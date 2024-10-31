@@ -16,6 +16,9 @@
     <Filter Include="Engine">
       <UniqueIdentifier>{5ca6b723-d64a-4664-804c-e2e448162e90}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{277f6d03-2f82-46c1-8408-359184e63781}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -60,5 +63,10 @@
     <Image Include="Client.ico">
       <Filter>리소스 파일</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shaders.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

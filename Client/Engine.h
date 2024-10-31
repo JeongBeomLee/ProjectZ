@@ -43,7 +43,6 @@ private:
 	bool CreateRootSignature();
 	bool CreatePipelineState();
 	bool CreateVertexBuffer();
-	bool CreateSyncObjects();
 
 	// ·»´õ¸µ ÇïÆÛ ÇÔ¼öµé
 	void WaitForGpu();

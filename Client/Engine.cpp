@@ -54,6 +54,15 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	if (!CreateFence()) {
 		return false;
 	}
+	if (!CreateRootSignature()) {
+		return false;
+	}
+	if (!CreatePipelineState()) {
+		return false;
+	}
+	if (!CreateVertexBuffer()) {
+		return false;
+	}
 
 	return true;
 }
@@ -65,46 +74,54 @@ void Engine::Update()
 
 void Engine::Render()
 {
-	// 1. 커맨드 할당자와 리스트 리셋
 	ThrowIfFailed(m_commandAllocator->Reset());
-	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
 
-	// 2. 리소스 배리어 변경 (Present → Render Target)
+	const CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
+	const CD3DX12_RECT scissorRect(0, 0, m_width, m_height);
+
+	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+	m_commandList->RSSetViewports(1, &viewport);
+	m_commandList->RSSetScissorRects(1, &scissorRect);
+
+	// 리소스 배리어
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_renderTargets[m_frameIndex].Get(),
-		D3D12_RESOURCE_STATE_PRESENT,
-		D3D12_RESOURCE_STATE_RENDER_TARGET);
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_commandList->ResourceBarrier(1, &barrier);
 
-	// 3. 렌더 타겟 설정 및 클리어
+	// 렌더 타겟 설정
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
 		m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_frameIndex, GetRtvDescriptorSize());
 
+	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+	// 화면 클리어
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
-	// 4. 리소스 배리어 변경 (Render Target → Present)
+	// 삼각형 그리기
+	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	m_commandList->DrawInstanced(3, 1, 0, 0);
+
+	// 리소스 배리어
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_renderTargets[m_frameIndex].Get(),
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PRESENT);
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	m_commandList->ResourceBarrier(1, &barrier);
 
-	// 5. 커맨드 리스트 종료
 	ThrowIfFailed(m_commandList->Close());
 
-	// 6. 커맨드 리스트 실행
+	// 커맨드 리스트 실행
 	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
 	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-	// 7. 화면 표시
+	// 화면 표시
 	ThrowIfFailed(m_swapChain->Present(1, 0));
 
-	// 8. CPU와 GPU 동기화
 	WaitForGpu();
-
-	// 9. 백버퍼 인덱스 변경
 	MoveToNextFrame();
 }
 
@@ -267,22 +284,101 @@ bool Engine::CreateFence()
 
 bool Engine::CreateRootSignature()
 {
-	return false;
+	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	rootSignatureDesc.Init(0, nullptr, 0, nullptr,
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+	ComPtr<ID3DBlob> signature;
+	ComPtr<ID3DBlob> error;
+	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc,
+		D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
+	ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(),
+		signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+
+	return true;
 }
 
 bool Engine::CreatePipelineState()
 {
-	return false;
+	// 정점 입력 레이아웃 정의
+	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
+		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
+
+	// 셰이더 컴파일 및 로드
+	ComPtr<ID3DBlob> vertexShader;
+	ComPtr<ID3DBlob> pixelShader;
+	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+
+	ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", nullptr, nullptr, "VSMain",
+		"vs_5_0", compileFlags, 0, &vertexShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", nullptr, nullptr, "PSMain",
+		"ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+
+	// 파이프라인 상태 생성
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.pRootSignature = m_rootSignature.Get();
+	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
+	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
+	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	psoDesc.DepthStencilState.DepthEnable = FALSE;
+	psoDesc.DepthStencilState.StencilEnable = FALSE;
+	psoDesc.SampleMask = UINT_MAX;
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	psoDesc.NumRenderTargets = 1;
+	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	psoDesc.SampleDesc.Count = 1;
+
+	ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc,
+		IID_PPV_ARGS(&m_pipelineState)));
+
+	return true;
 }
 
 bool Engine::CreateVertexBuffer()
 {
-	return false;
-}
+	// 삼각형 정점 데이터
+	Vertex triangleVertices[] =
+	{
+		{ { 0.0f, 0.25f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
+		{ { 0.25f, -0.25f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
+		{ { -0.25f, -0.25f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
+	};
 
-bool Engine::CreateSyncObjects()
-{
-	return false;
+	const UINT vertexBufferSize = sizeof(triangleVertices);
+
+	// 버퍼 생성
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+	CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
+
+	ThrowIfFailed(m_device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&bufferDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_vertexBuffer)));
+
+	// 데이터 복사
+	UINT8* pVertexDataBegin;
+	CD3DX12_RANGE readRange(0, 0);
+	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange,
+		reinterpret_cast<void**>(&pVertexDataBegin)));
+	memcpy(pVertexDataBegin, triangleVertices, sizeof(triangleVertices));
+	m_vertexBuffer->Unmap(0, nullptr);
+
+	// 버퍼 뷰 생성
+	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
+	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_vertexBufferView.SizeInBytes = vertexBufferSize;
+
+	return true;
 }
 
 void Engine::WaitForGpu()
