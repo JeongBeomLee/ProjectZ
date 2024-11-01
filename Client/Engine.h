@@ -32,6 +32,10 @@ private:
 	HANDLE								m_fenceEvent;
 	UINT								m_frameIndex;
 
+	// 셰이더 관련 멤버
+	ComPtr<ID3DBlob>					m_vertexShader;
+	ComPtr<ID3DBlob>					m_pixelShader;
+
 	// 초기화 헬퍼 함수들
 	bool CreateDevice();
 	bool CreateCommandQueue();
@@ -43,6 +47,8 @@ private:
 	bool CreateRootSignature();
 	bool CreatePipelineState();
 	bool CreateVertexBuffer();
+	bool CompileShaders();
+	void LogInitializationError(const std::string& step, const std::string& error);
 
 	// 렌더링 헬퍼 함수들
 	void WaitForGpu();
@@ -50,4 +56,3 @@ private:
 	UINT GetCurrentBackBufferIndex() const	{ return m_frameIndex; }
 	UINT GetRtvDescriptorSize() const		{ return m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV); }
 };
-

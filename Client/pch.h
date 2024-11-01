@@ -47,12 +47,15 @@ constexpr UINT MAX_LOADSTRING = 100;
 #ifndef ThrowIfFailed
 #define ThrowIfFailed(x)                                               \
 {                                                                      \
-    HRESULT hr__ = (x);                                               \
-    if(FAILED(hr__)) {                                                \
+    HRESULT hr__ = (x);                                                \
+    if (FAILED(hr__)) {                                                \
         std::string error_msg = std::format("{}({}) failed with {:x}", \
-            #x, __LINE__, static_cast<unsigned int>(hr__));           \
-        throw std::runtime_error(error_msg);                          \
-    }                                                                 \
+            #x, __LINE__, static_cast<unsigned int>(hr__));            \
+        MessageBox(nullptr, std::wstring(error_msg.begin(),            \
+                                         error_msg.end()).c_str(), 	   \
+                                         L"Error", MB_OK);             \
+		ExitProcess(EXIT_FAILURE);                                     \
+    }                                                                  \
 }
 #endif
 

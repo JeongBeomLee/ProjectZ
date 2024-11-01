@@ -300,6 +300,9 @@ bool Engine::CreateRootSignature()
 
 bool Engine::CreatePipelineState()
 {
+	// 셰이더 컴파일 및 로드
+	CompileShaders();
+
 	// 정점 입력 레이아웃 정의
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
 	{
@@ -309,22 +312,12 @@ bool Engine::CreatePipelineState()
 		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	// 셰이더 컴파일 및 로드
-	ComPtr<ID3DBlob> vertexShader;
-	ComPtr<ID3DBlob> pixelShader;
-	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-
-	ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", nullptr, nullptr, "VSMain",
-		"vs_5_0", compileFlags, 0, &vertexShader, nullptr));
-	ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", nullptr, nullptr, "PSMain",
-		"ps_5_0", compileFlags, 0, &pixelShader, nullptr));
-
 	// 파이프라인 상태 생성
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 	psoDesc.pRootSignature = m_rootSignature.Get();
-	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
-	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
+	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShader.Get());
+	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShader.Get());
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.DepthStencilState.DepthEnable = FALSE;
@@ -335,8 +328,12 @@ bool Engine::CreatePipelineState()
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	psoDesc.SampleDesc.Count = 1;
 
-	ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc,
-		IID_PPV_ARGS(&m_pipelineState)));
+	HRESULT hr = m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
+
+	if (FAILED(hr)) {
+		LogInitializationError("Pipeline State Creation", "Failed to create graphics pipeline state");
+		return false;
+	}
 
 	return true;
 }
@@ -368,8 +365,7 @@ bool Engine::CreateVertexBuffer()
 	// 데이터 복사
 	UINT8* pVertexDataBegin;
 	CD3DX12_RANGE readRange(0, 0);
-	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange,
-		reinterpret_cast<void**>(&pVertexDataBegin)));
+	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
 	memcpy(pVertexDataBegin, triangleVertices, sizeof(triangleVertices));
 	m_vertexBuffer->Unmap(0, nullptr);
 
@@ -379,6 +375,45 @@ bool Engine::CreateVertexBuffer()
 	m_vertexBufferView.SizeInBytes = vertexBufferSize;
 
 	return true;
+}
+
+bool Engine::CompileShaders()
+{
+	UINT compileFlags = 0;
+	IFDEBUG(compileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;);
+	ComPtr<ID3DBlob> errorBlob = nullptr;
+
+	// 버텍스 셰이더 컴파일
+	ThrowIfFailed(D3DCompileFromFile(
+		L"shaders.hlsl",
+		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		"VSMain",
+		"vs_5_0",
+		compileFlags,
+		0,
+		&m_vertexShader,
+		&errorBlob));
+
+	// 픽셀 셰이더 컴파일
+	ThrowIfFailed(D3DCompileFromFile(
+		L"shaders.hlsl",
+		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		"PSMain",
+		"ps_5_0",
+		compileFlags,
+		0,
+		&m_pixelShader,
+		&errorBlob));
+
+	return true;
+}
+
+void Engine::LogInitializationError(const std::string& step, const std::string& error)
+{
+	// 로깅 시스템을 사용하여 에러를 기록
+	OutputDebugStringA(("Error during " + step + ": " + error + "\n").c_str());
 }
 
 void Engine::WaitForGpu()
