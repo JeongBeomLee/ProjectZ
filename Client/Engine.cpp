@@ -39,7 +39,9 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	if (!CreateDescriptorHeaps()) return false;
 	if (!CreateRenderTargetViews()) return false;
 	if (!CreateConstantBuffer()) return false;
-	if (!CreateCbvHeap()) return false;
+	if (!CreateLightConstantBuffer()) return false;
+	if (!CreateTexture(L"Texture/checker.dds")) return false;  // 텍스처 로드
+	if (!CreateSrvHeap()) return false;                // SRV 힙 생성
 	if (!CreateCommandAllocatorAndList()) return false;
 	if (!CreateFence()) return false;
 	if (!CreateRootSignature()) return false;
@@ -50,12 +52,12 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	// 초기 변환 행렬 설정
 	m_worldMatrix = XMMatrixIdentity();
 	m_viewMatrix = XMMatrixLookAtLH(
-		XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f),  // 카메라 위치
+		XMVectorSet(0.0f, 1.0f, -5.0f, 1.0f),  // 카메라 위치
 		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 지점
 		XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f)    // 업 벡터
 	);
 	m_projectionMatrix = XMMatrixPerspectiveFovLH(
-		XM_PIDIV4,                              // 시야각(90도)
+		XM_PIDIV4,                              // 시야각(45도)
 		m_aspectRatio,                          // 화면 비율
 		0.1f,                                   // 근평면
 		100.0f                                  // 원평면
@@ -80,6 +82,20 @@ void Engine::Update()
 
 	// 월드 행렬 업데이트 (Y축 회전)
 	m_worldMatrix = XMMatrixRotationY(m_rotationAngle);
+
+	// 라이트 방향 업데이트 (원을 그리며 회전)
+	float lightAngle = m_rotationAngle * 0.5f;  // 큐브보다 천천히 회전
+	m_lightConstants.lightDirection.x = sinf(lightAngle);
+	m_lightConstants.lightDirection.z = cosf(lightAngle);
+	m_lightConstants.lightDirection.y = -0.5f;  // 약간 위에서 비추도록
+
+	// 정규화
+	XMVECTOR lightDir = XMLoadFloat4(&m_lightConstants.lightDirection);
+	lightDir = XMVector3Normalize(lightDir);
+	XMStoreFloat4(&m_lightConstants.lightDirection, lightDir);
+
+	// 라이트 상수 버퍼 업데이트
+	memcpy(m_lightConstantBufferMappedData, &m_lightConstants, sizeof(m_lightConstants));
 }
 
 void Engine::Render()
@@ -99,9 +115,23 @@ void Engine::Render()
 
 	// 루트 시그니처와 디스크립터 힙 설정
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-	ID3D12DescriptorHeap* ppHeaps[] = { m_cbvHeap.Get() };
+
+	// CBV/SRV 힙 설정
+	ID3D12DescriptorHeap* ppHeaps[] = { m_descHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-	m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+
+	// Transform CBV 설정 (첫 번째 위치)
+	m_commandList->SetGraphicsRootDescriptorTable(0, m_descHeap->GetGPUDescriptorHandleForHeapStart());
+
+	// Light CBV 설정 (두 번째 위치)
+	CD3DX12_GPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
+	lightCbvHandle.Offset(m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+	m_commandList->SetGraphicsRootDescriptorTable(1, lightCbvHandle);
+
+	// Texture SRV 설정 (세 번째 위치)
+	CD3DX12_GPU_DESCRIPTOR_HANDLE textureSrvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
+	textureSrvHandle.Offset(2, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+	m_commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandle);
 
 	// 리소스 배리어
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -117,7 +147,7 @@ void Engine::Render()
 	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
 	// 화면 클리어
-	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
+	const float clearColor[] = { 0.0f, 0.0f, 0.2f, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 	////////// RENDER ///////////
@@ -305,26 +335,74 @@ bool Engine::CreateFence()
 
 bool Engine::CreateRootSignature()
 {
-	// 루트 파라미터 설정
-	D3D12_ROOT_PARAMETER rootParameter = {};
-	rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	// 정적 샘플러 생성
+	D3D12_STATIC_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.MipLODBias = 0;
+	samplerDesc.MaxAnisotropy = 0;
+	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	samplerDesc.MinLOD = 0.0f;
+	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	samplerDesc.ShaderRegister = 0; // s0 레지스터
+	samplerDesc.RegisterSpace = 0;
+	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	// 디스크립터 테이블 설정
-	D3D12_DESCRIPTOR_RANGE descriptorRange = {};
-	descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	descriptorRange.NumDescriptors = 1;
-	descriptorRange.BaseShaderRegister = 0;
-	descriptorRange.RegisterSpace = 0;
-	descriptorRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	D3D12_DESCRIPTOR_RANGE ranges[3] = {};
 
-	rootParameter.DescriptorTable.NumDescriptorRanges = 1;
-	rootParameter.DescriptorTable.pDescriptorRanges = &descriptorRange;
+	// 변환 행렬용 range
+	ranges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	ranges[0].NumDescriptors = 1;
+	ranges[0].BaseShaderRegister = 0;	// b0 레지스터
+	ranges[0].RegisterSpace = 0;
+	ranges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	// 라이팅용 range
+	ranges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	ranges[1].NumDescriptors = 1;
+	ranges[1].BaseShaderRegister = 1;	// b1 레지스터
+	ranges[1].RegisterSpace = 0;
+	ranges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	// 텍스처용 range
+	ranges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	ranges[2].NumDescriptors = 1;
+	ranges[2].BaseShaderRegister = 0;	// t0 레지스터
+	ranges[2].RegisterSpace = 0;
+	ranges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	// 루트 파라미터 설정
+	D3D12_ROOT_PARAMETER rootParameters[3] = {};
+
+	// 변환 행렬용 파라미터
+	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[0].DescriptorTable.pDescriptorRanges = &ranges[0];
+	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+	// 라이팅용 파라미터
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[1].DescriptorTable.pDescriptorRanges = &ranges[1];
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	// 텍스처용 파라미터
+	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[2].DescriptorTable.pDescriptorRanges = &ranges[2];
+	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	// 루트 시그니처 생성
-	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init(1, &rootParameter, 0, nullptr,
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
+	rootSignatureDesc.NumParameters = _countof(rootParameters);
+	rootSignatureDesc.pParameters = rootParameters;
+	rootSignatureDesc.NumStaticSamplers = 1;
+	rootSignatureDesc.pStaticSamplers = &samplerDesc;
+	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	ComPtr<ID3DBlob> signature;
 	ComPtr<ID3DBlob> error;
@@ -349,6 +427,8 @@ bool Engine::CreatePipelineState()
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
 		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 28,
+		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40,
 		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
@@ -359,6 +439,7 @@ bool Engine::CreatePipelineState()
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShader.Get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShader.Get());
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	psoDesc.RasterizerState.FrontCounterClockwise = FALSE;
 	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.DepthStencilState.DepthEnable = FALSE;
@@ -384,17 +465,42 @@ bool Engine::CreateVertexBuffer()
 	// 큐브의 정점 데이터
 	Vertex cubeVertices[] = {
 		// 앞면 (z = 0.5f)
-		{ XMFLOAT3(-0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f) },
-		{ XMFLOAT3(-0.5f,  0.5f, 0.5f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f) },
-		{ XMFLOAT3(0.5f,  0.5f, 0.5f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f) },
-		{ XMFLOAT3(0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(-0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(-0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
 
 		// 뒷면 (z = -0.5f)
-		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f) },
-		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f) },
-		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f) },
-		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f) }
+		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
+
+		// 윗면 (y = 0.5f)
+		{ XMFLOAT3(-0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+
+		// 아랫면 (y = -0.5f)
+		{ XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+
+		// 오른쪽면 (x = 0.5f)
+		{ XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+
+		// 왼쪽면 (x = -0.5f)
+		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) }
 	};
+
 
 	const UINT vertexBufferSize = sizeof(cubeVertices);
 
@@ -429,30 +535,31 @@ bool Engine::CreateIndexBuffer()
 {
 	// 큐브의 인덱스 데이터
 	UINT indices[] = {
-		// 앞면
-		0, 1, 2,
-		0, 2, 3,
+		// 앞면 (0-3)
+		0, 2, 1,    // 첫 번째 삼각형
+		0, 3, 2,    // 두 번째 삼각형
 
-		// 뒷면
-		4, 5, 6,
-		4, 6, 7,
+		// 뒷면 (4-7)
+		4, 6, 5,
+		4, 7, 6,
 
-		// 윗면
-		1, 6, 2,
-		2, 6, 5,
+		// 윗면 (8-11)
+		8, 10, 9,
+		8, 11, 10,
 
-		// 아랫면
-		0, 3, 4,
-		0, 4, 7,
+		// 아랫면 (12-15)
+		12, 14, 13,
+		12, 15, 14,
 
-		// 왼쪽면
-		0, 7, 1,
-		1, 7, 6,
+		// 오른쪽면 (16-19)
+		16, 18, 17,
+		16, 19, 18,
 
-		// 오른쪽면
-		3, 2, 5,
-		3, 5, 4
+		// 왼쪽면 (20-23)
+		20, 22, 21,
+		20, 23, 22
 	};
+
 
 	m_indexCount = ARRAYSIZE(indices);
 	const UINT indexBufferSize = sizeof(indices);
@@ -544,20 +651,127 @@ bool Engine::CreateConstantBuffer()
 
 bool Engine::CreateCbvHeap()
 {
+	// 두 개의 CBV를 위한 디스크립터 힙 생성
 	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc = {};
-	cbvHeapDesc.NumDescriptors = 1;
+	cbvHeapDesc.NumDescriptors = 2;  // 변환 행렬용 1개, 라이팅용 1개
 	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-	ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
+	ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_descHeap)));
 
-	// CBV 생성
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-	cbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
-	cbvDesc.SizeInBytes = (sizeof(ObjectConstants) + 255) & ~255;
+	// 변환 행렬용 CBV 생성
+	D3D12_CONSTANT_BUFFER_VIEW_DESC transformCbvDesc = {};
+	transformCbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
+	transformCbvDesc.SizeInBytes = (sizeof(ObjectConstants) + 255) & ~255;
 
-	m_device->CreateConstantBufferView(&cbvDesc,
-		m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+	// 라이팅용 CBV 생성
+	D3D12_CONSTANT_BUFFER_VIEW_DESC lightCbvDesc = {};
+	lightCbvDesc.BufferLocation = m_lightConstantBuffer->GetGPUVirtualAddress();
+	lightCbvDesc.SizeInBytes = (sizeof(LightConstants) + 255) & ~255;
+
+	// 디스크립터 핸들 계산
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
+
+	// 첫 번째 위치에 변환 행렬 CBV 생성
+	m_device->CreateConstantBufferView(&transformCbvDesc, cbvHandle);
+
+	// 두 번째 위치에 라이팅 CBV 생성
+	cbvHandle.Offset(m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+	m_device->CreateConstantBufferView(&lightCbvDesc, cbvHandle);
+
+	return true;
+}
+
+bool Engine::CreateLightConstantBuffer()
+{
+	// 상수 버퍼는 256바이트 정렬이 필요
+	const UINT constantBufferSize = (sizeof(LightConstants) + 255) & ~255;
+
+	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
+
+	ThrowIfFailed(m_device->CreateCommittedResource(
+		&heapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_lightConstantBuffer)));
+
+	// 상수 버퍼를 CPU 메모리에 매핑
+	CD3DX12_RANGE readRange(0, 0);
+	ThrowIfFailed(m_lightConstantBuffer->Map(0, &readRange,
+		reinterpret_cast<void**>(&m_lightConstantBufferMappedData)));
+
+	// 초기 라이팅 값 설정
+	m_lightConstants.lightDirection = XMFLOAT4(-0.577f, -0.577f, -0.577f, 0.0f);  // 대각선 방향
+	m_lightConstants.lightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);              // 흰색 조명
+	m_lightConstants.ambientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);            // 회색 주변광
+	m_lightConstants.eyePosition = XMFLOAT4(0.0f, 0.0f, -5.0f, 0.0f);            // 카메라 위치
+
+	// 초기값 복사
+	memcpy(m_lightConstantBufferMappedData, &m_lightConstants, sizeof(m_lightConstants));
+
+	return true;
+}
+
+bool Engine::CreateTexture(const wchar_t* filename)
+{
+	// 리소스 업로드 배치 생성
+	DirectX::ResourceUploadBatch resourceUpload(m_device.Get());
+	resourceUpload.Begin();
+
+	// DDS 텍스처 로드
+	ThrowIfFailed(DirectX::CreateDDSTextureFromFile(
+		m_device.Get(),
+		resourceUpload,
+		filename,
+		m_texture.ReleaseAndGetAddressOf()));
+
+	// 리소스 업로드 실행
+	auto uploadResourcesFinished = resourceUpload.End(m_commandQueue.Get());
+	uploadResourcesFinished.wait();
+
+	return true;
+}
+
+bool Engine::CreateSrvHeap()
+{
+	// CBV 2개와 SRV 1개를 위한 디스크립터 힙 생성
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.NumDescriptors = 3;  // CBV 2개 + SRV 1개
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	ThrowIfFailed(m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_descHeap)));
+
+	// 변환 행렬용 CBV 생성
+	D3D12_CONSTANT_BUFFER_VIEW_DESC transformCbvDesc = {};
+	transformCbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
+	transformCbvDesc.SizeInBytes = (sizeof(ObjectConstants) + 255) & ~255;
+
+	// 라이팅용 CBV 생성
+	D3D12_CONSTANT_BUFFER_VIEW_DESC lightCbvDesc = {};
+	lightCbvDesc.BufferLocation = m_lightConstantBuffer->GetGPUVirtualAddress();
+	lightCbvDesc.SizeInBytes = (sizeof(LightConstants) + 255) & ~255;
+
+	// 텍스처용 SRV 생성
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = m_texture->GetDesc().Format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = m_texture->GetDesc().MipLevels;
+
+	// 디스크립터 핸들 계산
+	CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
+	UINT handleIncrement = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	// CBV들과 SRV 생성
+	m_device->CreateConstantBufferView(&transformCbvDesc, handle);
+	handle.Offset(handleIncrement);
+	m_device->CreateConstantBufferView(&lightCbvDesc, handle);
+	handle.Offset(handleIncrement);
+	m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, handle);
 
 	return true;
 }

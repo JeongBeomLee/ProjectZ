@@ -45,8 +45,15 @@ private:
 	ComPtr<ID3D12Resource>				m_constantBuffer;
 	UINT8*								m_constantBufferMappedData;
 
-	// 상수 버퍼 뷰를 위한 디스크립터 힙
-	ComPtr<ID3D12DescriptorHeap>		m_cbvHeap;
+	ComPtr<ID3D12DescriptorHeap>		m_descHeap;  // 하나의 힙으로 통합
+
+	// 라이팅 관련
+	ComPtr<ID3D12Resource>				m_lightConstantBuffer;
+	UINT8*								m_lightConstantBufferMappedData;
+	LightConstants						m_lightConstants;
+
+	// 텍스처 관련 멤버
+	ComPtr<ID3D12Resource>				m_texture;
 
 	// 변환 행렬
 	XMMATRIX m_worldMatrix;
@@ -72,6 +79,11 @@ private:
 	bool CompileShaders();
 	bool CreateConstantBuffer();
 	bool CreateCbvHeap();
+	bool CreateLightConstantBuffer();
+
+	bool CreateTexture(const wchar_t* filename);
+	bool CreateSrvHeap();
+
 	void UpdateConstantBuffer();
 	void LogInitializationError(const std::string& step, const std::string& error);
 

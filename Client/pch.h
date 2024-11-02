@@ -12,6 +12,8 @@
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 #include "Util/d3dx12.h"
+#include "packages/DirectXTK12/include/ResourceUploadBatch.h"
+#include "packages/DirectXTK12/include/DDSTextureLoader.h"
 
 // STL 헤더
 #include <memory>
@@ -88,6 +90,7 @@ struct Vertex {
     XMFLOAT3 position;
     XMFLOAT4 color;
     XMFLOAT3 normal;
+    XMFLOAT2 texCoord;
 };
 
 // Object 상수 버퍼 구조체
@@ -96,4 +99,12 @@ struct ObjectConstants
     XMMATRIX worldMatrix;
     XMMATRIX viewMatrix;
     XMMATRIX projectionMatrix;
+};
+
+// Light 상수 버퍼 구조체
+struct LightConstants {
+    XMFLOAT4 lightDirection;  // w는 사용하지 않음
+    XMFLOAT4 lightColor;      // w는 강도로 사용
+    XMFLOAT4 ambientColor;    // w는 강도로 사용
+    XMFLOAT4 eyePosition;     // w는 사용하지 않음
 };
