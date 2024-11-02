@@ -33,43 +33,53 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	);
 
 	// DirectX 12 객체 생성
-	if (!CreateDevice()) {
-		return false;
-	}
-	if (!CreateCommandQueue()) {
-		return false;
-	}
-	if (!CreateSwapChain(hwnd)) {
-		return false;
-	}
-	if (!CreateDescriptorHeaps()) {
-		return false;
-	}
-	if (!CreateRenderTargetViews()) {
-		return false;
-	}
-	if (!CreateCommandAllocatorAndList()) {
-		return false;
-	}
-	if (!CreateFence()) {
-		return false;
-	}
-	if (!CreateRootSignature()) {
-		return false;
-	}
-	if (!CreatePipelineState()) {
-		return false;
-	}
-	if (!CreateVertexBuffer()) {
-		return false;
-	}
+	if (!CreateDevice()) return false;
+	if (!CreateCommandQueue()) return false;
+	if (!CreateSwapChain(hwnd)) return false;
+	if (!CreateDescriptorHeaps()) return false;
+	if (!CreateRenderTargetViews()) return false;
+	if (!CreateConstantBuffer()) return false;
+	if (!CreateCbvHeap()) return false;
+	if (!CreateCommandAllocatorAndList()) return false;
+	if (!CreateFence()) return false;
+	if (!CreateRootSignature()) return false;
+	if (!CreatePipelineState()) return false;
+	if (!CreateVertexBuffer()) return false;
+	if (!CreateIndexBuffer()) return false;
+
+	// 초기 변환 행렬 설정
+	m_worldMatrix = XMMatrixIdentity();
+	m_viewMatrix = XMMatrixLookAtLH(
+		XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f),  // 카메라 위치
+		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 지점
+		XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f)    // 업 벡터
+	);
+	m_projectionMatrix = XMMatrixPerspectiveFovLH(
+		XM_PIDIV4,                              // 시야각(90도)
+		m_aspectRatio,                          // 화면 비율
+		0.1f,                                   // 근평면
+		100.0f                                  // 원평면
+	);
+
+	// 회전 애니메이션 초기화
+	m_rotationAngle = 0.0f;
+	m_lastTick = GetTickCount64();
 
 	return true;
 }
 
 void Engine::Update()
 {
-	// TODO: 업데이트 로직 구현
+	// 델타 시간 계산
+	ULONGLONG currentTick = GetTickCount64();
+	float deltaTime = (currentTick - m_lastTick) / 1000.0f;
+	m_lastTick = currentTick;
+
+	// 회전 각도 업데이트
+	m_rotationAngle += deltaTime;
+
+	// 월드 행렬 업데이트 (Y축 회전)
+	m_worldMatrix = XMMatrixRotationY(m_rotationAngle);
 }
 
 void Engine::Render()
@@ -77,12 +87,21 @@ void Engine::Render()
 	ThrowIfFailed(m_commandAllocator->Reset());
 	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
 
+	// 상수 버퍼 업데이트
+	UpdateConstantBuffer();
+
+	// 뷰포트와 시저렉트 설정
 	const CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
 	const CD3DX12_RECT scissorRect(0, 0, m_width, m_height);
 
-	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
+
+	// 루트 시그니처와 디스크립터 힙 설정
+	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+	ID3D12DescriptorHeap* ppHeaps[] = { m_cbvHeap.Get() };
+	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+	m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
 
 	// 리소스 배리어
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -101,10 +120,12 @@ void Engine::Render()
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
-	// 삼각형 그리기
+	////////// RENDER ///////////
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	m_commandList->DrawInstanced(3, 1, 0, 0);
+	m_commandList->IASetIndexBuffer(&m_indexBufferView);
+	m_commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+	/////////////////////////////
 
 	// 리소스 배리어
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -284,8 +305,25 @@ bool Engine::CreateFence()
 
 bool Engine::CreateRootSignature()
 {
+	// 루트 파라미터 설정
+	D3D12_ROOT_PARAMETER rootParameter = {};
+	rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+	// 디스크립터 테이블 설정
+	D3D12_DESCRIPTOR_RANGE descriptorRange = {};
+	descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	descriptorRange.NumDescriptors = 1;
+	descriptorRange.BaseShaderRegister = 0;
+	descriptorRange.RegisterSpace = 0;
+	descriptorRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	rootParameter.DescriptorTable.NumDescriptorRanges = 1;
+	rootParameter.DescriptorTable.pDescriptorRanges = &descriptorRange;
+
+	// 루트 시그니처 생성
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init(0, nullptr, 0, nullptr,
+	rootSignatureDesc.Init(1, &rootParameter, 0, nullptr,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	ComPtr<ID3DBlob> signature;
@@ -309,6 +347,8 @@ bool Engine::CreatePipelineState()
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
 		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
+		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 28,
 		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
@@ -319,6 +359,7 @@ bool Engine::CreatePipelineState()
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShader.Get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShader.Get());
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.DepthStencilState.DepthEnable = FALSE;
 	psoDesc.DepthStencilState.StencilEnable = FALSE;
@@ -340,15 +381,22 @@ bool Engine::CreatePipelineState()
 
 bool Engine::CreateVertexBuffer()
 {
-	// 삼각형 정점 데이터
-	Vertex triangleVertices[] =
-	{
-		{ { 0.0f, 0.25f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-		{ { 0.25f, -0.25f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
-		{ { -0.25f, -0.25f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
+	// 큐브의 정점 데이터
+	Vertex cubeVertices[] = {
+		// 앞면 (z = 0.5f)
+		{ XMFLOAT3(-0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(-0.5f,  0.5f, 0.5f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(0.5f,  0.5f, 0.5f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f) },
+
+		// 뒷면 (z = -0.5f)
+		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f) },
+		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f) },
+		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f) },
+		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f) }
 	};
 
-	const UINT vertexBufferSize = sizeof(triangleVertices);
+	const UINT vertexBufferSize = sizeof(cubeVertices);
 
 	// 버퍼 생성
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
@@ -366,13 +414,72 @@ bool Engine::CreateVertexBuffer()
 	UINT8* pVertexDataBegin;
 	CD3DX12_RANGE readRange(0, 0);
 	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-	memcpy(pVertexDataBegin, triangleVertices, sizeof(triangleVertices));
+	memcpy(pVertexDataBegin, cubeVertices, sizeof(cubeVertices));
 	m_vertexBuffer->Unmap(0, nullptr);
 
 	// 버퍼 뷰 생성
 	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
 	m_vertexBufferView.SizeInBytes = vertexBufferSize;
+
+	return true;
+}
+
+bool Engine::CreateIndexBuffer()
+{
+	// 큐브의 인덱스 데이터
+	UINT indices[] = {
+		// 앞면
+		0, 1, 2,
+		0, 2, 3,
+
+		// 뒷면
+		4, 5, 6,
+		4, 6, 7,
+
+		// 윗면
+		1, 6, 2,
+		2, 6, 5,
+
+		// 아랫면
+		0, 3, 4,
+		0, 4, 7,
+
+		// 왼쪽면
+		0, 7, 1,
+		1, 7, 6,
+
+		// 오른쪽면
+		3, 2, 5,
+		3, 5, 4
+	};
+
+	m_indexCount = ARRAYSIZE(indices);
+	const UINT indexBufferSize = sizeof(indices);
+
+	// 인덱스 버퍼 생성
+	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
+
+	ThrowIfFailed(m_device->CreateCommittedResource(
+		&heapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_indexBuffer)));
+
+	// 데이터 복사
+	UINT8* pIndexDataBegin;
+	CD3DX12_RANGE readRange(0, 0);
+	ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+	memcpy(pIndexDataBegin, indices, indexBufferSize);
+	m_indexBuffer->Unmap(0, nullptr);
+
+	// 인덱스 버퍼 뷰 생성
+	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
+	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	m_indexBufferView.SizeInBytes = indexBufferSize;
 
 	return true;
 }
@@ -408,6 +515,61 @@ bool Engine::CompileShaders()
 		&errorBlob));
 
 	return true;
+}
+
+bool Engine::CreateConstantBuffer()
+{
+	// 상수 버퍼는 256 바이트 정렬이 필요
+	const UINT constantBufferSize = (sizeof(ObjectConstants) + 255) & ~255;
+
+	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
+
+	// 상수 버퍼 생성
+	ThrowIfFailed(m_device->CreateCommittedResource(
+		&heapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_constantBuffer)));
+
+	// 상수 버퍼를 CPU 메모리에 매핑
+	CD3DX12_RANGE readRange(0, 0);
+	ThrowIfFailed(m_constantBuffer->Map(0, &readRange,
+		reinterpret_cast<void**>(&m_constantBufferMappedData)));
+
+	return true;
+}
+
+bool Engine::CreateCbvHeap()
+{
+	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc = {};
+	cbvHeapDesc.NumDescriptors = 1;
+	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
+
+	// CBV 생성
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+	cbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes = (sizeof(ObjectConstants) + 255) & ~255;
+
+	m_device->CreateConstantBufferView(&cbvDesc,
+		m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+
+	return true;
+}
+
+void Engine::UpdateConstantBuffer()
+{
+	ObjectConstants constants;
+	constants.worldMatrix = XMMatrixTranspose(m_worldMatrix);
+	constants.viewMatrix = XMMatrixTranspose(m_viewMatrix);
+	constants.projectionMatrix = XMMatrixTranspose(m_projectionMatrix);
+
+	memcpy(m_constantBufferMappedData, &constants, sizeof(constants));
 }
 
 void Engine::LogInitializationError(const std::string& step, const std::string& error)

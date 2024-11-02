@@ -19,6 +19,12 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{277f6d03-2f82-46c1-8408-359184e63781}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameObject">
+      <UniqueIdentifier>{6d5e8b34-2c0e-4480-845c-5ee7fcdf28f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{d825403a-2de7-48d4-9d3c-ed6cbf908462}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">

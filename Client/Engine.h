@@ -26,15 +26,36 @@ private:
 	ComPtr<ID3D12Fence1>				m_fence;
 	ComPtr<ID3D12RootSignature>			m_rootSignature;
 	ComPtr<ID3D12PipelineState>			m_pipelineState;
-	ComPtr<ID3D12Resource>				m_vertexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW			m_vertexBufferView;
+
 	UINT64								m_fenceValues[FRAME_BUFFER_COUNT];
 	HANDLE								m_fenceEvent;
 	UINT								m_frameIndex;
 
+	ComPtr<ID3D12Resource>				m_vertexBuffer;
+	D3D12_VERTEX_BUFFER_VIEW			m_vertexBufferView;
+	ComPtr<ID3D12Resource>				m_indexBuffer;
+	D3D12_INDEX_BUFFER_VIEW				m_indexBufferView;
+	UINT								m_indexCount;
+
 	// 셰이더 관련 멤버
 	ComPtr<ID3DBlob>					m_vertexShader;
 	ComPtr<ID3DBlob>					m_pixelShader;
+
+	// 상수 버퍼
+	ComPtr<ID3D12Resource>				m_constantBuffer;
+	UINT8*								m_constantBufferMappedData;
+
+	// 상수 버퍼 뷰를 위한 디스크립터 힙
+	ComPtr<ID3D12DescriptorHeap>		m_cbvHeap;
+
+	// 변환 행렬
+	XMMATRIX m_worldMatrix;
+	XMMATRIX m_viewMatrix;
+	XMMATRIX m_projectionMatrix;
+
+	// for animation
+	float m_rotationAngle;
+	ULONGLONG m_lastTick;
 
 	// 초기화 헬퍼 함수들
 	bool CreateDevice();
@@ -47,7 +68,11 @@ private:
 	bool CreateRootSignature();
 	bool CreatePipelineState();
 	bool CreateVertexBuffer();
+	bool CreateIndexBuffer();
 	bool CompileShaders();
+	bool CreateConstantBuffer();
+	bool CreateCbvHeap();
+	void UpdateConstantBuffer();
 	void LogInitializationError(const std::string& step, const std::string& error);
 
 	// 렌더링 헬퍼 함수들

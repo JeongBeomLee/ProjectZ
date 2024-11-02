@@ -87,4 +87,13 @@ void SafeRelease(T& ptr)
 struct Vertex {
     XMFLOAT3 position;
     XMFLOAT4 color;
+    XMFLOAT3 normal;
+};
+
+// Object 상수 버퍼 구조체
+struct ObjectConstants
+{
+    XMMATRIX worldMatrix;
+    XMMATRIX viewMatrix;
+    XMMATRIX projectionMatrix;
 };
