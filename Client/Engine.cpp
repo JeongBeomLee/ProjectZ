@@ -41,7 +41,7 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	if (!CreateConstantBuffer()) return false;
 	if (!CreateLightConstantBuffer()) return false;
 	if (!CreateTexture(L"Texture/checker.dds")) return false;  // 텍스처 로드
-	if (!CreateSrvHeap()) return false;                // SRV 힙 생성
+	if (!CreateDescHeap()) return false;                // SRV 힙 생성
 	if (!CreateCommandAllocatorAndList()) return false;
 	if (!CreateFence()) return false;
 	if (!CreateRootSignature()) return false;
@@ -439,7 +439,7 @@ bool Engine::CreatePipelineState()
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShader.Get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShader.Get());
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	psoDesc.RasterizerState.FrontCounterClockwise = FALSE;
+	psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
 	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.DepthStencilState.DepthEnable = FALSE;
@@ -536,29 +536,30 @@ bool Engine::CreateIndexBuffer()
 	// 큐브의 인덱스 데이터
 	UINT indices[] = {
 		// 앞면 (0-3)
-		0, 2, 1,    // 첫 번째 삼각형
-		0, 3, 2,    // 두 번째 삼각형
+		0, 1, 2,    // 첫 번째 삼각형
+		0, 2, 3,    // 두 번째 삼각형
 
 		// 뒷면 (4-7)
-		4, 6, 5,
-		4, 7, 6,
+		4, 5, 6,
+		4, 6, 7,
 
 		// 윗면 (8-11)
-		8, 10, 9,
-		8, 11, 10,
+		8, 9, 10,
+		8, 10, 11,
 
 		// 아랫면 (12-15)
-		12, 14, 13,
-		12, 15, 14,
+		12, 13, 14,
+		12, 14, 15,
 
 		// 오른쪽면 (16-19)
-		16, 18, 17,
-		16, 19, 18,
+		16, 17, 18,
+		16, 18, 19,
 
 		// 왼쪽면 (20-23)
-		20, 22, 21,
-		20, 23, 22
+		20, 21, 22,
+		20, 22, 23
 	};
+
 
 
 	m_indexCount = ARRAYSIZE(indices);
@@ -649,39 +650,6 @@ bool Engine::CreateConstantBuffer()
 	return true;
 }
 
-bool Engine::CreateCbvHeap()
-{
-	// 두 개의 CBV를 위한 디스크립터 힙 생성
-	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc = {};
-	cbvHeapDesc.NumDescriptors = 2;  // 변환 행렬용 1개, 라이팅용 1개
-	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
-	ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_descHeap)));
-
-	// 변환 행렬용 CBV 생성
-	D3D12_CONSTANT_BUFFER_VIEW_DESC transformCbvDesc = {};
-	transformCbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
-	transformCbvDesc.SizeInBytes = (sizeof(ObjectConstants) + 255) & ~255;
-
-	// 라이팅용 CBV 생성
-	D3D12_CONSTANT_BUFFER_VIEW_DESC lightCbvDesc = {};
-	lightCbvDesc.BufferLocation = m_lightConstantBuffer->GetGPUVirtualAddress();
-	lightCbvDesc.SizeInBytes = (sizeof(LightConstants) + 255) & ~255;
-
-	// 디스크립터 핸들 계산
-	CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
-
-	// 첫 번째 위치에 변환 행렬 CBV 생성
-	m_device->CreateConstantBufferView(&transformCbvDesc, cbvHandle);
-
-	// 두 번째 위치에 라이팅 CBV 생성
-	cbvHandle.Offset(m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-	m_device->CreateConstantBufferView(&lightCbvDesc, cbvHandle);
-
-	return true;
-}
-
 bool Engine::CreateLightConstantBuffer()
 {
 	// 상수 버퍼는 256바이트 정렬이 필요
@@ -735,7 +703,7 @@ bool Engine::CreateTexture(const wchar_t* filename)
 	return true;
 }
 
-bool Engine::CreateSrvHeap()
+bool Engine::CreateDescHeap()
 {
 	// CBV 2개와 SRV 1개를 위한 디스크립터 힙 생성
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};

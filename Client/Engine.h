@@ -78,11 +78,10 @@ private:
 	bool CreateIndexBuffer();
 	bool CompileShaders();
 	bool CreateConstantBuffer();
-	bool CreateCbvHeap();
 	bool CreateLightConstantBuffer();
 
 	bool CreateTexture(const wchar_t* filename);
-	bool CreateSrvHeap();
+	bool CreateDescHeap();
 
 	void UpdateConstantBuffer();
 	void LogInitializationError(const std::string& step, const std::string& error);
