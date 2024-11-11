@@ -20,6 +20,7 @@ private:
 	ComPtr<ID3D12CommandQueue>			m_commandQueue;
 	ComPtr<IDXGISwapChain4>				m_swapChain;
 	ComPtr<ID3D12DescriptorHeap>		m_rtvHeap;
+	ComPtr<ID3D12DescriptorHeap>		m_descHeap;  // 하나의 힙으로 통합
 	ComPtr<ID3D12Resource2>				m_renderTargets[FRAME_BUFFER_COUNT];
 	ComPtr<ID3D12CommandAllocator>		m_commandAllocator;
 	ComPtr<ID3D12GraphicsCommandList7>	m_commandList;
@@ -45,8 +46,6 @@ private:
 	ComPtr<ID3D12Resource>				m_constantBuffer;
 	UINT8*								m_constantBufferMappedData;
 
-	ComPtr<ID3D12DescriptorHeap>		m_descHeap;  // 하나의 힙으로 통합
-
 	// 라이팅 관련
 	ComPtr<ID3D12Resource>				m_lightConstantBuffer;
 	UINT8*								m_lightConstantBufferMappedData;
@@ -54,8 +53,8 @@ private:
 
 	// 텍스처 관련 멤버
 	ComPtr<ID3D12Resource>				m_texture;
-
-	// 변환 행렬
+	
+	// 변환 행렬 (카메라)
 	XMMATRIX m_worldMatrix;
 	XMMATRIX m_viewMatrix;
 	XMMATRIX m_projectionMatrix;
@@ -68,7 +67,7 @@ private:
 	bool CreateDevice();
 	bool CreateCommandQueue();
 	bool CreateSwapChain(HWND hwnd);
-	bool CreateDescriptorHeaps();
+	bool CreateRTVDescriptorHeaps();
 	bool CreateRenderTargetViews();
 	bool CreateCommandAllocatorAndList();
 	bool CreateFence();

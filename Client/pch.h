@@ -15,6 +15,9 @@
 #include "packages/DirectXTK12/include/ResourceUploadBatch.h"
 #include "packages/DirectXTK12/include/DDSTextureLoader.h"
 
+// PhysX 관련 헤더
+#include "PhysX/include/PxPhysicsAPI.h"
+
 // STL 헤더
 #include <memory>
 #include <vector>
@@ -33,8 +36,9 @@
 // COM 스마트 포인터 사용
 using Microsoft::WRL::ComPtr;
 
-// DirectX 네임스페이스
+// 네임스페이스
 using namespace DirectX;
+using namespace physx;
 
 // 자주 사용하는 상수 정의
 constexpr UINT FRAME_BUFFER_COUNT = 2;  // 더블 버퍼링
@@ -44,6 +48,43 @@ constexpr UINT MAX_LOADSTRING = 100;
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
+#ifdef _DEBUG
+    #pragma comment(lib, "PhysX_64.lib")
+    #pragma comment(lib, "PhysXCommon_64.lib")
+    #pragma comment(lib, "PhysXTask_static_64")
+    #pragma comment(lib, "PhysXCooking_64.lib")
+    #pragma comment(lib, "PhysXVehicle_static_64")
+    #pragma comment(lib, "PhysXFoundation_64.lib")
+    #pragma comment(lib, "PhysXVehicle2_static_64")
+    #pragma comment(lib, "PhysXPvdSDK_static_64.lib")
+    #pragma comment(lib, "PhysXExtensions_static_64.lib")
+    #pragma comment(lib, "PhysXCharacterKinematic_static_64.lib")
+
+    #pragma comment(lib, "PVDRuntime_64")
+    #pragma comment(lib, "LowLevel_static_64")
+    #pragma comment(lib, "SceneQuery_static_64")
+    #pragma comment(lib, "LowLevelAABB_static_64")
+    #pragma comment(lib, "LowLevelDynamics_static_64")
+    #pragma comment(lib, "SimulationController_static_64")
+#else
+    #pragma comment(lib, "PhysX_64.lib")
+    #pragma comment(lib, "PhysXCommon_64.lib")
+    #pragma comment(lib, "PhysXTask_static_64")
+    #pragma comment(lib, "PhysXCooking_64.lib")
+    #pragma comment(lib, "PhysXVehicle_static_64")
+    #pragma comment(lib, "PhysXFoundation_64.lib")
+    #pragma comment(lib, "PhysXVehicle2_static_64")
+    #pragma comment(lib, "PhysXPvdSDK_static_64.lib")
+    #pragma comment(lib, "PhysXExtensions_static_64.lib")
+    #pragma comment(lib, "PhysXCharacterKinematic_static_64.lib")
+
+    #pragma comment(lib, "PVDRuntime_64")
+    #pragma comment(lib, "LowLevel_static_64")
+    #pragma comment(lib, "SceneQuery_static_64")
+    #pragma comment(lib, "LowLevelAABB_static_64")
+    #pragma comment(lib, "LowLevelDynamics_static_64")
+    #pragma comment(lib, "SimulationController_static_64")
+#endif
 
 // 에러 체크 매크로
 #ifndef ThrowIfFailed

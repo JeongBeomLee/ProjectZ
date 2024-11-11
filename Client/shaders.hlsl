@@ -64,12 +64,12 @@ float4 PSMain(PSInput input) : SV_TARGET
     float3 ambient = ambientColor.rgb * ambientColor.a;
     
     // È®»ê±¤
-    float diffuseFactor = max(dot(lightDir, normal), 0.0f);
-    float3 diffuse = lightColor.rgb * lightColor.a * diffuseFactor;
+    float diffuseFactor = max(dot(lightDir, normal), 0.0f); // ºûÀÇ ¾ç °è»ê
+    float3 diffuse = lightColor.rgb * lightColor.a * diffuseFactor; // ºûÀÇ »ö»ó * ºûÀÇ °­µµ * ºûÀÇ ¾ç
     
     // ¹Ý»ç±¤
-    float3 reflection = reflect(-lightDir, normal);
-    float specularFactor = pow(max(dot(reflection, toEye), 0.0f), 32.0f);
+    float3 reflection = reflect(-lightDir, normal); // ¹Ý»ç±¤ °è»ê
+    float specularFactor = pow(max(dot(reflection, toEye), 0.0f) /*¹Ý»ç±¤ÀÇ ¾ç °è»ê*/, 16.0f); // Á¦°öÀº ±¤ÅÃ Á¤µµ
     float3 specular = lightColor.rgb * lightColor.a * specularFactor * 0.5f;
     
     // ÅØ½ºÃ³ »ö»ó »ùÇÃ¸µ

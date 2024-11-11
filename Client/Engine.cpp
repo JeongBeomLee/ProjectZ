@@ -36,12 +36,12 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	if (!CreateDevice()) return false;
 	if (!CreateCommandQueue()) return false;
 	if (!CreateSwapChain(hwnd)) return false;
-	if (!CreateDescriptorHeaps()) return false;
+	if (!CreateRTVDescriptorHeaps()) return false;
 	if (!CreateRenderTargetViews()) return false;
 	if (!CreateConstantBuffer()) return false;
 	if (!CreateLightConstantBuffer()) return false;
-	if (!CreateTexture(L"Texture/checker.dds")) return false;  // 텍스처 로드
-	if (!CreateDescHeap()) return false;                // SRV 힙 생성
+	if (!CreateTexture(L"Texture/checker.dds")) return false;
+	if (!CreateDescHeap()) return false;
 	if (!CreateCommandAllocatorAndList()) return false;
 	if (!CreateFence()) return false;
 	if (!CreateRootSignature()) return false;
@@ -263,7 +263,7 @@ bool Engine::CreateSwapChain(HWND hwnd)
 	return true;
 }
 
-bool Engine::CreateDescriptorHeaps()
+bool Engine::CreateRTVDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.NumDescriptors = FRAME_BUFFER_COUNT;
@@ -560,8 +560,6 @@ bool Engine::CreateIndexBuffer()
 		20, 22, 23
 	};
 
-
-
 	m_indexCount = ARRAYSIZE(indices);
 	const UINT indexBufferSize = sizeof(indices);
 
@@ -679,7 +677,6 @@ bool Engine::CreateLightConstantBuffer()
 
 	// 초기값 복사
 	memcpy(m_lightConstantBufferMappedData, &m_lightConstants, sizeof(m_lightConstants));
-
 	return true;
 }
 

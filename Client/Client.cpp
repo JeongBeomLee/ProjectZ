@@ -34,19 +34,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	MSG msg = {};
     
-        while (msg.message != WM_QUIT) {
-			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-				if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
-					TranslateMessage(&msg);
-					DispatchMessage(&msg);
-				}
-			} else {
-				if (g_engine) {
-					g_engine->Update();
-					g_engine->Render();
-				}
+	while (msg.message != WM_QUIT) {
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+			if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
 			}
-        }
+		}
+		else {
+			if (g_engine) {
+				g_engine->Update();
+				g_engine->Render();
+			}
+		}
+	}
 
     return (int) msg.wParam;
 }
