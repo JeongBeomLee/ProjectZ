@@ -149,3 +149,10 @@ struct LightConstants {
     XMFLOAT4 ambientColor;    // w는 강도로 사용
     XMFLOAT4 eyePosition;     // w는 사용하지 않음
 };
+
+// 물리 객체의 타입을 구분하기 위한 열거형 클래스
+enum class PhysicsObjectType {
+    STATIC,
+    DYNAMIC,
+    KINEMATIC
+};

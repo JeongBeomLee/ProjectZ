@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "Engine.h"
+#include "PhysicsObject.h"
+#include "PhysicsEngine.h"
 
 Engine::Engine()
 	: m_width(0)
@@ -49,10 +51,24 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	if (!CreateVertexBuffer()) return false;
 	if (!CreateIndexBuffer()) return false;
 
+	// 물리 엔진 초기화
+	m_physicsEngine = std::make_unique<PhysicsEngine>();
+	if (!m_physicsEngine->Initialize()) return false;
+
+	// 지면 생성
+	m_ground = m_physicsEngine->CreateGroundPlane();
+
+	// 물리 박스 생성 (크기는 렌더링되는 큐브와 동일하게)
+	m_physicsBox = m_physicsEngine->CreateBox(
+		PxVec3(0.0f, 5.0f, 0.0f),  // 시작 위치
+		PxVec3(0.5f, 0.5f, 0.5f),  // 크기
+		PhysicsObjectType::DYNAMIC  // 동적 객체
+	);
+
 	// 초기 변환 행렬 설정
 	m_worldMatrix = XMMatrixIdentity();
 	m_viewMatrix = XMMatrixLookAtLH(
-		XMVectorSet(0.0f, 1.0f, -5.0f, 1.0f),  // 카메라 위치
+		XMVectorSet(0.0f, 5.0f, -5.0f, 1.0f),  // 카메라 위치
 		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 지점
 		XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f)    // 업 벡터
 	);
@@ -77,11 +93,14 @@ void Engine::Update()
 	float deltaTime = (currentTick - m_lastTick) / 1000.0f;
 	m_lastTick = currentTick;
 
-	// 회전 각도 업데이트
-	m_rotationAngle += deltaTime;
+	// 물리 엔진 업데이트
+	m_physicsEngine->Update(deltaTime);
 
-	// 월드 행렬 업데이트 (Y축 회전)
-	m_worldMatrix = XMMatrixRotationY(m_rotationAngle);
+	// 월드 행렬 업데이트
+	UpdateWorldMatrix();
+
+	//// 회전 각도 업데이트
+	m_rotationAngle += deltaTime;
 
 	// 라이트 방향 업데이트 (원을 그리며 회전)
 	float lightAngle = m_rotationAngle * 0.5f;  // 큐브보다 천천히 회전
@@ -180,6 +199,14 @@ void Engine::Cleanup()
 {
 	WaitForGpu();
     CloseHandle(m_fenceEvent);
+}
+
+void Engine::UpdateWorldMatrix()
+{
+	if (m_physicsBox) {
+		// 물리 객체의 변환 행렬을 가져와서 렌더링에 사용할 월드 행렬 업데이트
+		m_worldMatrix = m_physicsBox->GetTransformMatrix();
+	}
 }
 
 bool Engine::CreateDevice()

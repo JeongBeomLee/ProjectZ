@@ -1,4 +1,6 @@
 #pragma once
+class PhysicsObject;
+class PhysicsEngine;
 class Engine {
 public:
 	Engine();
@@ -16,43 +18,43 @@ private:
 	float	m_aspectRatio;
 
 	// DirectX 12 객체
-	ComPtr<ID3D12Device10>				m_device;
-	ComPtr<ID3D12CommandQueue>			m_commandQueue;
-	ComPtr<IDXGISwapChain4>				m_swapChain;
-	ComPtr<ID3D12DescriptorHeap>		m_rtvHeap;
-	ComPtr<ID3D12DescriptorHeap>		m_descHeap;  // 하나의 힙으로 통합
-	ComPtr<ID3D12Resource2>				m_renderTargets[FRAME_BUFFER_COUNT];
-	ComPtr<ID3D12CommandAllocator>		m_commandAllocator;
-	ComPtr<ID3D12GraphicsCommandList7>	m_commandList;
-	ComPtr<ID3D12Fence1>				m_fence;
-	ComPtr<ID3D12RootSignature>			m_rootSignature;
-	ComPtr<ID3D12PipelineState>			m_pipelineState;
+	ComPtr<ID3D12Device10> m_device;
+	ComPtr<ID3D12CommandQueue> m_commandQueue;
+	ComPtr<IDXGISwapChain4> m_swapChain;
+	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
+	ComPtr<ID3D12DescriptorHeap> m_descHeap;  // 하나의 힙으로 통합
+	ComPtr<ID3D12Resource2> m_renderTargets[FRAME_BUFFER_COUNT];
+	ComPtr<ID3D12CommandAllocator> m_commandAllocator;
+	ComPtr<ID3D12GraphicsCommandList7> m_commandList;
+	ComPtr<ID3D12Fence1> m_fence;
+	ComPtr<ID3D12RootSignature> m_rootSignature;
+	ComPtr<ID3D12PipelineState> m_pipelineState;
 
-	UINT64								m_fenceValues[FRAME_BUFFER_COUNT];
-	HANDLE								m_fenceEvent;
-	UINT								m_frameIndex;
+	UINT64 m_fenceValues[FRAME_BUFFER_COUNT];
+	HANDLE m_fenceEvent;
+	UINT m_frameIndex;
 
-	ComPtr<ID3D12Resource>				m_vertexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW			m_vertexBufferView;
-	ComPtr<ID3D12Resource>				m_indexBuffer;
-	D3D12_INDEX_BUFFER_VIEW				m_indexBufferView;
-	UINT								m_indexCount;
+	ComPtr<ID3D12Resource> m_vertexBuffer;
+	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+	ComPtr<ID3D12Resource> m_indexBuffer;
+	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+	UINT m_indexCount;
 
 	// 셰이더 관련 멤버
-	ComPtr<ID3DBlob>					m_vertexShader;
-	ComPtr<ID3DBlob>					m_pixelShader;
+	ComPtr<ID3DBlob> m_vertexShader;
+	ComPtr<ID3DBlob> m_pixelShader;
 
 	// 상수 버퍼
-	ComPtr<ID3D12Resource>				m_constantBuffer;
-	UINT8*								m_constantBufferMappedData;
+	ComPtr<ID3D12Resource> m_constantBuffer;
+	UINT8* m_constantBufferMappedData;
 
 	// 라이팅 관련
-	ComPtr<ID3D12Resource>				m_lightConstantBuffer;
-	UINT8*								m_lightConstantBufferMappedData;
-	LightConstants						m_lightConstants;
+	ComPtr<ID3D12Resource> m_lightConstantBuffer;
+	UINT8* m_lightConstantBufferMappedData;
+	LightConstants m_lightConstants;
 
 	// 텍스처 관련 멤버
-	ComPtr<ID3D12Resource>				m_texture;
+	ComPtr<ID3D12Resource> m_texture;
 	
 	// 변환 행렬 (카메라)
 	XMMATRIX m_worldMatrix;
@@ -62,6 +64,16 @@ private:
 	// for animation
 	float m_rotationAngle;
 	ULONGLONG m_lastTick;
+
+	// 물리 엔진
+	std::unique_ptr<PhysicsEngine> m_physicsEngine;
+
+	// 물리 객체
+	std::shared_ptr<PhysicsObject> m_physicsBox;
+	std::shared_ptr<PhysicsObject> m_ground;
+
+	// 월드 행렬 업데이트 함수
+	void UpdateWorldMatrix();
 
 	// 초기화 헬퍼 함수들
 	bool CreateDevice();
