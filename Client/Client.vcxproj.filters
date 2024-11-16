@@ -25,6 +25,9 @@
     <Filter Include="Object">
       <UniqueIdentifier>{fa7549b1-5a26-4eaa-b721-fbad3242c649}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThreadPool">
+      <UniqueIdentifier>{ad2603a0-d750-40d4-9984-55dadf24df3a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -51,6 +54,9 @@
     <ClInclude Include="PhysicsObject.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="ThreadPool.h">
+      <Filter>ThreadPool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -67,6 +73,9 @@
     </ClCompile>
     <ClCompile Include="PhysicsObject.cpp">
       <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadPool.cpp">
+      <Filter>ThreadPool</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
