@@ -22,6 +22,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+    // 콘솔 창 활성화
+    AllocConsole();
+    FILE* fp;
+    freopen_s(&fp, "CONOUT$", "w", stdout); // 표준 출력 연결
+    freopen_s(&fp, "CONIN$", "r", stdin);  // 표준 입력 연결
+
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_CLIENT, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
@@ -48,6 +54,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			}
 		}
 	}
+
+    // 콘솔 창 정리
+	if (fp != nullptr) fclose(fp);
+    FreeConsole();
 
     return (int) msg.wParam;
 }

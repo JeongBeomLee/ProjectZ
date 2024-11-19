@@ -24,14 +24,21 @@
 #include <array>
 #include <string>
 #include <map>
-#include <unordered_map>
 #include <set>
+#include <unordered_map>
 #include <unordered_set>
 #include <queue>
 #include <algorithm>
 #include <stdexcept>
 #include <cassert>
+#include <thread>
 #include <format>
+#include <future>
+#include <functional>
+#include <mutex>
+#include <type_traits>
+#include <chrono>
+#include <sstream>
 
 // COM 스마트 포인터 사용
 using Microsoft::WRL::ComPtr;
