@@ -19,26 +19,31 @@
 #include "PhysX/include/PxPhysicsAPI.h"
 
 // STL 헤더
+#include <iostream>
 #include <memory>
 #include <vector>
 #include <array>
 #include <string>
 #include <map>
-#include <set>
 #include <unordered_map>
+#include <set>
 #include <unordered_set>
 #include <queue>
 #include <algorithm>
-#include <stdexcept>
-#include <cassert>
 #include <thread>
 #include <format>
-#include <future>
-#include <functional>
+#include <fstream>
 #include <mutex>
-#include <type_traits>
 #include <chrono>
+
+#include <stdexcept>
+#include <cassert>
+#include <future>
 #include <sstream>
+#include <functional>
+#include <source_location>
+#include <type_traits>
+#include <iomanip>
 
 // COM 스마트 포인터 사용
 using Microsoft::WRL::ComPtr;
@@ -111,10 +116,16 @@ constexpr UINT MAX_LOADSTRING = 100;
 
 // 디버그 빌드용 매크로
 #if defined(DEBUG) | defined(_DEBUG)
-#define IFDEBUG(x) x
+    #define IFDEBUG(x) x
 #else
-#define IFDEBUG(x)
+    #define IFDEBUG(x)
 #endif
+
+// 로깅 매크로 정의
+#define LOG_DEBUG(...) Logger::GetInstance().Debug(__VA_ARGS__)
+#define LOG_INFO(...) Logger::GetInstance().Info(__VA_ARGS__)
+#define LOG_WARNING(...) Logger::GetInstance().Warning(__VA_ARGS__)
+#define LOG_ERROR(...) Logger::GetInstance().Error(__VA_ARGS__)
 
 // 메모리 정렬 헬퍼
 template<typename T>

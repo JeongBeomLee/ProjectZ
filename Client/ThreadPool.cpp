@@ -85,7 +85,8 @@ void ThreadPool::DumpStats() const
         ss << "\n";
     }
 
-    OutputDebugStringA(ss.str().c_str());
+	OutputDebugStringA(ss.str().c_str());
+	//std::cout << ss.str() << std::endl;
 }
 
 void ThreadPool::LogThreadError(const std::string& errorMsg) 
@@ -93,6 +94,7 @@ void ThreadPool::LogThreadError(const std::string& errorMsg)
     std::stringstream ss;
     ss << "Thread " << std::this_thread::get_id() << ": " << errorMsg << "\n";
     OutputDebugStringA(ss.str().c_str());
+    //std::cout << ss.str() << std::endl;
 }
 
 void ThreadPool::WorkerThread() 

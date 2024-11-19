@@ -28,6 +28,15 @@
     <Filter Include="ThreadPool">
       <UniqueIdentifier>{ad2603a0-d750-40d4-9984-55dadf24df3a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Managers">
+      <UniqueIdentifier>{f9f7363d-f8d9-4691-a231-f30fe34d34af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Managers\MemoryManager">
+      <UniqueIdentifier>{9cada018-fd47-48f5-9a31-e5544c99a544}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tools">
+      <UniqueIdentifier>{7415beb2-ac06-4f51-b2ae-46cb5a503519}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -57,6 +66,12 @@
     <ClInclude Include="ThreadPool.h">
       <Filter>ThreadPool</Filter>
     </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryManager.h">
+      <Filter>Managers\MemoryManager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -76,6 +91,12 @@
     </ClCompile>
     <ClCompile Include="ThreadPool.cpp">
       <Filter>ThreadPool</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryManager.cpp">
+      <Filter>Managers\MemoryManager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
