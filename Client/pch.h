@@ -34,6 +34,7 @@
 #include <format>
 #include <fstream>
 #include <mutex>
+#include <shared_mutex>
 #include <chrono>
 
 #include <stdexcept>
@@ -55,6 +56,7 @@ using namespace physx;
 // 자주 사용하는 상수 정의
 constexpr UINT FRAME_BUFFER_COUNT = 2;  // 더블 버퍼링
 constexpr UINT MAX_LOADSTRING = 100;
+constexpr UINT CACHE_LINE_SIZE = 64;
 
 // 추가 라이브러리
 #pragma comment(lib, "d3d12.lib")
@@ -120,12 +122,6 @@ constexpr UINT MAX_LOADSTRING = 100;
 #else
     #define IFDEBUG(x)
 #endif
-
-// 로깅 매크로 정의
-#define LOG_DEBUG(...) Logger::GetInstance().Debug(__VA_ARGS__)
-#define LOG_INFO(...) Logger::GetInstance().Info(__VA_ARGS__)
-#define LOG_WARNING(...) Logger::GetInstance().Warning(__VA_ARGS__)
-#define LOG_ERROR(...) Logger::GetInstance().Error(__VA_ARGS__)
 
 // 메모리 정렬 헬퍼
 template<typename T>

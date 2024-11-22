@@ -118,3 +118,9 @@ void Logger::LogMessage(LogLevel level, const std::string_view format,
         OutputDebugStringA(("Logger error: " + std::string(e.what()) + "\n").c_str());
     }
 }
+
+// 로깅 매크로 정의
+#define LOG_DEBUG(...) Logger::GetInstance().Debug(__VA_ARGS__)
+#define LOG_INFO(...) Logger::GetInstance().Info(__VA_ARGS__)
+#define LOG_WARNING(...) Logger::GetInstance().Warning(__VA_ARGS__)
+#define LOG_ERROR(...) Logger::GetInstance().Error(__VA_ARGS__)
