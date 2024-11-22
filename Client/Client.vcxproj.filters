@@ -37,6 +37,30 @@
     <Filter Include="Managers\TaskManager">
       <UniqueIdentifier>{94c080d9-8bc9-4c55-b557-fd4092ee59a9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Managers\ResourceManager">
+      <UniqueIdentifier>{7306c1ff-7413-41df-936e-773a745abc9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{6a141b98-da23-470d-a170-84277f7c63da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Texture">
+      <UniqueIdentifier>{88d581e8-1838-4f96-9351-0978b4ad8257}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Mesh">
+      <UniqueIdentifier>{23b83c5b-c360-46a9-8f88-06ca67fc86cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Shader">
+      <UniqueIdentifier>{8fccc2c6-d9c8-4419-8faa-089d87122c69}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Material">
+      <UniqueIdentifier>{6bd51f41-ddf2-45f4-8603-4d2b09530c30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Animation">
+      <UniqueIdentifier>{53fcf992-712a-49d3-a842-877f4309f969}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Sound">
+      <UniqueIdentifier>{d2190846-f302-430a-b7c3-6e15108b46c7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -45,7 +69,7 @@
     <ClInclude Include="targetver.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Resource.h">
+    <ClInclude Include="WinResource.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Client.h">
@@ -75,8 +99,26 @@
     <ClInclude Include="TaskSystem.h">
       <Filter>Managers\TaskManager</Filter>
     </ClInclude>
-    <ClInclude Include="TaskGraph.h">
-      <Filter>Tools</Filter>
+    <ClInclude Include="Resource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager.h">
+      <Filter>Managers\ResourceManager</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceHandle.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceLoader.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundLoader.h">
+      <Filter>Resource\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshLoader.h">
+      <Filter>Resource\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureLoader.h">
+      <Filter>Resource\Texture</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -107,8 +149,26 @@
     <ClCompile Include="TaskSystem.cpp">
       <Filter>Managers\TaskManager</Filter>
     </ClCompile>
-    <ClCompile Include="TaskGraph.cpp">
-      <Filter>Tools</Filter>
+    <ClCompile Include="Resource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager.cpp">
+      <Filter>Managers\ResourceManager</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceHandle.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceLoader.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="SoundLoader.cpp">
+      <Filter>Resource\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshLoader.cpp">
+      <Filter>Resource\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureLoader.cpp">
+      <Filter>Resource\Texture</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

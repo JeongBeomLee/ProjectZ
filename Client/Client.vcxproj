@@ -150,12 +150,18 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="LockFreeStructures.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="MeshLoader.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="PhysicsObject.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="ResourceHandle.h" />
+    <ClInclude Include="ResourceLoader.h" />
+    <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="SoundLoader.h" />
+    <ClInclude Include="TextureLoader.h" />
+    <ClInclude Include="WinResource.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="TaskGraph.h" />
     <ClInclude Include="TaskSystem.h" />
     <ClInclude Include="ThreadPool.h" />
   </ItemGroup>
@@ -164,14 +170,20 @@
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="LockFreeStructures.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="MeshLoader.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PhysicsEngine.cpp" />
     <ClCompile Include="PhysicsObject.cpp" />
-    <ClCompile Include="TaskGraph.cpp" />
+    <ClCompile Include="Resource.cpp" />
+    <ClCompile Include="ResourceHandle.cpp" />
+    <ClCompile Include="ResourceLoader.cpp" />
+    <ClCompile Include="ResourceManager.cpp" />
+    <ClCompile Include="SoundLoader.cpp" />
     <ClCompile Include="TaskSystem.cpp" />
+    <ClCompile Include="TextureLoader.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
   </ItemGroup>
   <ItemGroup>

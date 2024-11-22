@@ -1,30 +1,53 @@
-ï»¿//{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ì—ì„œ ìƒì„±í•œ í¬í•¨ íŒŒì¼ì…ë‹ˆë‹¤.
-// ë‹¤ìŒì—ì„œ ì‚¬ìš© Client.rc
+#pragma once
+// ¸®¼Ò½º »óÅÂ
+enum class ResourceState {
+    Unloaded,   // ·ÎµåµÇÁö ¾ÊÀ½
+    Loading,    // ·Îµù Áß
+    Ready,      // »ç¿ë °¡´É
+    Failed      // ·Îµå ½ÇÆĞ
+};
 
-#define IDS_APP_TITLE			103
+// ¸®¼Ò½º Å¸ÀÔ
+enum class ResourceType {
+    Texture,
+    Mesh,
+    Shader,
+    Sound,
+    Material,
+    Animation
+};
 
-#define IDR_MAINFRAME			128
-#define IDD_CLIENT_DIALOG	102
-#define IDD_ABOUTBOX			103
-#define IDM_ABOUT				104
-#define IDM_EXIT				105
-#define IDI_CLIENT			107
-#define IDI_SMALL				108
-#define IDC_CLIENT			109
-#define IDC_MYICON				2
-#ifndef IDC_STATIC
-#define IDC_STATIC				-1
-#endif
-// ë‹¤ìŒì€ ìƒˆ ê°œì²´ì— ì‚¬ìš©í•  ê¸°ë³¸ê°’ì…ë‹ˆë‹¤.
-//
-#ifdef APSTUDIO_INVOKED
-#ifndef APSTUDIO_READONLY_SYMBOLS
+// ¸®¼Ò½º ±âº» Å¬·¡½º (ÀÎÅÍÆäÀÌ½º)
+class Resource {
+public:
+    explicit Resource(const std::string& name)
+        : m_name(name)
+        , m_state(ResourceState::Unloaded)
+        , m_refCount(0)
+    {}
 
-#define _APS_NO_MFC					130
-#define _APS_NEXT_RESOURCE_VALUE	129
-#define _APS_NEXT_COMMAND_VALUE		32771
-#define _APS_NEXT_CONTROL_VALUE		1000
-#define _APS_NEXT_SYMED_VALUE		110
-#endif
-#endif
+    virtual ~Resource() = default;
+
+    // ¼ø¼ö °¡»ó ÇÔ¼ö
+    virtual bool Load() = 0;
+    virtual void Unload() = 0;
+    virtual ResourceType GetType() const = 0;
+    virtual size_t GetMemoryUsage() const = 0;
+
+    // °øÅë ÀÎÅÍÆäÀÌ½º
+    const std::string& GetName() const { return m_name; }
+    ResourceState GetState() const { return m_state; }
+    void AddRef() { ++m_refCount; }
+    void Release() {
+        if (--m_refCount == 0) {
+            Unload();
+        }
+    }
+    uint32_t GetRefCount() const { return m_refCount; }
+
+protected:
+    std::string m_name;
+    std::atomic<ResourceState> m_state;
+    std::atomic<uint32_t> m_refCount;
+    std::string m_errorMessage;
+};

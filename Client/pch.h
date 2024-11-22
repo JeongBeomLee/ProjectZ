@@ -45,6 +45,7 @@
 #include <source_location>
 #include <type_traits>
 #include <iomanip>
+#include <typeindex>
 
 // COM 스마트 포인터 사용
 using Microsoft::WRL::ComPtr;
