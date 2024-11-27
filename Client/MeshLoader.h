@@ -1,5 +1,6 @@
 #pragma once
 #include "ResourceLoader.h"
+#include "MeshResource.h"
 
 class MeshLoader : public ResourceLoader {
 public:

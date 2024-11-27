@@ -145,12 +145,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AnimationLoader.h" />
+    <ClInclude Include="AnimationResource.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="LockFreeStructures.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="MaterialLoader.h" />
+    <ClInclude Include="MaterialResource.h" />
     <ClInclude Include="MeshLoader.h" />
+    <ClInclude Include="MeshResource.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="PhysicsObject.h" />
@@ -158,19 +163,28 @@
     <ClInclude Include="ResourceHandle.h" />
     <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="ShaderLoader.h" />
+    <ClInclude Include="ShaderResource.h" />
     <ClInclude Include="SoundLoader.h" />
+    <ClInclude Include="SoundResource.h" />
     <ClInclude Include="TextureLoader.h" />
+    <ClInclude Include="TextureResource.h" />
     <ClInclude Include="WinResource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TaskSystem.h" />
     <ClInclude Include="ThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationLoader.cpp" />
+    <ClCompile Include="AnimationResource.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="LockFreeStructures.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="MaterialLoader.cpp" />
+    <ClCompile Include="MaterialResource.cpp" />
     <ClCompile Include="MeshLoader.cpp" />
+    <ClCompile Include="MeshResource.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -181,9 +195,13 @@
     <ClCompile Include="ResourceHandle.cpp" />
     <ClCompile Include="ResourceLoader.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
+    <ClCompile Include="ShaderLoader.cpp" />
+    <ClCompile Include="ShaderResource.cpp" />
     <ClCompile Include="SoundLoader.cpp" />
+    <ClCompile Include="SoundResource.cpp" />
     <ClCompile Include="TaskSystem.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
+    <ClCompile Include="TextureResource.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -205,11 +223,15 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\directxtk12_uwp.2024.10.29.1\build\native\directxtk12_uwp.targets" Condition="Exists('packages\directxtk12_uwp.2024.10.29.1\build\native\directxtk12_uwp.targets')" />
+    <Import Project="packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets" Condition="Exists('packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets')" />
+    <Import Project="packages\Assimp.3.0.0\build\native\Assimp.targets" Condition="Exists('packages\Assimp.3.0.0\build\native\Assimp.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>이 프로젝트는 이 컴퓨터에 없는 NuGet 패키지를 참조합니다. 해당 패키지를 다운로드하려면 NuGet 패키지 복원을 사용하십시오. 자세한 내용은 http://go.microsoft.com/fwlink/?LinkID=322105를 참조하십시오. 누락된 파일은 {0}입니다.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('packages\directxtk12_uwp.2024.10.29.1\build\native\directxtk12_uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\directxtk12_uwp.2024.10.29.1\build\native\directxtk12_uwp.targets'))" />
+    <Error Condition="!Exists('packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets'))" />
+    <Error Condition="!Exists('packages\Assimp.3.0.0\build\native\Assimp.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Assimp.3.0.0\build\native\Assimp.targets'))" />
   </Target>
 </Project>

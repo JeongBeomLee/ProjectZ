@@ -20,6 +20,12 @@ Engine::~Engine()
 	Cleanup();
 }
 
+Engine& Engine::GetInstance()
+{
+	static Engine instance;
+	return instance;
+}
+
 bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 {
 	m_width = width;

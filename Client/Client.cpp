@@ -7,7 +7,6 @@
 HINSTANCE hInst;                                // 현재 인스턴스
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트
 WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름
-std::unique_ptr<Engine> g_engine;
 
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -40,6 +39,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	MSG msg = {};
     
+    Engine& engine = Engine::GetInstance();
 	while (msg.message != WM_QUIT) {
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 			if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
@@ -48,10 +48,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			}
 		}
 		else {
-			if (g_engine) {
-				g_engine->Update();
-				g_engine->Render();
-			}
+            engine.Update();
+            engine.Render();
 		}
 	}
 
@@ -95,8 +93,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    }
    
    // 엔진 초기화
-   g_engine = std::make_unique<Engine>();
-   if (!g_engine->Initialize(hWnd, 1280, 720)) {
+   if (!Engine::GetInstance().Initialize(hWnd, 1280, 720)) {
        MessageBox(nullptr, L"Failed to initialize DirectX 12", L"Error", MB_OK);
        return FALSE;
    }
@@ -127,7 +124,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_SIZE:
         // 윈도우 크기가 변경될 때 처리
-        if (g_engine && wParam != SIZE_MINIMIZED) {
+        if (wParam != SIZE_MINIMIZED) {
             // TODO: 리사이즈 처리 구현
         }
         break;

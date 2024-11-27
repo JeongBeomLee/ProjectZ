@@ -6,10 +6,14 @@ public:
 	Engine();
 	~Engine();
 
+	static Engine& GetInstance();
 	bool Initialize(HWND hwnd, UINT width, UINT height);
 	void Update();
 	void Render();
 	void Cleanup();
+
+	ID3D12Device10* GetDevice() const { return m_device.Get(); }
+	ID3D12CommandQueue* GetCommandQueue() const { return m_commandQueue.Get(); }
 
 private:
 	// 화면 크기

@@ -1,12 +1,11 @@
 #pragma once
 #include "ResourceLoader.h"
-#include "SoundResource.h"
-
-class SoundLoader : public ResourceLoader {
+#include "AnimationResource.h"
+class AnimationLoader : public ResourceLoader {
 public:
     bool CanLoadExtension(const std::string& extension) const override {
         static const std::unordered_set<std::string> supportedExtensions = {
-            ".wav", ".ogg", ".mp3"
+            ".anim", ".fbx", ".gltf", ".glb"  // 애니메이션 데이터를 포함할 수 있는 형식들
         };
         return supportedExtensions.contains(extension);
     }
@@ -14,6 +13,6 @@ public:
     std::unique_ptr<Resource> CreateResource(
         const std::string& name,
         const std::string& extension) override {
-        return std::make_unique<SoundResource>(name);
+        return std::make_unique<AnimationResource>(name);
     }
 };

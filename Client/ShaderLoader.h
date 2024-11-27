@@ -1,12 +1,11 @@
 #pragma once
 #include "ResourceLoader.h"
-#include "SoundResource.h"
-
-class SoundLoader : public ResourceLoader {
+#include "ShaderResource.h"
+class ShaderLoader : public ResourceLoader {
 public:
     bool CanLoadExtension(const std::string& extension) const override {
         static const std::unordered_set<std::string> supportedExtensions = {
-            ".wav", ".ogg", ".mp3"
+            ".hlsl", ".fx", ".shader"
         };
         return supportedExtensions.contains(extension);
     }
@@ -14,6 +13,6 @@ public:
     std::unique_ptr<Resource> CreateResource(
         const std::string& name,
         const std::string& extension) override {
-        return std::make_unique<SoundResource>(name);
+        return std::make_unique<ShaderResource>(name);
     }
 };

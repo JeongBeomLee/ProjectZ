@@ -1,6 +1,8 @@
 #pragma once
 
 // Windows 헤더
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 #include <windowsx.h>
 #include <wrl.h>
@@ -10,6 +12,7 @@
 #include <dxgi1_6.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
+#include <DirectXCollision.h>
 #include <DirectXColors.h>
 #include "Util/d3dx12.h"
 #include "packages/DirectXTK12/include/ResourceUploadBatch.h"
@@ -17,6 +20,11 @@
 
 // PhysX 관련 헤더
 #include "PhysX/include/PxPhysicsAPI.h"
+
+// Assimp 관련 헤더
+#include "packages/Assimp.3.0.0/build/native/include/assimp/Importer.hpp"
+#include "packages/Assimp.3.0.0/build/native/include/assimp/scene.h"
+#include "packages/Assimp.3.0.0/build/native/include/assimp/postprocess.h"
 
 // STL 헤더
 #include <iostream>
@@ -63,6 +71,7 @@ constexpr UINT CACHE_LINE_SIZE = 64;
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
+
 #ifdef _DEBUG
     #pragma comment(lib, "PhysX_64.lib")
     #pragma comment(lib, "PhysXCommon_64.lib")
@@ -100,6 +109,9 @@ constexpr UINT CACHE_LINE_SIZE = 64;
     #pragma comment(lib, "LowLevelDynamics_static_64")
     #pragma comment(lib, "SimulationController_static_64")
 #endif
+
+#pragma comment(lib, "packages/Assimp.3.0.0/build/native/lib/x64/assimp.lib")
+
 
 // 에러 체크 매크로
 #ifndef ThrowIfFailed
