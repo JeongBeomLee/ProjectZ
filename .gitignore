@@ -14,7 +14,6 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
-*.dll
 
 # Fortran module files
 *.mod
@@ -24,21 +23,12 @@
 *.lai
 *.la
 *.a
-*.lib
 
 # Executables
 *.exe
 *.out
 *.app
-
 *.vs
-*.jpg
-*.dds
-*.tga
-*.png
-*.psd
-*.fbx
-*.fbm
 *.cso
 *.pdb
 *.idb
