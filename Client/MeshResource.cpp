@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "Utils.h"
 #include "MeshResource.h"
 #include "Engine.h"
 #include "Logger.h"
@@ -146,9 +147,21 @@ bool MeshResource::Load()
 
 void MeshResource::Unload()
 {
+    m_submeshes.clear();
+    m_vertexBuffers.clear();
+    m_indexBuffers.clear();
+    m_state = ResourceState::Unloaded;
 }
 
 size_t MeshResource::GetMemoryUsage() const
 {
-	return size_t();
+    size_t totalSize = 0;
+
+    // 정점 데이터 크기
+    for (const auto& submesh : m_submeshes) {
+        totalSize += submesh.vertices.size() * sizeof(Vertex);
+        totalSize += submesh.indices.size() * sizeof(uint32_t);
+    }
+
+    return totalSize;
 }

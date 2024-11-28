@@ -169,6 +169,7 @@
     <ClInclude Include="SoundResource.h" />
     <ClInclude Include="TextureLoader.h" />
     <ClInclude Include="TextureResource.h" />
+    <ClInclude Include="Utils.h" />
     <ClInclude Include="WinResource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TaskSystem.h" />
@@ -203,6 +204,7 @@
     <ClCompile Include="TextureLoader.cpp" />
     <ClCompile Include="TextureResource.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
+    <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc" />
