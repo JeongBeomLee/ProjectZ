@@ -6,7 +6,7 @@ public:
 	Engine();
 	~Engine();
 
-	static Engine& GetInstance();
+	static Engine& Instance();
 	bool Initialize(HWND hwnd, UINT width, UINT height);
 	void Update();
 	void Render();

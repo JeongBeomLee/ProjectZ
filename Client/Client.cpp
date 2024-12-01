@@ -39,7 +39,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	MSG msg = {};
     
-    Engine& engine = Engine::GetInstance();
+    Engine& engine = Engine::Instance();
 	while (msg.message != WM_QUIT) {
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 			if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
@@ -93,7 +93,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    }
    
    // 엔진 초기화
-   if (!Engine::GetInstance().Initialize(hWnd, 1280, 720)) {
+   if (!Engine::Instance().Initialize(hWnd, 1280, 720)) {
        MessageBox(nullptr, L"Failed to initialize DirectX 12", L"Error", MB_OK);
        return FALSE;
    }

@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include "PhysicsObject.h"
 #include "PhysicsEngine.h"
+#include "Logger.h"
 
 Engine::Engine()
 	: m_width(0)
@@ -20,14 +21,20 @@ Engine::~Engine()
 	Cleanup();
 }
 
-Engine& Engine::GetInstance()
+Engine& Engine::Instance()
 {
 	static Engine instance;
 	return instance;
 }
 
-bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
+bool Engine::0(HWND hwnd, UINT width, UINT height)
 {
+	// 로거 초기화
+	Logger::Instance().AddOutput(std::make_unique<DebugOutput>());
+	Logger::Instance().AddOutput(std::make_unique<FileOutput>("Game.log"));
+
+	Logger::Instance().Info("Engine 초기화 시작");
+
 	m_width = width;
 	m_height = height;
 	m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
@@ -37,29 +44,81 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		ComPtr<ID3D12Debug6> debugController;
 		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
 			debugController->EnableDebugLayer();
+			Logger::Instance().Debug("디버그 레이어 활성화");
 		}
 	);
 
 	// DirectX 12 객체 생성
-	if (!CreateDevice()) return false;
-	if (!CreateCommandQueue()) return false;
-	if (!CreateSwapChain(hwnd)) return false;
-	if (!CreateRTVDescriptorHeaps()) return false;
-	if (!CreateRenderTargetViews()) return false;
-	if (!CreateConstantBuffer()) return false;
-	if (!CreateLightConstantBuffer()) return false;
-	if (!CreateTexture(L"Texture/checker.dds")) return false;
-	if (!CreateDescHeap()) return false;
-	if (!CreateCommandAllocatorAndList()) return false;
-	if (!CreateFence()) return false;
-	if (!CreateRootSignature()) return false;
-	if (!CreatePipelineState()) return false;
-	if (!CreateVertexBuffer()) return false;
-	if (!CreateIndexBuffer()) return false;
+	if (!CreateDevice()) {
+		Logger::Instance().Fatal("디바이스 생성 실패");
+		return false;
+	}
+	if (!CreateCommandQueue()) {
+		Logger::Instance().Fatal("커맨드 큐 생성 실패");
+		return false;
+	}
+	if (!CreateSwapChain(hwnd)) {
+		Logger::Instance().Fatal("스왑체인 생성 실패");
+		return false;
+
+	}
+	if (!CreateRTVDescriptorHeaps()) {
+		Logger::Instance().Fatal("RTV 디스크립터 힙 생성 실패");
+		return false;
+
+	}
+	if (!CreateRenderTargetViews()) {
+		Logger::Instance().Fatal("RTV 생성 실패");
+		return false;
+
+	}
+	if (!CreateConstantBuffer()) {
+		Logger::Instance().Fatal("상수 버퍼 생성 실패");
+		return false;
+	}
+	if (!CreateLightConstantBuffer()) {
+		Logger::Instance().Fatal("라이트 상수 버퍼 생성 실패");
+		return false;
+	}
+	if (!CreateTexture(L"Texture/checker.dds")) {
+		Logger::Instance().Fatal("텍스처 생성 실패");
+		return false;
+	}
+	if (!CreateDescHeap()) {
+		Logger::Instance().Fatal("디스크립터 힙 생성 실패");
+		return false;
+	}
+	if (!CreateCommandAllocatorAndList()) {
+		Logger::Instance().Fatal("커맨드 할당자 및 커맨드 리스트 생성 실패");
+		return false;
+	}
+	if (!CreateFence()) {
+		Logger::Instance().Fatal("펜스 생성 실패");
+		return false;
+	}
+	if (!CreateRootSignature()) {
+		Logger::Instance().Fatal("루트 시그니처 생성 실패");
+		return false;
+	}
+	if (!CreatePipelineState()) {
+		Logger::Instance().Fatal("파이프라인 상태 생성 실패");
+		return false;
+	}
+	if (!CreateVertexBuffer()) {
+		Logger::Instance().Fatal("정점 버퍼 생성 실패");
+		return false;
+	}
+	if (!CreateIndexBuffer()) {
+		Logger::Instance().Fatal("인덱스 버퍼 생성 실패");
+		return false;
+	}
 
 	// 물리 엔진 초기화
 	m_physicsEngine = std::make_unique<PhysicsEngine>();
-	if (!m_physicsEngine->Initialize()) return false;
+	if (!m_physicsEngine->Initialize()) {
+		Logger::Instance().Fatal("물리 엔진 초기화 실패");
+		return false;
+	}
 
 	// 지면 생성
 	m_ground = m_physicsEngine->CreateGroundPlane();
@@ -89,6 +148,7 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	m_rotationAngle = 0.0f;
 	m_lastTick = GetTickCount64();
 
+	Logger::Instance().Info("Engine 초기화 완료");
 	return true;
 }
 
@@ -224,7 +284,9 @@ bool Engine::CreateDevice()
 	IFDEBUG(dxgiFactoryFlag |= DXGI_CREATE_FACTORY_DEBUG;);
 
 	// 팩토리 생성
-	ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlag, IID_PPV_ARGS(&factory)));
+	if (FAILED(CreateDXGIFactory2(dxgiFactoryFlag, IID_PPV_ARGS(&factory)))) {
+		return false;
+	}
 
 	ComPtr<IDXGIAdapter1> hardwareAdapter;
 	for (UINT adapterIndex = 0;; ++adapterIndex) {
@@ -247,6 +309,7 @@ bool Engine::CreateDevice()
 			hardwareAdapter.Get(), 
 			D3D_FEATURE_LEVEL_11_0, 
 			IID_PPV_ARGS(&m_device)))) {
+			Logger::Instance().Info("디바이스 생성 성공");
 			break;
 		}
 	}
@@ -260,8 +323,11 @@ bool Engine::CreateCommandQueue()
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 
-	ThrowIfFailed(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue)));
+	if (FAILED(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue)))) {
+		return false;
+	}
 
+	Logger::Instance().Info("커맨드 큐 생성 성공");
 	return true;
 }
 
@@ -270,7 +336,9 @@ bool Engine::CreateSwapChain(HWND hwnd)
 	ComPtr<IDXGIFactory7> factory;
 	UINT dxgiFactoryFlag = 0;
 	IFDEBUG(dxgiFactoryFlag |= DXGI_CREATE_FACTORY_DEBUG;);
-	ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlag, IID_PPV_ARGS(&factory)));
+	if (FAILED(CreateDXGIFactory2(dxgiFactoryFlag, IID_PPV_ARGS(&factory)))) {
+		return false;
+	}
 
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 	swapChainDesc.BufferCount = FRAME_BUFFER_COUNT;
@@ -282,17 +350,17 @@ bool Engine::CreateSwapChain(HWND hwnd)
 	swapChainDesc.SampleDesc.Count = 1;
 
 	ComPtr<IDXGISwapChain1> swapChain;
-	ThrowIfFailed(factory->CreateSwapChainForHwnd(
-		m_commandQueue.Get(), 
-		hwnd, 
-		&swapChainDesc, 
-		nullptr, 
-		nullptr, 
-		&swapChain));
+	if (FAILED(factory->CreateSwapChainForHwnd(m_commandQueue.Get(), hwnd, 
+		&swapChainDesc, nullptr, nullptr, &swapChain))) {
+		return false;
+	}
 
-	ThrowIfFailed(swapChain.As(&m_swapChain));
+	if (FAILED(swapChain.As(&m_swapChain))) {
+		return false;
+	}
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
+	Logger::Instance().Info("스왑체인 생성 성공");
 	return true;
 }
 
@@ -303,9 +371,11 @@ bool Engine::CreateRTVDescriptorHeaps()
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-	ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc,
-		IID_PPV_ARGS(&m_rtvHeap)));
+	if (FAILED(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)))) {
+		return false;
+	}
 
+	Logger::Instance().Info("RTV 디스크립터 힙 생성 성공");
 	return true;
 }
 
@@ -322,7 +392,9 @@ bool Engine::CreateRenderTargetViews()
 	// 2. 각 백버퍼에 대한 RTV 생성
 	for (UINT n = 0; n < FRAME_BUFFER_COUNT; ++n) {
 		// 2-1. 스왑체인으로부터 버퍼 얻기
-		ThrowIfFailed(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])));
+		if (FAILED(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])))) {
+			return false;
+		}
 
 		// 2-2. m_renderTargets[n]에 대한 RTV 생성
 		m_device->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle);
@@ -331,6 +403,7 @@ bool Engine::CreateRenderTargetViews()
 		rtvHandle.Offset(1, GetRtvDescriptorSize());
 	}
 
+	Logger::Instance().Info("RTV 생성 성공");
 	return true;
 }
 
@@ -665,19 +738,24 @@ bool Engine::CreateConstantBuffer()
 	auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
 
 	// 상수 버퍼 생성
-	ThrowIfFailed(m_device->CreateCommittedResource(
+	if(FAILED(m_device->CreateCommittedResource(
 		&heapProperties,
 		D3D12_HEAP_FLAG_NONE,
 		&resourceDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(&m_constantBuffer)));
+		IID_PPV_ARGS(&m_constantBuffer)))) {
+		return false;
+	}
 
 	// 상수 버퍼를 CPU 메모리에 매핑
 	CD3DX12_RANGE readRange(0, 0);
-	ThrowIfFailed(m_constantBuffer->Map(0, &readRange,
-		reinterpret_cast<void**>(&m_constantBufferMappedData)));
+	if (FAILED(m_constantBuffer->Map(0, &readRange,
+		reinterpret_cast<void**>(&m_constantBufferMappedData)))) {
+		return false;
+	}
 
+	Logger::Instance().Info("상수 버퍼 생성 성공");
 	return true;
 }
 
@@ -689,18 +767,22 @@ bool Engine::CreateLightConstantBuffer()
 	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
 
-	ThrowIfFailed(m_device->CreateCommittedResource(
+	if (FAILED(m_device->CreateCommittedResource(
 		&heapProperties,
 		D3D12_HEAP_FLAG_NONE,
 		&resourceDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(&m_lightConstantBuffer)));
+		IID_PPV_ARGS(&m_lightConstantBuffer)))) {
+		return false;
+	}
 
 	// 상수 버퍼를 CPU 메모리에 매핑
 	CD3DX12_RANGE readRange(0, 0);
-	ThrowIfFailed(m_lightConstantBuffer->Map(0, &readRange,
-		reinterpret_cast<void**>(&m_lightConstantBufferMappedData)));
+	if (FAILED(m_lightConstantBuffer->Map(0, &readRange,
+		reinterpret_cast<void**>(&m_lightConstantBufferMappedData)))) {
+		return false;
+	}
 
 	// 초기 라이팅 값 설정
 	m_lightConstants.lightDirection = XMFLOAT4(-0.577f, -0.577f, -0.577f, 0.0f);  // 대각선 방향
@@ -710,6 +792,8 @@ bool Engine::CreateLightConstantBuffer()
 
 	// 초기값 복사
 	memcpy(m_lightConstantBufferMappedData, &m_lightConstants, sizeof(m_lightConstants));
+
+	Logger::Instance().Info("라이트 상수 버퍼 생성 성공");
 	return true;
 }
 
@@ -720,11 +804,13 @@ bool Engine::CreateTexture(const wchar_t* filename)
 	resourceUpload.Begin();
 
 	// DDS 텍스처 로드
-	ThrowIfFailed(DirectX::CreateDDSTextureFromFile(
+	if (FAILED(DirectX::CreateDDSTextureFromFile(
 		m_device.Get(),
 		resourceUpload,
 		filename,
-		m_texture.ReleaseAndGetAddressOf()));
+		m_texture.ReleaseAndGetAddressOf()))) {
+		return false;
+	}
 
 	// 리소스 업로드 실행
 	auto uploadResourcesFinished = resourceUpload.End(m_commandQueue.Get());
