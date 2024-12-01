@@ -27,7 +27,7 @@ Engine& Engine::Instance()
 	return instance;
 }
 
-bool Engine::0(HWND hwnd, UINT width, UINT height)
+bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 {
 	// 로거 초기화
 	Logger::Instance().AddOutput(std::make_unique<DebugOutput>());
