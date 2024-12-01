@@ -559,7 +559,6 @@ bool Engine::CreatePipelineState()
 	HRESULT hr = m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
 
 	if (FAILED(hr)) {
-		LogInitializationError("Pipeline State Creation", "Failed to create graphics pipeline state");
 		return false;
 	}
 
@@ -868,12 +867,6 @@ void Engine::UpdateConstantBuffer()
 	constants.projectionMatrix = XMMatrixTranspose(m_projectionMatrix);
 
 	memcpy(m_constantBufferMappedData, &constants, sizeof(constants));
-}
-
-void Engine::LogInitializationError(const std::string& step, const std::string& error)
-{
-	// 로깅 시스템을 사용하여 에러를 기록
-	OutputDebugStringA(("Error during " + step + ": " + error + "\n").c_str());
 }
 
 void Engine::WaitForGpu()

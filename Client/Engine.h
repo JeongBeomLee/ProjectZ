@@ -99,7 +99,6 @@ private:
 	bool CreateDescHeap();
 
 	void UpdateConstantBuffer();
-	void LogInitializationError(const std::string& step, const std::string& error);
 
 	// ·»´õ¸µ ÇïÆÛ ÇÔ¼öµé
 	void WaitForGpu();
