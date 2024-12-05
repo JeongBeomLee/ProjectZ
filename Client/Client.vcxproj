@@ -148,23 +148,41 @@
     <ClInclude Include="Client.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="IAllocator.h" />
+    <ClInclude Include="LinearAllocator.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="MemoryManager.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">아니오</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">아니오</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="PhysicsObject.h" />
+    <ClInclude Include="PoolAllocator.h" />
+    <ClInclude Include="StackAllocator.h" />
+    <ClInclude Include="ThreadSafeAllocator.h" />
     <ClInclude Include="WinResource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="IAllocator.cpp" />
+    <ClCompile Include="LinearAllocator.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="MemoryManager.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">아니오</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">아니오</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PhysicsEngine.cpp" />
     <ClCompile Include="PhysicsObject.cpp" />
+    <ClCompile Include="PoolAllocator.cpp" />
+    <ClCompile Include="StackAllocator.cpp" />
+    <ClCompile Include="ThreadSafeAllocator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc" />
