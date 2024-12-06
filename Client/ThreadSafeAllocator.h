@@ -15,11 +15,11 @@ namespace Memory
         explicit ThreadSafeAllocator(Args&&... args)
             : m_allocator(std::forward<Args>(args)...)
             , m_name("ThreadSafe" + std::string(m_allocator.GetName())) {
-            Logger::Instance().Info("[{}] Created", m_name);
+            Logger::Instance().Info("[{}] 생성됨", m_name);
         }
 
         ~ThreadSafeAllocator() override {
-            Logger::Instance().Info("[{}] Destroyed", m_name);
+            Logger::Instance().Info("[{}] 소멸됨", m_name);
         }
 
         // 복사 금지
@@ -31,7 +31,7 @@ namespace Memory
             auto result = m_allocator.Allocate(size, alignment);
 
             if (result.ptr) {
-                Logger::Instance().Debug("[{}] Allocated {} bytes at {:p}",
+                Logger::Instance().Debug("[{}] {}바이트 할당됨, 주소: {:p}",
                     m_name, size, result.ptr);
             }
 
@@ -42,7 +42,7 @@ namespace Memory
             if (!ptr) return;
 
             std::lock_guard<std::shared_mutex> lock(m_mutex);
-            Logger::Instance().Debug("[{}] Deallocating memory at {:p}", m_name, ptr);
+            Logger::Instance().Debug("[{}] 메모리 해제, 주소: {:p}", m_name, ptr);
             m_allocator.Deallocate(ptr);
         }
 

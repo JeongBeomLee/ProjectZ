@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "PhysicsEngine.h"
 #include "PhysicsObject.h"
+#include "Logger.h"
 
 PhysicsEngine::PhysicsEngine()
 	: m_foundation(nullptr)
@@ -34,8 +35,19 @@ bool PhysicsEngine::Initialize()
 void PhysicsEngine::Update(float deltaTime)
 {
 	if (m_scene) {
-		m_scene->simulate(deltaTime);
-		m_scene->fetchResults(true);
+		try {
+			// simulate 호출 전 상태 체크
+			m_scene->simulate(deltaTime);
+
+			// simulate의 결과를 기다림
+			m_scene->fetchResults(true);
+		}
+		catch (const std::exception& e) {
+			Logger::Instance().Error("PhysicsEngine::Update - Exception: {}", e.what());
+		}
+	}
+	else {
+		Logger::Instance().Error("PhysicsEngine::Update - Scene is null");
 	}
 }
 

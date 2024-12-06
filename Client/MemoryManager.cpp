@@ -38,18 +38,18 @@ bool Memory::MemoryManager::Initialize()
             "GameObjectAllocator"
         );
 
-        Logger::Instance().Info("MemoryManager initialized successfully");
+        Logger::Instance().Info("메모리 매니저 초기화 완료");
         return true;
     }
     catch (const std::exception& e) {
-        Logger::Instance().Fatal("Failed to initialize MemoryManager: {}", e.what());
+        Logger::Instance().Fatal("메모리 매니저 초기화 실패: {}", e.what());
         return false;
     }
 }
 
 void Memory::MemoryManager::Shutdown()
 {
-    Logger::Instance().Info("MemoryManager shutting down");
+    Logger::Instance().Info("메모리 매니저 종료");
 
     for (auto& allocator : m_frameAllocators) {
         allocator.reset();
@@ -72,45 +72,41 @@ void Memory::MemoryManager::ClearLevel()
 
 Memory::IAllocator* Memory::MemoryManager::GetAllocator(Domain domain)
 {
-    {
-        switch (domain) {
-        case Domain::Frame:
-            return m_frameAllocators[m_currentFrameIndex].get();
-        case Domain::Level:
-            return m_levelAllocator.get();
-        case Domain::Permanent:
-            return m_permanentAllocator.get();
-        case Domain::GameObject:
-            return m_gameObjectAllocator.get();
-        default:
-            Logger::Instance().Error("Invalid memory domain requested");
-            return nullptr;
-        }
+    switch (domain) {
+    case Domain::Frame:
+        return m_frameAllocators[m_currentFrameIndex].get();
+    case Domain::Level:
+        return m_levelAllocator.get();
+    case Domain::Permanent:
+        return m_permanentAllocator.get();
+    case Domain::GameObject:
+        return m_gameObjectAllocator.get();
+    default:
+        Logger::Instance().Error("잘못된 메모리 도메인이 요청됨");
+        return nullptr;
     }
 }
 
 void Memory::MemoryManager::PrintStats()
 {
-    {
-        Logger::Instance().Info("Memory Manager Statistics:");
-        Logger::Instance().Info("Frame Allocator:");
-        for (size_t i = 0; i < FRAME_BUFFER_COUNT; ++i) {
-            Logger::Instance().Info("  Buffer {}: {}/{} bytes used",
-                i,
-                m_frameAllocators[i]->GetUsedMemory(),
-                m_frameAllocators[i]->GetTotalMemory());
-        }
-
-        Logger::Instance().Info("Level Allocator: {}/{} bytes used",
-            m_levelAllocator->GetUsedMemory(),
-            m_levelAllocator->GetTotalMemory());
-
-        Logger::Instance().Info("Permanent Allocator: {}/{} bytes used",
-            m_permanentAllocator->GetUsedMemory(),
-            m_permanentAllocator->GetTotalMemory());
-
-        Logger::Instance().Info("GameObject Allocator: {}/{} bytes used",
-            m_gameObjectAllocator->GetUsedMemory(),
-            m_gameObjectAllocator->GetTotalMemory());
+    Logger::Instance().Info("메모리 매니저 통계:");
+    Logger::Instance().Info("프레임 할당자:");
+    for (size_t i = 0; i < FRAME_BUFFER_COUNT; ++i) {
+        Logger::Instance().Info("  버퍼 {}: {}/{} 바이트 사용됨",
+            i,
+            m_frameAllocators[i]->GetUsedMemory(),
+            m_frameAllocators[i]->GetTotalMemory());
     }
+
+    Logger::Instance().Info("레벨 할당자: {}/{} 바이트 사용됨",
+        m_levelAllocator->GetUsedMemory(),
+        m_levelAllocator->GetTotalMemory());
+
+    Logger::Instance().Info("영구 할당자: {}/{} 바이트 사용됨",
+        m_permanentAllocator->GetUsedMemory(),
+        m_permanentAllocator->GetTotalMemory());
+
+    Logger::Instance().Info("게임오브젝트 할당자: {}/{} 바이트 사용됨",
+        m_gameObjectAllocator->GetUsedMemory(),
+        m_gameObjectAllocator->GetTotalMemory());
 }

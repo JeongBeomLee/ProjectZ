@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include "PhysicsObject.h"
 #include "PhysicsEngine.h"
+#include "MemoryManager.h"
 #include "Logger.h"
 
 Engine::Engine()
@@ -38,6 +39,12 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	m_width = width;
 	m_height = height;
 	m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+
+	// 메모리 관리자 초기화
+	if (!Memory::InitializeMemory()) {
+		Logger::Instance().Fatal("메모리 관리자 초기화 실패");
+		return false;
+	}
 
 	// 디버그 레이어 활성화
 	IFDEBUG(
@@ -154,10 +161,18 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 
 void Engine::Update()
 {
+	Memory::BeginFrameMemory();
+	
 	// 델타 시간 계산
 	ULONGLONG currentTick = GetTickCount64();
 	float deltaTime = (currentTick - m_lastTick) / 1000.0f;
 	m_lastTick = currentTick;
+
+	// deltaTime이 0이하인 경우 최소값으로 설정
+	if (deltaTime <= 0.0f) {
+		deltaTime = 1.0f / 600.0f;  // 기본 프레임 레이트
+		Logger::Instance().Warning("0 또는 음수 DT 감지, 기본 값 사용: {}", deltaTime);
+	}
 
 	// 물리 엔진 업데이트
 	m_physicsEngine->Update(deltaTime);
@@ -264,6 +279,9 @@ void Engine::Render()
 void Engine::Cleanup()
 {
 	WaitForGpu();
+
+	m_physicsEngine.reset();
+
     CloseHandle(m_fenceEvent);
 }
 

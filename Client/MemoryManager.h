@@ -38,7 +38,7 @@ namespace Memory
 
     private:
         MemoryManager() = default;
-        ~MemoryManager() = default;
+        ~MemoryManager() { Shutdown(); }
 
         MemoryManager(const MemoryManager&) = delete;
         MemoryManager& operator=(const MemoryManager&) = delete;
