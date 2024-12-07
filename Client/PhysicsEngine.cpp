@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "PhysicsEngine.h"
 #include "PhysicsObject.h"
+#include "ContactReportCallback.h"
 #include "Logger.h"
 
 PhysicsEngine::PhysicsEngine()
@@ -68,22 +69,29 @@ std::shared_ptr<PhysicsObject> PhysicsEngine::CreateBox(
 	const PxVec3& position, 
 	const PxVec3& dimensions, 
 	PhysicsObjectType type, 
+	CollisionGroup group, CollisionGroup mask, 
 	float density)
 {
 	PxRigidActor* actor = nullptr;
+	PxShape* shape = nullptr;
 
 	switch (type)
 	{
 	case PhysicsObjectType::STATIC: {
 		actor = m_physics->createRigidStatic(PxTransform(position));
-		PxRigidActorExt::createExclusiveShape(*actor, PxBoxGeometry(dimensions), *m_defaultMaterial);
+		actor->setName("StaticBox");
+		shape = PxRigidActorExt::createExclusiveShape(*actor,
+			PxBoxGeometry(dimensions), *m_defaultMaterial);
 		break;
 	}
 	case PhysicsObjectType::DYNAMIC: {
 		PxRigidDynamic* dynamicActor = m_physics->createRigidDynamic(PxTransform(position));
-		PxRigidActorExt::createExclusiveShape(*dynamicActor, PxBoxGeometry(dimensions), *m_defaultMaterial);
+		dynamicActor->setName("DynamicBox");
+		shape = PxRigidActorExt::createExclusiveShape(*dynamicActor,
+			PxBoxGeometry(dimensions), *m_defaultMaterial);
 		PxRigidBodyExt::updateMassAndInertia(*dynamicActor, density);
 		actor = dynamicActor;
+		break;
 	}
 	case PhysicsObjectType::KINEMATIC:
 		break;
@@ -91,7 +99,10 @@ std::shared_ptr<PhysicsObject> PhysicsEngine::CreateBox(
 		break;
 	}
 
-	if (actor) {
+	if (actor && shape) {
+		// 충돌 필터 데이터 설정
+		shape->setSimulationFilterData(CreateFilterData(group, mask));
+
 		m_scene->addActor(*actor);
 		auto physicsObject = std::make_shared<PhysicsObject>(actor);
 		m_physicsObjects.push_back(physicsObject);
@@ -105,12 +116,21 @@ std::shared_ptr<PhysicsObject> PhysicsEngine::CreateGroundPlane()
 {
 	PxRigidStatic* groundPlane = PxCreatePlane(*m_physics, PxPlane(0, 1, 0, 0), *m_defaultMaterial);
 	if (groundPlane) {
+		// 충돌 필터 데이터 설정
 		m_scene->addActor(*groundPlane);
 		auto physicsObject = std::make_shared<PhysicsObject>(groundPlane);
 		m_physicsObjects.push_back(physicsObject);
 		return physicsObject;
 	}
 	return nullptr;
+}
+
+PxFilterData PhysicsEngine::CreateFilterData(CollisionGroup group, CollisionGroup mask)
+{
+	PxFilterData filterData;
+	filterData.word0 = static_cast<PxU32>(group);  // 자신의 그룹
+	filterData.word1 = static_cast<PxU32>(mask);   // 충돌할 그룹
+	return filterData;
 }
 
 bool PhysicsEngine::CreateFoundation()
@@ -136,8 +156,12 @@ bool PhysicsEngine::CreateScene()
 	if (!m_dispatcher) return false;
 	sceneDesc.cpuDispatcher = m_dispatcher;
 
-	// 필터 셰이더 설정 (충돌 필터링)
-	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+	// 충돌 콜백 생성 및 설정
+	m_contactCallback = std::make_unique<ContactReportCallback>();
+	sceneDesc.simulationEventCallback = m_contactCallback.get();
+
+	// 커스텀 필터 셰이더 설정
+	sceneDesc.filterShader = CustomFilterShader;
 
 	m_scene = m_physics->createScene(sceneDesc);
 	return m_scene != nullptr;
@@ -151,4 +175,28 @@ void PhysicsEngine::SetupDebugger()
 		PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
 		m_pvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
 	}
+}
+
+PxFilterFlags PhysicsEngine::CustomFilterShader(
+	PxFilterObjectAttributes attributes0, PxFilterData filterData0, 
+	PxFilterObjectAttributes attributes1, PxFilterData filterData1, 
+	PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
+{
+	// 트리거 객체 처리
+	if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1)) {
+		pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
+		return PxFilterFlag::eDEFAULT;
+	}
+
+	// 충돌 마스크 확인
+	if ((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1)) {
+		pairFlags = PxPairFlag::eCONTACT_DEFAULT  // 기본 충돌 속성
+			| PxPairFlag::eNOTIFY_TOUCH_FOUND     // 충돌 시작 알림
+			| PxPairFlag::eNOTIFY_TOUCH_LOST      // 충돌 종료 알림
+			| PxPairFlag::eNOTIFY_CONTACT_POINTS; // 접촉점 정보 제공
+
+		return PxFilterFlag::eDEFAULT;
+	}
+
+	return PxFilterFlag::eSUPPRESS; // 충돌 무시
 }

@@ -60,5 +60,5 @@ void Memory::LinearAllocator::Deallocate(void* ptr)
 void Memory::LinearAllocator::Reset()
 {
     m_used = 0;
-    Logger::Instance().Info("[{}] 초기화됨. 최대 사용량: {} 바이트", m_name, m_peak);
+    //Logger::Instance().Info("[{}] 초기화됨. 최대 사용량: {} 바이트", m_name, m_peak);
 }

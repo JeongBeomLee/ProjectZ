@@ -81,6 +81,12 @@
     <ClInclude Include="MemoryManager.h">
       <Filter>Memory\Manager</Filter>
     </ClInclude>
+    <ClInclude Include="ContactReportCallback.h">
+      <Filter>PhysXEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsTypes.h">
+      <Filter>PhysXEngine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -118,6 +124,9 @@
     </ClCompile>
     <ClCompile Include="MemoryManager.cpp">
       <Filter>Memory\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="ContactReportCallback.cpp">
+      <Filter>PhysXEngine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

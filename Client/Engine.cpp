@@ -77,7 +77,6 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	if (!CreateRenderTargetViews()) {
 		Logger::Instance().Fatal("RTV 생성 실패");
 		return false;
-
 	}
 	if (!CreateConstantBuffer()) {
 		Logger::Instance().Fatal("상수 버퍼 생성 실패");
@@ -128,14 +127,20 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	}
 
 	// 지면 생성
-	m_ground = m_physicsEngine->CreateGroundPlane();
+	m_ground = m_physicsEngine->CreateBox(
+		PxVec3(0.0f, 0.0f, 0.0f),
+		PxVec3(100.0f, 0.5f, 100.0f),
+		PhysicsObjectType::STATIC,
+		CollisionGroup::Ground,
+		CollisionGroup::Default | CollisionGroup::Player);
 
 	// 물리 박스 생성 (크기는 렌더링되는 큐브와 동일하게)
 	m_physicsBox = m_physicsEngine->CreateBox(
 		PxVec3(0.0f, 5.0f, 0.0f),  // 시작 위치
 		PxVec3(0.5f, 0.5f, 0.5f),  // 크기
-		PhysicsObjectType::DYNAMIC  // 동적 객체
-	);
+		PhysicsObjectType::DYNAMIC, // 동적 객체
+		CollisionGroup::Default,    // 기본 그룹
+		CollisionGroup::Ground);    // 지면과 충돌
 
 	// 초기 변환 행렬 설정
 	m_worldMatrix = XMMatrixIdentity();
@@ -171,7 +176,7 @@ void Engine::Update()
 	// deltaTime이 0이하인 경우 최소값으로 설정
 	if (deltaTime <= 0.0f) {
 		deltaTime = 1.0f / 600.0f;  // 기본 프레임 레이트
-		Logger::Instance().Warning("0 또는 음수 DT 감지, 기본 값 사용: {}", deltaTime);
+		//Logger::Instance().Warning("0 또는 음수 DT 감지, 기본 값 사용: {}", deltaTime);
 	}
 
 	// 물리 엔진 업데이트

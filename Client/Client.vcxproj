@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
+    <ClInclude Include="ContactReportCallback.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="IAllocator.h" />
@@ -158,6 +159,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="PhysicsObject.h" />
+    <ClInclude Include="PhysicsTypes.h" />
     <ClInclude Include="PoolAllocator.h" />
     <ClInclude Include="StackAllocator.h" />
     <ClInclude Include="ThreadSafeAllocator.h" />
@@ -166,6 +168,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="ContactReportCallback.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="IAllocator.cpp" />
     <ClCompile Include="LinearAllocator.cpp" />
