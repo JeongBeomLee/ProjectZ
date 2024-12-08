@@ -41509,3 +41509,157 @@
 [2024-12-07 23:31:40.038][INFO][25160] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
 [2024-12-07 23:31:40.038][INFO][25160] [ThreadSafeGameObjectAllocator] 소멸됨
 [2024-12-07 23:31:40.038][INFO][25160] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
+[2024-12-08 05:44:59.558][INFO][20040] Engine 초기화 시작
+[2024-12-08 05:44:59.558][INFO][20040] [FrameAllocator0] 크기: 8388608 바이트로 생성됨
+[2024-12-08 05:44:59.559][INFO][20040] [ThreadSafeFrameAllocator0] 생성됨
+[2024-12-08 05:44:59.559][INFO][20040] [FrameAllocator1] 크기: 8388608 바이트로 생성됨
+[2024-12-08 05:44:59.559][INFO][20040] [ThreadSafeFrameAllocator1] 생성됨
+[2024-12-08 05:44:59.559][INFO][20040] [LevelAllocator] 생성됨. 크기: 67108864 바이트
+[2024-12-08 05:44:59.559][INFO][20040] [ThreadSafeLevelAllocator] 생성됨
+[2024-12-08 05:44:59.559][INFO][20040] [PermanentAllocator] 크기: 33554432 바이트로 생성됨
+[2024-12-08 05:44:59.559][INFO][20040] [ThreadSafePermanentAllocator] 생성됨
+[2024-12-08 05:44:59.559][INFO][20040] [GameObjectAllocator] 생성됨. 블록 크기: 1024 bytes, 블록 수: 1024, Total: 1048576 bytes
+[2024-12-08 05:44:59.559][INFO][20040] [ThreadSafeGameObjectAllocator] 생성됨
+[2024-12-08 05:44:59.559][INFO][20040] 메모리 매니저 초기화 완료
+[2024-12-08 05:44:59.819][INFO][20040] 디바이스 생성 성공
+[2024-12-08 05:44:59.844][INFO][20040] 커맨드 큐 생성 성공
+[2024-12-08 05:44:59.852][INFO][20040] 스왑체인 생성 성공
+[2024-12-08 05:44:59.852][INFO][20040] RTV 디스크립터 힙 생성 성공
+[2024-12-08 05:44:59.852][INFO][20040] RTV 생성 성공
+[2024-12-08 05:44:59.853][INFO][20040] 상수 버퍼 생성 성공
+[2024-12-08 05:44:59.853][INFO][20040] 라이트 상수 버퍼 생성 성공
+[2024-12-08 05:44:59.924][INFO][20040] Engine 초기화 완료
+[2024-12-08 05:45:00.712][INFO][20040] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 05:45:00.712][DEBUG][20040] Contact point 0: pos(0.5, 0.5, 0.5), normal(0, 1, 0), impulse: (0, 4.46605, 0)
+[2024-12-08 05:45:00.712][DEBUG][20040] Contact point 1: pos(0.5, 0.5, -0.5), normal(0, 1, 0), impulse: (0, 2.6750298, 0)
+[2024-12-08 05:45:00.712][DEBUG][20040] Contact point 2: pos(-0.5, 0.5, -0.5), normal(0, 1, 0), impulse: (0, 4.456874, 0)
+[2024-12-08 05:45:00.712][DEBUG][20040] Contact point 3: pos(-0.5, 0.5, 0.5), normal(0, 1, 0), impulse: (0, 2.6738982, 0)
+[2024-12-08 05:45:00.730][INFO][20040] Collision ended between actors DynamicBox and StaticBox
+[2024-12-08 05:45:01.778][INFO][20040] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 05:45:01.778][DEBUG][20040] Contact point 0: pos(-0.47910595, 0.5, -0.4731114), normal(0, 1, 0), impulse: (0, 9.016022, 0)
+[2024-12-08 05:45:01.778][DEBUG][20040] Contact point 1: pos(-0.49326283, 0.5, -0.42654926), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 05:45:01.778][DEBUG][20040] Contact point 2: pos(-0.5182195, 0.5, -0.51226854), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 05:45:01.790][INFO][20040] Collision ended between actors DynamicBox and StaticBox
+[2024-12-08 05:45:02.348][INFO][20040] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 05:45:02.348][DEBUG][20040] Contact point 0: pos(-1.2479606, 0.5, -1.2285063), normal(0, 1, 0), impulse: (0, 5.457499, 0)
+[2024-12-08 05:45:02.348][DEBUG][20040] Contact point 1: pos(-1.2411791, 0.5, -1.2218143), normal(0, 1, 0), impulse: (0, 0.023865223, 0)
+[2024-12-08 05:45:02.348][DEBUG][20040] Contact point 2: pos(-1.2524331, 0.5, -1.2263825), normal(0, 1, 0), impulse: (0, 0.029773235, 0)
+[2024-12-08 05:45:02.354][INFO][20040] Collision ended between actors DynamicBox and StaticBox
+[2024-12-08 05:45:02.748][INFO][20040] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 05:45:02.748][DEBUG][20040] Contact point 0: pos(-1.2547776, 0.5, -1.2322555), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 05:45:02.748][DEBUG][20040] Contact point 1: pos(-1.2248307, 0.5, -1.2005711), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 05:45:02.748][DEBUG][20040] Contact point 2: pos(-1.2999084, 0.5, -1.2151285), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 05:45:02.778][INFO][20040] Collision ended between actors DynamicBox and StaticBox
+[2024-12-08 05:45:03.027][INFO][20040] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 05:45:03.027][DEBUG][20040] Contact point 0: pos(-1.2614588, 0.5, -1.2314229), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 05:45:03.027][DEBUG][20040] Contact point 1: pos(-1.2465812, 0.5, -1.2115558), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 05:45:03.027][DEBUG][20040] Contact point 2: pos(-1.311964, 0.5, -1.2110156), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 21:35:34.632][INFO][23412] Engine 초기화 시작
+[2024-12-08 21:35:34.633][INFO][23412] [FrameAllocator0] 크기: 8388608 바이트로 생성됨
+[2024-12-08 21:35:34.633][INFO][23412] [ThreadSafeFrameAllocator0] 생성됨
+[2024-12-08 21:35:34.633][INFO][23412] [FrameAllocator1] 크기: 8388608 바이트로 생성됨
+[2024-12-08 21:35:34.633][INFO][23412] [ThreadSafeFrameAllocator1] 생성됨
+[2024-12-08 21:35:34.633][INFO][23412] [LevelAllocator] 생성됨. 크기: 67108864 바이트
+[2024-12-08 21:35:34.633][INFO][23412] [ThreadSafeLevelAllocator] 생성됨
+[2024-12-08 21:35:34.634][INFO][23412] [PermanentAllocator] 크기: 33554432 바이트로 생성됨
+[2024-12-08 21:35:34.634][INFO][23412] [ThreadSafePermanentAllocator] 생성됨
+[2024-12-08 21:35:34.634][INFO][23412] [GameObjectAllocator] 생성됨. 블록 크기: 1024 bytes, 블록 수: 1024, Total: 1048576 bytes
+[2024-12-08 21:35:34.634][INFO][23412] [ThreadSafeGameObjectAllocator] 생성됨
+[2024-12-08 21:35:34.634][INFO][23412] 메모리 매니저 초기화 완료
+[2024-12-08 21:35:34.918][INFO][23412] 디바이스 생성 성공
+[2024-12-08 21:35:34.944][INFO][23412] 커맨드 큐 생성 성공
+[2024-12-08 21:35:34.953][INFO][23412] 스왑체인 생성 성공
+[2024-12-08 21:35:34.953][INFO][23412] RTV 디스크립터 힙 생성 성공
+[2024-12-08 21:35:34.953][INFO][23412] RTV 생성 성공
+[2024-12-08 21:35:34.954][INFO][23412] 상수 버퍼 생성 성공
+[2024-12-08 21:35:34.954][INFO][23412] 라이트 상수 버퍼 생성 성공
+[2024-12-08 21:35:35.031][INFO][23412] Engine 초기화 완료
+[2024-12-08 21:35:35.818][INFO][23412] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 21:35:35.818][DEBUG][23412] Contact point 0: pos(0.5, 0.5, 0.5), normal(0, 1, 0), impulse: (0, 4.4628873, 0)
+[2024-12-08 21:35:35.818][DEBUG][23412] Contact point 1: pos(0.5, 0.5, -0.5), normal(0, 1, 0), impulse: (0, 2.673074, 0)
+[2024-12-08 21:35:35.819][DEBUG][23412] Contact point 2: pos(-0.5, 0.5, -0.5), normal(0, 1, 0), impulse: (0, 4.4535346, 0)
+[2024-12-08 21:35:35.819][DEBUG][23412] Contact point 3: pos(-0.5, 0.5, 0.5), normal(0, 1, 0), impulse: (0, 2.6718817, 0)
+[2024-12-08 21:35:35.836][INFO][23412] Collision ended between actors DynamicBox and StaticBox
+[2024-12-08 21:35:36.878][INFO][23412] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 21:35:36.878][DEBUG][23412] Contact point 0: pos(-0.6786313, 0.5, -0.6751664), normal(0, 1, 0), impulse: (0, 8.855768, 0)
+[2024-12-08 21:35:36.878][DEBUG][23412] Contact point 1: pos(-0.6807194, 0.5, -0.65315443), normal(0, 1, 0), impulse: (0, 0.19507122, 0)
+[2024-12-08 21:35:36.878][DEBUG][23412] Contact point 2: pos(-0.65693885, 0.5, -0.6770155), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 21:35:36.884][INFO][23412] Collision ended between actors DynamicBox and StaticBox
+[2024-12-08 21:35:37.442][INFO][23412] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 21:35:37.442][DEBUG][23412] Contact point 0: pos(0.43861255, 0.5, 0.49373177), normal(0, 1, 0), impulse: (0, 5.305184, 0)
+[2024-12-08 21:35:37.442][DEBUG][23412] Contact point 1: pos(0.4534806, 0.5, 0.4369228), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 21:35:37.442][DEBUG][23412] Contact point 2: pos(0.38218328, 0.5, 0.5041943), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 21:35:37.472][INFO][23412] Collision ended between actors DynamicBox and StaticBox
+[2024-12-08 21:35:37.836][INFO][23412] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 21:35:37.836][DEBUG][23412] Contact point 0: pos(1.1586335, 0.5, 1.2671218), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 21:35:37.836][DEBUG][23412] Contact point 1: pos(1.1714233, 0.5, 1.2576492), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 21:35:37.836][DEBUG][23412] Contact point 2: pos(1.0706847, 0.5, 1.1707973), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 21:35:37.848][INFO][23412] Collision ended between actors DynamicBox and StaticBox
+[2024-12-08 21:35:38.163][INFO][23412] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 21:35:38.163][DEBUG][23412] Contact point 0: pos(1.1679897, 0.5, 1.2731137), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 21:35:38.163][DEBUG][23412] Contact point 1: pos(0.51443076, 0.5, 0.51638716), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 21:35:38.163][DEBUG][23412] Contact point 2: pos(0.52308506, 0.5, 0.5090904), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 21:35:38.163][DEBUG][23412] Contact point 3: pos(1.1912324, 0.5, 1.253517), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 21:35:42.195][INFO][23412] 메모리 매니저 종료
+[2024-12-08 21:35:42.195][INFO][23412] [ThreadSafeFrameAllocator0] 소멸됨
+[2024-12-08 21:35:42.195][INFO][23412] [FrameAllocator0] 제거됨. 최대 사용량: 0 바이트
+[2024-12-08 21:35:42.195][INFO][23412] [ThreadSafeFrameAllocator1] 소멸됨
+[2024-12-08 21:35:42.195][INFO][23412] [FrameAllocator1] 제거됨. 최대 사용량: 0 바이트
+[2024-12-08 21:35:42.196][INFO][23412] [ThreadSafeLevelAllocator] 소멸됨
+[2024-12-08 21:35:42.196][INFO][23412] [LevelAllocator] 소멸됨. 최대 사용량: 0 바이트
+[2024-12-08 21:35:42.196][INFO][23412] [ThreadSafePermanentAllocator] 소멸됨
+[2024-12-08 21:35:42.196][INFO][23412] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
+[2024-12-08 21:35:42.196][INFO][23412] [ThreadSafeGameObjectAllocator] 소멸됨
+[2024-12-08 21:35:42.196][INFO][23412] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
+[2024-12-08 22:38:35.901][INFO][31328] Engine 초기화 시작
+[2024-12-08 22:38:35.901][INFO][31328] [FrameAllocator0] 크기: 8388608 바이트로 생성됨
+[2024-12-08 22:38:35.901][INFO][31328] [ThreadSafeFrameAllocator0] 생성됨
+[2024-12-08 22:38:35.901][INFO][31328] [FrameAllocator1] 크기: 8388608 바이트로 생성됨
+[2024-12-08 22:38:35.902][INFO][31328] [ThreadSafeFrameAllocator1] 생성됨
+[2024-12-08 22:38:35.902][INFO][31328] [LevelAllocator] 생성됨. 크기: 67108864 바이트
+[2024-12-08 22:38:35.902][INFO][31328] [ThreadSafeLevelAllocator] 생성됨
+[2024-12-08 22:38:35.902][INFO][31328] [PermanentAllocator] 크기: 33554432 바이트로 생성됨
+[2024-12-08 22:38:35.902][INFO][31328] [ThreadSafePermanentAllocator] 생성됨
+[2024-12-08 22:38:35.902][INFO][31328] [GameObjectAllocator] 생성됨. 블록 크기: 1024 bytes, 블록 수: 1024, Total: 1048576 bytes
+[2024-12-08 22:38:35.902][INFO][31328] [ThreadSafeGameObjectAllocator] 생성됨
+[2024-12-08 22:38:35.902][INFO][31328] 메모리 매니저 초기화 완료
+[2024-12-08 22:38:36.089][INFO][31328] 디바이스 생성 성공
+[2024-12-08 22:38:36.112][INFO][31328] 커맨드 큐 생성 성공
+[2024-12-08 22:38:36.121][INFO][31328] 스왑체인 생성 성공
+[2024-12-08 22:38:36.121][INFO][31328] RTV 디스크립터 힙 생성 성공
+[2024-12-08 22:38:36.122][INFO][31328] RTV 생성 성공
+[2024-12-08 22:38:36.122][INFO][31328] 상수 버퍼 생성 성공
+[2024-12-08 22:38:36.122][INFO][31328] 라이트 상수 버퍼 생성 성공
+[2024-12-08 22:38:36.179][INFO][31328] Engine 초기화 완료
+[2024-12-08 22:38:36.959][INFO][31328] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 22:38:36.959][DEBUG][31328] Contact point 0: pos(0.5, 0.5, 0.5), normal(0, 1, 0), impulse: (0, 4.463016, 0)
+[2024-12-08 22:38:36.959][DEBUG][31328] Contact point 1: pos(0.5, 0.5, -0.5), normal(0, 1, 0), impulse: (0, 2.6706235, 0)
+[2024-12-08 22:38:36.959][DEBUG][31328] Contact point 2: pos(-0.5, 0.5, -0.5), normal(0, 1, 0), impulse: (0, 4.44538, 0)
+[2024-12-08 22:38:36.960][DEBUG][31328] Contact point 3: pos(-0.5, 0.5, 0.5), normal(0, 1, 0), impulse: (0, 2.666379, 0)
+[2024-12-08 22:38:36.966][INFO][31328] Collision ended between actors DynamicBox and StaticBox
+[2024-12-08 22:38:37.904][INFO][31328] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 22:38:37.904][DEBUG][31328] Contact point 0: pos(0.49692115, 0.5, 0.4921671), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 22:38:37.904][DEBUG][31328] Contact point 1: pos(0.49528542, 0.5, -0.50779337), normal(0, 1, 0), impulse: (0, 3.900955, 0)
+[2024-12-08 22:38:37.904][DEBUG][31328] Contact point 2: pos(-0.50443757, 0.5, -0.50595284), normal(0, 1, 0), impulse: (0, 0.4993925, 0)
+[2024-12-08 22:38:37.904][DEBUG][31328] Contact point 3: pos(-0.50280184, 0.5, 0.49400765), normal(0, 1, 0), impulse: (0, 4.167419, 0)
+[2024-12-08 22:38:37.922][INFO][31328] Collision ended between actors DynamicBox and StaticBox
+[2024-12-08 22:38:38.377][INFO][31328] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 22:38:38.377][DEBUG][31328] Contact point 0: pos(0.48028186, 0.5, 0.47295132), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 22:38:38.377][DEBUG][31328] Contact point 1: pos(0.47469229, 0.5, 0.4730648), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 22:38:38.377][DEBUG][31328] Contact point 2: pos(0.48051116, 0.5, 0.45407003), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 22:38:38.389][INFO][31328] Collision ended between actors DynamicBox and StaticBox
+[2024-12-08 22:38:38.486][INFO][31328] Collision started between actors DynamicBox and StaticBox
+[2024-12-08 22:38:38.486][DEBUG][31328] Contact point 0: pos(0.48373416, 0.5, -0.53559226), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 22:38:38.486][DEBUG][31328] Contact point 1: pos(0.48355478, 0.5, -0.4882481), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 22:38:38.486][DEBUG][31328] Contact point 2: pos(0.4585031, 0.5, -0.53635836), normal(0, 1, 0), impulse: (0, 0, 0)
+[2024-12-08 22:38:41.042][INFO][31328] 메모리 매니저 종료
+[2024-12-08 22:38:41.042][INFO][31328] [ThreadSafeFrameAllocator0] 소멸됨
+[2024-12-08 22:38:41.042][INFO][31328] [FrameAllocator0] 제거됨. 최대 사용량: 0 바이트
+[2024-12-08 22:38:41.042][INFO][31328] [ThreadSafeFrameAllocator1] 소멸됨
+[2024-12-08 22:38:41.042][INFO][31328] [FrameAllocator1] 제거됨. 최대 사용량: 0 바이트
+[2024-12-08 22:38:41.042][INFO][31328] [ThreadSafeLevelAllocator] 소멸됨
+[2024-12-08 22:38:41.042][INFO][31328] [LevelAllocator] 소멸됨. 최대 사용량: 0 바이트
+[2024-12-08 22:38:41.043][INFO][31328] [ThreadSafePermanentAllocator] 소멸됨
+[2024-12-08 22:38:41.043][INFO][31328] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
+[2024-12-08 22:38:41.043][INFO][31328] [ThreadSafeGameObjectAllocator] 소멸됨
+[2024-12-08 22:38:41.043][INFO][31328] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
