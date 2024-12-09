@@ -1,4 +1,7 @@
 #pragma once
+#include "Event.h"
+#include "EventTypes.h"
+
 class PhysicsObject;
 class PhysicsEngine;
 class Engine {
@@ -76,6 +79,11 @@ private:
 	std::shared_ptr<PhysicsObject> m_physicsBox;
 	std::shared_ptr<PhysicsObject> m_ground;
 
+	// 이벤트 핸들러 ID 저장용 변수들
+	std::vector<Event::EventDispatcher<Event::CollisionEvent>::HandlerId> m_collisionHandlerIds;
+	std::vector<Event::EventDispatcher<Event::ResourceEvent>::HandlerId> m_resourceHandlerIds;
+	std::vector<Event::EventDispatcher<Event::InputEvent>::HandlerId> m_inputHandlerIds;
+
 	// 월드 행렬 업데이트 함수
 	void UpdateWorldMatrix();
 
@@ -94,9 +102,12 @@ private:
 	bool CompileShaders();
 	bool CreateConstantBuffer();
 	bool CreateLightConstantBuffer();
-
 	bool CreateTexture(const wchar_t* filename);
 	bool CreateDescHeap();
+
+	// 이벤트 핸들러 등록, 등록 해제 함수
+	void RegisterEventHandlers();
+	void UnregisterEventHandlers();
 
 	void UpdateConstantBuffer();
 

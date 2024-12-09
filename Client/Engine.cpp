@@ -3,6 +3,7 @@
 #include "PhysicsObject.h"
 #include "PhysicsEngine.h"
 #include "MemoryManager.h"
+#include "EventManager.h"
 #include "Logger.h"
 
 Engine::Engine()
@@ -45,6 +46,9 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		Logger::Instance().Fatal("메모리 관리자 초기화 실패");
 		return false;
 	}
+
+	// 이벤트 핸들러 등록
+	RegisterEventHandlers();
 
 	// 디버그 레이어 활성화
 	IFDEBUG(
@@ -166,7 +170,11 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 
 void Engine::Update()
 {
+	// 프레임 메모리 초기화
 	Memory::BeginFrameMemory();
+
+	// 모든 큐에 있는 이벤트 처리
+	EventManager::Instance().Update();
 	
 	// 델타 시간 계산
 	ULONGLONG currentTick = GetTickCount64();
@@ -284,6 +292,8 @@ void Engine::Render()
 void Engine::Cleanup()
 {
 	WaitForGpu();
+
+	UnregisterEventHandlers();
 
 	m_physicsEngine.reset();
 
@@ -880,6 +890,88 @@ bool Engine::CreateDescHeap()
 	m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, handle);
 
 	return true;
+}
+
+void Engine::RegisterEventHandlers()
+{
+	auto collisionHandler = m_collisionHandlerIds.emplace_back(
+		EventManager::Instance().Subscribe<Event::CollisionEvent>(
+			Event::EventCallback<Event::CollisionEvent>(
+			[this](const Event::CollisionEvent& event) {
+				// 충돌 이벤트 처리
+				Logger::Instance().Debug("'{}'와 '{}'가 충돌 발생. 위치: ({}, {}, {}), 노말: ({}, {}, {}), 충격량: ({})",
+					event.actor1->getName(),
+					event.actor2->getName(),
+					event.position.x,
+					event.position.y,
+					event.position.z,
+					event.normal.x,
+					event.normal.y,
+					event.normal.z,
+					event.impulse);
+			})
+		)
+	);
+
+	auto resourceHandler = m_resourceHandlerIds.emplace_back(
+		EventManager::Instance().Subscribe<Event::ResourceEvent>(
+			Event::EventCallback <Event::ResourceEvent>(
+			[this](const Event::ResourceEvent& event) {
+				// 리소스 이벤트 처리
+				switch (event.type) {
+				case Event::ResourceEvent::Type::Started:
+					Logger::Instance().Debug("리소스 로딩 시작: {}", event.path);
+					break;
+				case Event::ResourceEvent::Type::Completed:
+					Logger::Instance().Debug("리소스 로딩 완료: {}", event.path);
+					break;
+				case Event::ResourceEvent::Type::Failed:
+					Logger::Instance().Error("리소스 로딩 실패: {}, 오류: {}",
+						event.path, event.error);
+					break;
+				}
+			})
+		)
+	);
+
+	auto inputHandler = m_inputHandlerIds.emplace_back(
+		EventManager::Instance().Subscribe<Event::InputEvent>(
+			Event::EventCallback<Event::InputEvent>(
+			[this](const Event::InputEvent& event) {
+				// 입력 이벤트 처리
+				switch (event.type) {
+				case Event::InputEvent::Type::KeyDown:
+					Logger::Instance().Debug("키 눌림: {}", event.code);
+					break;
+				case Event::InputEvent::Type::KeyUp:
+					Logger::Instance().Debug("키 뗌: {}", event.code);
+					break;
+				case Event::InputEvent::Type::MouseMove:
+					Logger::Instance().Debug("마우스 이동: ({}, {})", event.x, event.y);
+					break;
+				case Event::InputEvent::Type::MouseButtonDown:
+					Logger::Instance().Debug("마우스 버튼 눌림: {}", event.code);
+					break;
+				case Event::InputEvent::Type::MouseButtonUp:
+					Logger::Instance().Debug("마우스 버튼 뗌: {}", event.code);
+					break;
+				}
+			})
+		)
+	);
+}
+
+void Engine::UnregisterEventHandlers()
+{
+	for (auto id : m_collisionHandlerIds) {
+		EventManager::Instance().Unsubscribe<Event::CollisionEvent>(id);
+	}
+	for (auto id : m_resourceHandlerIds) {
+		EventManager::Instance().Unsubscribe<Event::ResourceEvent>(id);
+	}
+	for (auto id : m_inputHandlerIds) {
+		EventManager::Instance().Unsubscribe<Event::InputEvent>(id);
+	}
 }
 
 void Engine::UpdateConstantBuffer()

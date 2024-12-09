@@ -148,6 +148,9 @@
     <ClInclude Include="Client.h" />
     <ClInclude Include="ContactReportCallback.h" />
     <ClInclude Include="Engine.h" />
+    <ClInclude Include="Event.h" />
+    <ClInclude Include="EventManager.h" />
+    <ClInclude Include="EventTypes.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="IAllocator.h" />
     <ClInclude Include="LinearAllocator.h" />
@@ -170,6 +173,7 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ContactReportCallback.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="IAllocator.cpp" />
     <ClCompile Include="LinearAllocator.cpp" />
     <ClCompile Include="Logger.cpp" />

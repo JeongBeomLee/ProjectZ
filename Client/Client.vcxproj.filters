@@ -34,6 +34,12 @@
     <Filter Include="Memory\Manager">
       <UniqueIdentifier>{acb4e58d-ba91-409b-8528-00ae7b122599}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Event">
+      <UniqueIdentifier>{86194033-390f-4eab-8fc1-4d3431810080}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Event\Manager">
+      <UniqueIdentifier>{53dae0a9-2544-42cd-8847-1413988b3a4a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -87,6 +93,15 @@
     <ClInclude Include="PhysicsTypes.h">
       <Filter>PhysXEngine</Filter>
     </ClInclude>
+    <ClInclude Include="Event.h">
+      <Filter>Event</Filter>
+    </ClInclude>
+    <ClInclude Include="EventTypes.h">
+      <Filter>Event</Filter>
+    </ClInclude>
+    <ClInclude Include="EventManager.h">
+      <Filter>Event\Manager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -127,6 +142,9 @@
     </ClCompile>
     <ClCompile Include="ContactReportCallback.cpp">
       <Filter>PhysXEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="EventManager.cpp">
+      <Filter>Event\Manager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

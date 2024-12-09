@@ -15,16 +15,20 @@
 #include <DirectXCollision.h>
 #include <DirectXColors.h>
 #include "Util/d3dx12.h"
-#include "packages/DirectXTK12/include/ResourceUploadBatch.h"
-#include "packages/DirectXTK12/include/DDSTextureLoader.h"
+#include "ResourceUploadBatch.h"
+#include "DDSTextureLoader.h"
 
 // PhysX 관련 헤더
 #include "PhysX/include/PxPhysicsAPI.h"
 
 // Assimp 관련 헤더
-#include "packages/Assimp.3.0.0/build/native/include/assimp/Importer.hpp"
-#include "packages/Assimp.3.0.0/build/native/include/assimp/scene.h"
-#include "packages/Assimp.3.0.0/build/native/include/assimp/postprocess.h"
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+#include "assimp/postprocess.h"
+
+// TBB 관련 헤더
+#include "tbb/concurrent_queue.h"
+#include "tbb/concurrent_unordered_map.h"
 
 // STL 헤더
 #include <iostream>
