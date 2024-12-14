@@ -5,6 +5,7 @@
 #include "MemoryManager.h"
 #include "EventManager.h"
 #include "Logger.h"
+#include "Utils.h"
 
 Engine::Engine()
 	: m_width(0)

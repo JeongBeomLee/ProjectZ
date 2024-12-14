@@ -16,14 +16,12 @@ public:
         Logger::Instance().Debug("이벤트 발행: {}", typeid(EventType).name());
     }
 
-    // 이벤트 구독
     template<typename EventType>
     Event::EventDispatcher<EventType>::HandlerId Subscribe(
 		Event::EventCallback<EventType> callback) {
         return GetDispatcher<EventType>().Subscribe(std::move(callback));
     }
 
-    // 구독 취소
     template<typename EventType>
     void Unsubscribe(typename Event::EventDispatcher<EventType>::HandlerId id) {
         GetDispatcher<EventType>().Unsubscribe(id);

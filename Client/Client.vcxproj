@@ -166,6 +166,7 @@
     <ClInclude Include="PoolAllocator.h" />
     <ClInclude Include="StackAllocator.h" />
     <ClInclude Include="ThreadSafeAllocator.h" />
+    <ClInclude Include="Utils.h" />
     <ClInclude Include="WinResource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>

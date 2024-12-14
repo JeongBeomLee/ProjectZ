@@ -42431,3 +42431,150 @@ Logging failed: Argument not found.[2024-12-09 09:06:15.516][INFO][5796] 메모리 
 [2024-12-09 09:09:25.078][INFO][22508] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
 [2024-12-09 09:09:25.078][INFO][22508] [ThreadSafeGameObjectAllocator] 소멸됨
 [2024-12-09 09:09:25.078][INFO][22508] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
+[2024-12-14 14:02:10.671][INFO][23876] Engine 초기화 시작
+[2024-12-14 14:02:10.672][INFO][23876] [FrameAllocator0] 크기: 8388608 바이트로 생성됨
+[2024-12-14 14:02:10.672][INFO][23876] [ThreadSafeFrameAllocator0] 생성됨
+[2024-12-14 14:02:10.672][INFO][23876] [FrameAllocator1] 크기: 8388608 바이트로 생성됨
+[2024-12-14 14:02:10.672][INFO][23876] [ThreadSafeFrameAllocator1] 생성됨
+[2024-12-14 14:02:10.672][INFO][23876] [LevelAllocator] 생성됨. 크기: 67108864 바이트
+[2024-12-14 14:02:10.673][INFO][23876] [ThreadSafeLevelAllocator] 생성됨
+[2024-12-14 14:02:10.673][INFO][23876] [PermanentAllocator] 크기: 33554432 바이트로 생성됨
+[2024-12-14 14:02:10.673][INFO][23876] [ThreadSafePermanentAllocator] 생성됨
+[2024-12-14 14:02:10.673][INFO][23876] [GameObjectAllocator] 생성됨. 블록 크기: 1024 bytes, 블록 수: 1024, Total: 1048576 bytes
+[2024-12-14 14:02:10.673][INFO][23876] [ThreadSafeGameObjectAllocator] 생성됨
+[2024-12-14 14:02:10.673][INFO][23876] 메모리 매니저 초기화 완료
+[2024-12-14 14:02:10.673][DEBUG][23876] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::CollisionEvent
+[2024-12-14 14:02:10.673][DEBUG][23876] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::ResourceEvent
+[2024-12-14 14:02:10.673][DEBUG][23876] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::InputEvent
+[2024-12-14 14:02:10.933][INFO][23876] 디바이스 생성 성공
+[2024-12-14 14:02:10.956][INFO][23876] 커맨드 큐 생성 성공
+[2024-12-14 14:02:10.965][INFO][23876] 스왑체인 생성 성공
+[2024-12-14 14:02:10.965][INFO][23876] RTV 디스크립터 힙 생성 성공
+[2024-12-14 14:02:10.965][INFO][23876] RTV 생성 성공
+[2024-12-14 14:02:10.965][INFO][23876] 상수 버퍼 생성 성공
+[2024-12-14 14:02:10.965][INFO][23876] 라이트 상수 버퍼 생성 성공
+[2024-12-14 14:02:11.087][INFO][23876] Engine 초기화 완료
+[2024-12-14 14:02:11.862][INFO][23876] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2024-12-14 14:02:11.862][DEBUG][23876] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2024-12-14 14:02:11.862][DEBUG][23876] 이벤트 발행: struct Event::CollisionEvent
+[2024-12-14 14:02:11.864][DEBUG][23876] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.5, 0.5, 0.5), 노말: (0, 1, 0), 충격량: (4.467827)
+[2024-12-14 14:02:11.865][INFO][23876] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2024-12-14 14:02:12.804][INFO][23876] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2024-12-14 14:02:12.804][DEBUG][23876] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2024-12-14 14:02:12.804][DEBUG][23876] 이벤트 발행: struct Event::CollisionEvent
+[2024-12-14 14:02:12.810][DEBUG][23876] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.49697047, 0.5, 0.492202), 노말: (0, 1, 0), 충격량: (0)
+[2024-12-14 14:02:12.816][INFO][23876] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2024-12-14 14:02:13.222][INFO][23876] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2024-12-14 14:02:13.222][DEBUG][23876] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2024-12-14 14:02:13.222][DEBUG][23876] 이벤트 발행: struct Event::CollisionEvent
+[2024-12-14 14:02:13.228][DEBUG][23876] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.73208714, 0.5, -0.4837031), 노말: (0, 1, 0), 충격량: (0)
+[2024-12-14 14:02:15.456][INFO][23876] 메모리 매니저 종료
+[2024-12-14 14:02:15.456][INFO][23876] [ThreadSafeFrameAllocator0] 소멸됨
+[2024-12-14 14:02:15.456][INFO][23876] [FrameAllocator0] 제거됨. 최대 사용량: 0 바이트
+[2024-12-14 14:02:15.456][INFO][23876] [ThreadSafeFrameAllocator1] 소멸됨
+[2024-12-14 14:02:15.456][INFO][23876] [FrameAllocator1] 제거됨. 최대 사용량: 0 바이트
+[2024-12-14 14:02:15.456][INFO][23876] [ThreadSafeLevelAllocator] 소멸됨
+[2024-12-14 14:02:15.456][INFO][23876] [LevelAllocator] 소멸됨. 최대 사용량: 0 바이트
+[2024-12-14 14:02:15.457][INFO][23876] [ThreadSafePermanentAllocator] 소멸됨
+[2024-12-14 14:02:15.457][INFO][23876] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
+[2024-12-14 14:02:15.457][INFO][23876] [ThreadSafeGameObjectAllocator] 소멸됨
+[2024-12-14 14:02:15.457][INFO][23876] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
+[2024-12-14 14:02:27.198][INFO][22872] Engine 초기화 시작
+[2024-12-14 14:02:27.199][INFO][22872] [FrameAllocator0] 크기: 8388608 바이트로 생성됨
+[2024-12-14 14:02:27.199][INFO][22872] [ThreadSafeFrameAllocator0] 생성됨
+[2024-12-14 14:02:27.199][INFO][22872] [FrameAllocator1] 크기: 8388608 바이트로 생성됨
+[2024-12-14 14:02:27.199][INFO][22872] [ThreadSafeFrameAllocator1] 생성됨
+[2024-12-14 14:02:27.199][INFO][22872] [LevelAllocator] 생성됨. 크기: 67108864 바이트
+[2024-12-14 14:02:27.199][INFO][22872] [ThreadSafeLevelAllocator] 생성됨
+[2024-12-14 14:02:27.199][INFO][22872] [PermanentAllocator] 크기: 33554432 바이트로 생성됨
+[2024-12-14 14:02:27.199][INFO][22872] [ThreadSafePermanentAllocator] 생성됨
+[2024-12-14 14:02:27.199][INFO][22872] [GameObjectAllocator] 생성됨. 블록 크기: 1024 bytes, 블록 수: 1024, Total: 1048576 bytes
+[2024-12-14 14:02:27.200][INFO][22872] [ThreadSafeGameObjectAllocator] 생성됨
+[2024-12-14 14:02:27.200][INFO][22872] 메모리 매니저 초기화 완료
+[2024-12-14 14:02:27.200][DEBUG][22872] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::CollisionEvent
+[2024-12-14 14:02:27.200][DEBUG][22872] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::ResourceEvent
+[2024-12-14 14:02:27.200][DEBUG][22872] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::InputEvent
+[2024-12-14 14:02:27.412][INFO][22872] 디바이스 생성 성공
+[2024-12-14 14:02:27.435][INFO][22872] 커맨드 큐 생성 성공
+[2024-12-14 14:02:27.442][INFO][22872] 스왑체인 생성 성공
+[2024-12-14 14:02:27.442][INFO][22872] RTV 디스크립터 힙 생성 성공
+[2024-12-14 14:02:27.442][INFO][22872] RTV 생성 성공
+[2024-12-14 14:02:27.442][INFO][22872] 상수 버퍼 생성 성공
+[2024-12-14 14:02:27.442][INFO][22872] 라이트 상수 버퍼 생성 성공
+[2024-12-14 14:02:27.493][INFO][22872] Engine 초기화 완료
+[2024-12-14 14:02:28.265][INFO][22872] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2024-12-14 14:02:28.265][DEBUG][22872] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2024-12-14 14:02:28.265][DEBUG][22872] 이벤트 발행: struct Event::CollisionEvent
+[2024-12-14 14:02:28.270][DEBUG][22872] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.5, 0.5, 0.5), 노말: (0, 1, 0), 충격량: (4.463293)
+[2024-12-14 14:02:28.270][INFO][22872] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2024-12-14 14:02:29.210][INFO][22872] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2024-12-14 14:02:29.210][DEBUG][22872] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2024-12-14 14:02:29.210][DEBUG][22872] 이벤트 발행: struct Event::CollisionEvent
+[2024-12-14 14:02:29.216][DEBUG][22872] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.49677643, 0.5, 0.4920427), 노말: (0, 1, 0), 충격량: (0)
+[2024-12-14 14:02:29.228][INFO][22872] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2024-12-14 14:02:29.634][INFO][22872] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2024-12-14 14:02:29.634][DEBUG][22872] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2024-12-14 14:02:29.634][DEBUG][22872] 이벤트 발행: struct Event::CollisionEvent
+[2024-12-14 14:02:29.640][DEBUG][22872] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.70881546, 0.5, -0.48373464), 노말: (0, 1, 0), 충격량: (0)
+[2024-12-14 14:02:47.756][INFO][22872] 메모리 매니저 종료
+[2024-12-14 14:02:47.757][INFO][22872] [ThreadSafeFrameAllocator0] 소멸됨
+[2024-12-14 14:02:47.757][INFO][22872] [FrameAllocator0] 제거됨. 최대 사용량: 0 바이트
+[2024-12-14 14:02:47.757][INFO][22872] [ThreadSafeFrameAllocator1] 소멸됨
+[2024-12-14 14:02:47.757][INFO][22872] [FrameAllocator1] 제거됨. 최대 사용량: 0 바이트
+[2024-12-14 14:02:47.757][INFO][22872] [ThreadSafeLevelAllocator] 소멸됨
+[2024-12-14 14:02:47.757][INFO][22872] [LevelAllocator] 소멸됨. 최대 사용량: 0 바이트
+[2024-12-14 14:02:47.757][INFO][22872] [ThreadSafePermanentAllocator] 소멸됨
+[2024-12-14 14:02:47.757][INFO][22872] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
+[2024-12-14 14:02:47.757][INFO][22872] [ThreadSafeGameObjectAllocator] 소멸됨
+[2024-12-14 14:02:47.757][INFO][22872] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
+[2024-12-14 14:17:27.906][INFO][22096] Engine 초기화 시작
+[2024-12-14 14:17:27.907][INFO][22096] [FrameAllocator0] 크기: 8388608 바이트로 생성됨
+[2024-12-14 14:17:27.907][INFO][22096] [ThreadSafeFrameAllocator0] 생성됨
+[2024-12-14 14:17:27.907][INFO][22096] [FrameAllocator1] 크기: 8388608 바이트로 생성됨
+[2024-12-14 14:17:27.907][INFO][22096] [ThreadSafeFrameAllocator1] 생성됨
+[2024-12-14 14:17:27.907][INFO][22096] [LevelAllocator] 생성됨. 크기: 67108864 바이트
+[2024-12-14 14:17:27.907][INFO][22096] [ThreadSafeLevelAllocator] 생성됨
+[2024-12-14 14:17:27.907][INFO][22096] [PermanentAllocator] 크기: 33554432 바이트로 생성됨
+[2024-12-14 14:17:27.907][INFO][22096] [ThreadSafePermanentAllocator] 생성됨
+[2024-12-14 14:17:27.907][INFO][22096] [GameObjectAllocator] 생성됨. 블록 크기: 1024 bytes, 블록 수: 1024, Total: 1048576 bytes
+[2024-12-14 14:17:27.907][INFO][22096] [ThreadSafeGameObjectAllocator] 생성됨
+[2024-12-14 14:17:27.908][INFO][22096] 메모리 매니저 초기화 완료
+[2024-12-14 14:17:27.908][DEBUG][22096] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::CollisionEvent
+[2024-12-14 14:17:27.908][DEBUG][22096] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::ResourceEvent
+[2024-12-14 14:17:27.908][DEBUG][22096] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::InputEvent
+[2024-12-14 14:17:28.155][INFO][22096] 디바이스 생성 성공
+[2024-12-14 14:17:28.180][INFO][22096] 커맨드 큐 생성 성공
+[2024-12-14 14:17:28.188][INFO][22096] 스왑체인 생성 성공
+[2024-12-14 14:17:28.188][INFO][22096] RTV 디스크립터 힙 생성 성공
+[2024-12-14 14:17:28.188][INFO][22096] RTV 생성 성공
+[2024-12-14 14:17:28.189][INFO][22096] 상수 버퍼 생성 성공
+[2024-12-14 14:17:28.189][INFO][22096] 라이트 상수 버퍼 생성 성공
+[2024-12-14 14:17:28.192][DEBUG][22096] 이벤트가 큐에 추가됨: struct Event::ResourceEvent
+[2024-12-14 14:17:28.192][DEBUG][22096] 이벤트 발행: struct Event::ResourceEvent
+[2024-12-14 14:17:28.251][INFO][22096] Engine 초기화 완료
+[2024-12-14 14:17:28.283][DEBUG][22096] 리소스 로딩 완료: Texture/checker.dds
+[2024-12-14 14:17:29.029][INFO][22096] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2024-12-14 14:17:29.030][DEBUG][22096] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2024-12-14 14:17:29.030][DEBUG][22096] 이벤트 발행: struct Event::CollisionEvent
+[2024-12-14 14:17:29.035][DEBUG][22096] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.5, 0.5, 0.5), 노말: (0, 1, 0), 충격량: (0)
+[2024-12-14 14:17:29.041][INFO][22096] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2024-12-14 14:17:29.975][INFO][22096] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2024-12-14 14:17:29.975][DEBUG][22096] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2024-12-14 14:17:29.975][DEBUG][22096] 이벤트 발행: struct Event::CollisionEvent
+[2024-12-14 14:17:29.981][DEBUG][22096] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.49677244, 0.5, 0.4920326), 노말: (0, 1, 0), 충격량: (0)
+[2024-12-14 14:17:29.999][INFO][22096] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2024-12-14 14:17:30.399][INFO][22096] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2024-12-14 14:17:30.399][DEBUG][22096] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2024-12-14 14:17:30.399][DEBUG][22096] 이벤트 발행: struct Event::CollisionEvent
+[2024-12-14 14:17:30.405][DEBUG][22096] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.70624167, 0.5, -0.48377907), 노말: (0, 1, 0), 충격량: (0)
+[2024-12-14 14:17:31.343][INFO][22096] 메모리 매니저 종료
+[2024-12-14 14:17:31.343][INFO][22096] [ThreadSafeFrameAllocator0] 소멸됨
+[2024-12-14 14:17:31.343][INFO][22096] [FrameAllocator0] 제거됨. 최대 사용량: 0 바이트
+[2024-12-14 14:17:31.343][INFO][22096] [ThreadSafeFrameAllocator1] 소멸됨
+[2024-12-14 14:17:31.343][INFO][22096] [FrameAllocator1] 제거됨. 최대 사용량: 0 바이트
+[2024-12-14 14:17:31.343][INFO][22096] [ThreadSafeLevelAllocator] 소멸됨
+[2024-12-14 14:17:31.343][INFO][22096] [LevelAllocator] 소멸됨. 최대 사용량: 0 바이트
+[2024-12-14 14:17:31.343][INFO][22096] [ThreadSafePermanentAllocator] 소멸됨
+[2024-12-14 14:17:31.343][INFO][22096] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
+[2024-12-14 14:17:31.343][INFO][22096] [ThreadSafeGameObjectAllocator] 소멸됨
+[2024-12-14 14:17:31.343][INFO][22096] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
