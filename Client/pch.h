@@ -45,6 +45,7 @@
 #include <thread>
 #include <format>
 #include <fstream>
+#include <filesystem>
 #include <mutex>
 #include <shared_mutex>
 #include <chrono>

@@ -1,6 +1,7 @@
 #pragma once
 #include "Event.h"
 #include "EventTypes.h"
+#include "ShaderResource.h"
 
 class PhysicsObject;
 class PhysicsEngine;
@@ -48,8 +49,8 @@ private:
 	UINT m_indexCount;
 
 	// 셰이더 관련 멤버
-	ComPtr<ID3DBlob> m_vertexShader;
-	ComPtr<ID3DBlob> m_pixelShader;
+	std::shared_ptr<Resource::ShaderResource> m_vertexShader;
+	std::shared_ptr<Resource::ShaderResource> m_pixelShader;
 
 	// 상수 버퍼
 	ComPtr<ID3D12Resource> m_constantBuffer;
@@ -99,7 +100,7 @@ private:
 	bool CreatePipelineState();
 	bool CreateVertexBuffer();
 	bool CreateIndexBuffer();
-	bool CompileShaders();
+	bool InitializeShaders();
 	bool CreateConstantBuffer();
 	bool CreateLightConstantBuffer();
 	bool CreateTexture(const wchar_t* filename);

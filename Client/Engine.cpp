@@ -4,6 +4,7 @@
 #include "PhysicsEngine.h"
 #include "MemoryManager.h"
 #include "EventManager.h"
+#include "ResourceManager.h"
 #include "Logger.h"
 #include "Utils.h"
 
@@ -557,7 +558,9 @@ bool Engine::CreateRootSignature()
 bool Engine::CreatePipelineState()
 {
 	// 셰이더 컴파일 및 로드
-	CompileShaders();
+	if (!InitializeShaders()) {
+		return false;
+	}
 
 	// 정점 입력 레이아웃 정의
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
@@ -576,8 +579,8 @@ bool Engine::CreatePipelineState()
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 	psoDesc.pRootSignature = m_rootSignature.Get();
-	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShader.Get());
-	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShader.Get());
+	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShader->GetShaderBlob());
+	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShader->GetShaderBlob());
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
 	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
@@ -590,13 +593,7 @@ bool Engine::CreatePipelineState()
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	psoDesc.SampleDesc.Count = 1;
 
-	HRESULT hr = m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
-
-	if (FAILED(hr)) {
-		return false;
-	}
-
-	return true;
+	return SUCCEEDED(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 }
 
 bool Engine::CreateVertexBuffer()
@@ -729,35 +726,29 @@ bool Engine::CreateIndexBuffer()
 	return true;
 }
 
-bool Engine::CompileShaders()
+bool Engine::InitializeShaders()
 {
-	UINT compileFlags = 0;
-	IFDEBUG(compileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;);
-	ComPtr<ID3DBlob> errorBlob = nullptr;
+	using namespace Resource;
 
-	// 버텍스 셰이더 컴파일
-	ThrowIfFailed(D3DCompileFromFile(
-		L"shaders.hlsl",
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"VSMain",
-		"vs_5_0",
-		compileFlags,
-		0,
-		&m_vertexShader,
-		&errorBlob));
+	// 버텍스 셰이더 로드
+	m_vertexShader = ResourceManager::Instance().RequestResource<ShaderResource>(
+		"shaders.hlsl",
+		ShaderResource::ShaderType::Vertex,
+		"VSMain"
+	);
 
-	// 픽셀 셰이더 컴파일
-	ThrowIfFailed(D3DCompileFromFile(
-		L"shaders.hlsl",
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"PSMain",
-		"ps_5_0",
-		compileFlags,
-		0,
-		&m_pixelShader,
-		&errorBlob));
+	// 픽셀 셰이더 로드
+	m_pixelShader = ResourceManager::Instance().RequestResource<ShaderResource>(
+		"shaders.hlsl",
+		ShaderResource::ShaderType::Pixel,
+		"PSMain"
+	);
+
+	// 셰이더 로딩 완료 대기
+	if (!m_vertexShader->Load() || !m_pixelShader->Load()) {
+		Logger::Instance().Error("셰이더 로딩 실패");
+		return false;
+	}
 
 	return true;
 }
