@@ -3,6 +3,7 @@
 #include "MemoryManager.h"
 #include "EventManager.h"
 #include "ShaderResource.h"
+#include "TextureResource.h"
 
 namespace Resource
 {
@@ -75,7 +76,7 @@ namespace Resource
         };
         std::queue<LoadingTask> m_loadingQueue;
 
-		// For ShaderResource
+		// 셰이더 리소스 키 생성
         template<typename T>
         std::string CreateResourceKey(const std::string& path,
             ShaderResource::ShaderType type, const std::string& entryPoint) {
@@ -84,6 +85,15 @@ namespace Resource
                     static_cast<int>(type), entryPoint);
             }
             return path;
+        }
+
+		// 텍스처 리소스 키 생성
+		template<typename T>
+        std::string CreateResourceKey(const std::string& path) {
+            if constexpr (std::is_same_v<T, TextureResource>) {
+                return path;
+            }
+			return path;
         }
 
         // 동기화를 위한 뮤텍스

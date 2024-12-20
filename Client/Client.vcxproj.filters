@@ -46,6 +46,9 @@
     <Filter Include="Resource\Manager">
       <UniqueIdentifier>{534fb1d8-47b0-4e6d-8ef3-3525d8535ce0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\GraphicsDevice">
+      <UniqueIdentifier>{4cfef54d-1b46-4244-b7d9-9510ae057843}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -120,6 +123,12 @@
     <ClInclude Include="ShaderResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
+    <ClInclude Include="TextureResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsDevice.h">
+      <Filter>Engine\GraphicsDevice</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -166,9 +175,6 @@
     </ClCompile>
     <ClCompile Include="ResourceManager.cpp">
       <Filter>Resource\Manager</Filter>
-    </ClCompile>
-    <ClCompile Include="ShaderResource.cpp">
-      <Filter>Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -152,6 +152,7 @@
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventTypes.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="GraphicsDevice.h" />
     <ClInclude Include="IAllocator.h" />
     <ClInclude Include="IResource.h" />
     <ClInclude Include="LinearAllocator.h" />
@@ -168,6 +169,7 @@
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="ShaderResource.h" />
     <ClInclude Include="StackAllocator.h" />
+    <ClInclude Include="TextureResource.h" />
     <ClInclude Include="ThreadSafeAllocator.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="WinResource.h" />
@@ -193,7 +195,6 @@
     <ClCompile Include="PhysicsObject.cpp" />
     <ClCompile Include="PoolAllocator.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
-    <ClCompile Include="ShaderResource.cpp" />
     <ClCompile Include="StackAllocator.cpp" />
     <ClCompile Include="ThreadSafeAllocator.cpp" />
   </ItemGroup>
