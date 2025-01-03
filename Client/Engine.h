@@ -12,6 +12,9 @@ public:
 	static Engine& Instance();
 	bool Initialize(HWND hwnd, UINT width, UINT height);
 	void Update();
+	void BeginRender();
+	void ExecuteRender();
+	void EndRender();
 	void Render();
 	void Cleanup();
 

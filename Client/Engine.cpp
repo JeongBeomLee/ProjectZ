@@ -72,12 +72,10 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	if (!CreateSwapChain(hwnd)) {
 		Logger::Instance().Fatal("스왑체인 생성 실패");
 		return false;
-
 	}
 	if (!CreateRTVDescriptorHeaps()) {
 		Logger::Instance().Fatal("RTV 디스크립터 힙 생성 실패");
 		return false;
-
 	}
 	if (!CreateRenderTargetViews()) {
 		Logger::Instance().Fatal("RTV 생성 실패");
@@ -194,7 +192,10 @@ void Engine::Update()
 	// 월드 행렬 업데이트
 	UpdateWorldMatrix();
 
-	//// 회전 각도 업데이트
+	// 물체 상수 버퍼 업데이트
+	UpdateConstantBuffer();
+
+	// 회전 각도 업데이트
 	m_rotationAngle += deltaTime;
 
 	// 라이트 방향 업데이트 (원을 그리며 회전)
@@ -212,20 +213,34 @@ void Engine::Update()
 	memcpy(m_lightConstantBufferMappedData, &m_lightConstants, sizeof(m_lightConstants));
 }
 
-void Engine::Render()
+void Engine::BeginRender()
 {
+	// 커맨드 리스트 초기화
 	ThrowIfFailed(m_commandAllocator->Reset());
 	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
-
-	// 상수 버퍼 업데이트
-	UpdateConstantBuffer();
 
 	// 뷰포트와 시저렉트 설정
 	const CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
 	const CD3DX12_RECT scissorRect(0, 0, m_width, m_height);
-
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
+
+	// 리소스 배리어 (Present -> RenderTarget)
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		m_renderTargets[m_frameIndex].Get(),
+		D3D12_RESOURCE_STATE_PRESENT,
+		D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_commandList->ResourceBarrier(1, &barrier);
+
+	// 렌더 타겟 설정
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
+		m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
+		m_frameIndex, GetRtvDescriptorSize());
+	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+	// 화면 클리어
+	const float clearColor[] = { 0.0f, 0.0f, 0.2f, 1.0f };
+	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 	// 루트 시그니처와 디스크립터 힙 설정
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
@@ -247,36 +262,27 @@ void Engine::Render()
 	textureSrvHandle.Offset(2, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 	m_commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandle);
 
-	// 리소스 배리어
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-		m_renderTargets[m_frameIndex].Get(),
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	m_commandList->ResourceBarrier(1, &barrier);
-
-	// 렌더 타겟 설정
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
-		m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
-		m_frameIndex, GetRtvDescriptorSize());
-
-	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-
-	// 화면 클리어
-	const float clearColor[] = { 0.0f, 0.0f, 0.2f, 1.0f };
-	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-
-	////////// RENDER ///////////
+	// 프리미티브 토폴로지 설정
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	m_commandList->IASetIndexBuffer(&m_indexBufferView);
-	m_commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
-	/////////////////////////////
+}
 
-	// 리소스 배리어
-	barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+void Engine::ExecuteRender()
+{
+	m_commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+}
+
+void Engine::EndRender()
+{
+	// 리소스 배리어 (RenderTarget -> Present)
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_renderTargets[m_frameIndex].Get(),
-		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PRESENT);
 	m_commandList->ResourceBarrier(1, &barrier);
 
+	// 커맨드 리스트 닫기
 	ThrowIfFailed(m_commandList->Close());
 
 	// 커맨드 리스트 실행
@@ -286,18 +292,23 @@ void Engine::Render()
 	// 화면 표시
 	ThrowIfFailed(m_swapChain->Present(1, 0));
 
+	// GPU 동기화
 	WaitForGpu();
 	MoveToNextFrame();
+}
+
+void Engine::Render()
+{
+	BeginRender();
+	ExecuteRender();
+	EndRender();
 }
 
 void Engine::Cleanup()
 {
 	WaitForGpu();
-
 	UnregisterEventHandlers();
-
 	m_physicsEngine.reset();
-
     CloseHandle(m_fenceEvent);
 }
 
