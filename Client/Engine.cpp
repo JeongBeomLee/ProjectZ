@@ -138,15 +138,15 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		CollisionGroup::Default | CollisionGroup::Player);
 
 	// 물리 박스 생성 (크기는 렌더링되는 큐브와 동일하게)
-	m_physicsBox = m_physicsEngine->CreateBox(
-		PxVec3(0.0f, 5.0f, 0.0f),  // 시작 위치
-		PxVec3(0.5f, 0.5f, 0.5f),  // 크기
-		PhysicsObjectType::DYNAMIC, // 동적 객체
-		CollisionGroup::Default,    // 기본 그룹
-		CollisionGroup::Ground);    // 지면과 충돌
+	//m_physicsBox = m_physicsEngine->CreateBox(
+	//	PxVec3(0.0f, 5.0f, 0.0f),  // 시작 위치
+	//	PxVec3(0.5f, 0.5f, 0.5f),  // 크기
+	//	PhysicsObjectType::DYNAMIC, // 동적 객체
+	//	CollisionGroup::Default,    // 기본 그룹
+	//	CollisionGroup::Ground);    // 지면과 충돌
 
 	// 초기 변환 행렬 설정
-	m_worldMatrix = XMMatrixIdentity();
+	//m_worldMatrix = XMMatrixIdentity();
 	m_viewMatrix = XMMatrixLookAtLH(
 		XMVectorSet(0.0f, 5.0f, -5.0f, 1.0f),  // 카메라 위치
 		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 지점
@@ -158,6 +158,12 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		0.1f,                                   // 근평면
 		100.0f                                  // 원평면
 	);
+
+	CreateCube(PxVec3(0.0f, 5.0f, 0.0f));   // 첫 번째 큐브
+	CreateCube(PxVec3(1.0f, 7.0f, 0.0f));   // 두 번째 큐브
+	CreateCube(PxVec3(-1.0f, 9.0f, 0.0f));  // 세 번째 큐브
+	CreateCube(PxVec3(0.0f, 11.0f, 0.0f));  // 네 번째 큐브
+	CreateCube(PxVec3(1.0f, 13.0f, 0.0f));  // 다섯 번째 큐브
 
 	// 회전 애니메이션 초기화
 	m_rotationAngle = 0.0f;
@@ -252,14 +258,16 @@ void Engine::BeginRender()
 	// Transform CBV 설정 (첫 번째 위치)
 	m_commandList->SetGraphicsRootDescriptorTable(0, m_descHeap->GetGPUDescriptorHandleForHeapStart());
 
-	// Light CBV 설정 (두 번째 위치)
+	// Light CBV 설정 (큐브들 뒤에 위치)
 	CD3DX12_GPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
-	lightCbvHandle.Offset(m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+	lightCbvHandle.Offset(100, // maxCubes
+		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 	m_commandList->SetGraphicsRootDescriptorTable(1, lightCbvHandle);
 
-	// Texture SRV 설정 (세 번째 위치)
+	// Texture SRV 설정 (라이트 CBV 뒤에 위치)
 	CD3DX12_GPU_DESCRIPTOR_HANDLE textureSrvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
-	textureSrvHandle.Offset(2, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+	textureSrvHandle.Offset(101, // maxCubes + 1
+		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 	m_commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandle);
 
 	// 프리미티브 토폴로지 설정
@@ -270,7 +278,22 @@ void Engine::BeginRender()
 
 void Engine::ExecuteRender()
 {
-	m_commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+	//m_commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+	// 각 큐브 렌더링
+	for (auto& cube : m_cubeObjects) {
+		// 상수 버퍼 업데이트
+		ObjectConstants constants;
+		constants.worldMatrix = XMMatrixTranspose(cube.worldMatrix);
+		constants.viewMatrix = XMMatrixTranspose(m_viewMatrix);
+		constants.projectionMatrix = XMMatrixTranspose(m_projectionMatrix);
+		memcpy(cube.constantBufferMappedData, &constants, sizeof(constants));
+
+		// Transform CBV 설정 (이제 각 큐브의 고유한 CBV 사용)
+		m_commandList->SetGraphicsRootDescriptorTable(0, cube.cbvHandle);
+
+		// 드로우 콜
+		m_commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+	}
 }
 
 void Engine::EndRender()
@@ -314,9 +337,16 @@ void Engine::Cleanup()
 
 void Engine::UpdateWorldMatrix()
 {
-	if (m_physicsBox) {
-		// 물리 객체의 변환 행렬을 가져와서 렌더링에 사용할 월드 행렬 업데이트
-		m_worldMatrix = m_physicsBox->GetTransformMatrix();
+	//if (m_physicsBox) {
+	//	// 물리 객체의 변환 행렬을 가져와서 렌더링에 사용할 월드 행렬 업데이트
+	//	m_worldMatrix = m_physicsBox->GetTransformMatrix();
+	//}
+	
+	// 모든 큐브 객체의 월드 행렬 업데이트
+	for (auto& cube : m_cubeObjects) {
+		if (cube.physicsObject) {
+			cube.worldMatrix = cube.physicsObject->GetTransformMatrix();
+		}
 	}
 }
 
@@ -865,43 +895,94 @@ bool Engine::CreateTexture(const wchar_t* filename)
 
 bool Engine::CreateDescHeap()
 {
-	// CBV 2개와 SRV 1개를 위한 디스크립터 힙 생성
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 3;  // CBV 2개 + SRV 1개
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	const UINT maxCubes = 100;  // 최대 큐브 개수 설정
 
-	ThrowIfFailed(m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_descHeap)));
+	// 디스크립터 힙 생성
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+	heapDesc.NumDescriptors = maxCubes + 2;  // 큐브들 + 라이트 + 텍스처
+	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-	// 변환 행렬용 CBV 생성
-	D3D12_CONSTANT_BUFFER_VIEW_DESC transformCbvDesc = {};
-	transformCbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
-	transformCbvDesc.SizeInBytes = (sizeof(ObjectConstants) + 255) & ~255;
+	ThrowIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_descHeap)));
 
-	// 라이팅용 CBV 생성
+	// 초기 CPU 디스크립터 핸들 설정 (큐브들의 CBV를 위한 공간)
+	m_currentCbvHandle = m_descHeap->GetCPUDescriptorHandleForHeapStart();
+
+	// 라이트용 CBV 생성 (큐브들 뒤에 위치)
+	CD3DX12_CPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
+	lightCbvHandle.Offset(maxCubes,
+		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+
 	D3D12_CONSTANT_BUFFER_VIEW_DESC lightCbvDesc = {};
 	lightCbvDesc.BufferLocation = m_lightConstantBuffer->GetGPUVirtualAddress();
 	lightCbvDesc.SizeInBytes = (sizeof(LightConstants) + 255) & ~255;
+	m_device->CreateConstantBufferView(&lightCbvDesc, lightCbvHandle);
 
-	// 텍스처용 SRV 생성
+	// 텍스처용 SRV 생성 (라이트 CBV 뒤에 위치)
+	CD3DX12_CPU_DESCRIPTOR_HANDLE textureSrvHandle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
+	textureSrvHandle.Offset(maxCubes + 1,
+		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = m_texture->GetDesc().Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = m_texture->GetDesc().MipLevels;
-
-	// 디스크립터 핸들 계산
-	CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
-	UINT handleIncrement = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	// CBV들과 SRV 생성
-	m_device->CreateConstantBufferView(&transformCbvDesc, handle);
-	handle.Offset(handleIncrement);
-	m_device->CreateConstantBufferView(&lightCbvDesc, handle);
-	handle.Offset(handleIncrement);
-	m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, handle);
+	m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, textureSrvHandle);
 
 	return true;
+}
+
+void Engine::CreateCube(const PxVec3& position, const PxVec3& dimensions)
+{
+	CubeObject cube;
+
+	// PhysX 물리 객체 생성
+	cube.physicsObject = m_physicsEngine->CreateBox(
+		position,
+		dimensions,
+		PhysicsObjectType::DYNAMIC,
+		CollisionGroup::Default,
+		CollisionGroup::Default | CollisionGroup::Ground
+	);
+
+	// 초기 월드 행렬 설정
+	cube.worldMatrix = XMMatrixIdentity();
+
+	// 상수 버퍼 생성
+	const UINT constantBufferSize = (sizeof(ObjectConstants) + 255) & ~255;
+
+	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
+
+	ThrowIfFailed(m_device->CreateCommittedResource(
+		&heapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&cube.constantBuffer)));
+
+	// 상수 버퍼 매핑
+	CD3DX12_RANGE readRange(0, 0);
+	ThrowIfFailed(cube.constantBuffer->Map(0, &readRange,
+		reinterpret_cast<void**>(&cube.constantBufferMappedData)));
+
+	// CBV 생성
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+	cbvDesc.BufferLocation = cube.constantBuffer->GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes = constantBufferSize;
+
+	// CBV 디스크립터 생성
+	cube.cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_descHeap->GetGPUDescriptorHandleForHeapStart());
+	cube.cbvHandle.ptr += m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * m_cubeObjects.size();
+
+	// CPU 디스크립터 핸들로 CBV 생성
+	m_device->CreateConstantBufferView(&cbvDesc, m_currentCbvHandle);
+	m_currentCbvHandle.ptr += m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	// 컨테이너에 추가
+	m_cubeObjects.push_back(cube);
 }
 
 void Engine::RegisterEventHandlers()
@@ -988,12 +1069,12 @@ void Engine::UnregisterEventHandlers()
 
 void Engine::UpdateConstantBuffer()
 {
-	ObjectConstants constants;
+	/*ObjectConstants constants;
 	constants.worldMatrix = XMMatrixTranspose(m_worldMatrix);
 	constants.viewMatrix = XMMatrixTranspose(m_viewMatrix);
 	constants.projectionMatrix = XMMatrixTranspose(m_projectionMatrix);
 
-	memcpy(m_constantBufferMappedData, &constants, sizeof(constants));
+	memcpy(m_constantBufferMappedData, &constants, sizeof(constants));*/
 }
 
 void Engine::WaitForGpu()

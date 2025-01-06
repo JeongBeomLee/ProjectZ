@@ -67,7 +67,7 @@ private:
 	ComPtr<ID3D12Resource> m_texture;
 	
 	// 변환 행렬 (카메라)
-	XMMATRIX m_worldMatrix;
+	//XMMATRIX m_worldMatrix;
 	XMMATRIX m_viewMatrix;
 	XMMATRIX m_projectionMatrix;
 
@@ -79,8 +79,18 @@ private:
 	std::unique_ptr<PhysicsEngine> m_physicsEngine;
 
 	// 물리 객체
-	std::shared_ptr<PhysicsObject> m_physicsBox;
+	//std::shared_ptr<PhysicsObject> m_physicsBox;
+	struct CubeObject {
+		std::shared_ptr<PhysicsObject> physicsObject;  // 물리 객체
+		XMMATRIX worldMatrix;                          // 월드 변환 행렬
+		ComPtr<ID3D12Resource> constantBuffer;         // 각 큐브의 상수 버퍼
+		UINT8* constantBufferMappedData;               // 매핑된 상수 버퍼 데이터
+		D3D12_GPU_DESCRIPTOR_HANDLE cbvHandle;         // CBV 디스크립터 핸들
+	};
 	std::shared_ptr<PhysicsObject> m_ground;
+
+	std::vector<CubeObject> m_cubeObjects;  // 큐브 객체들을 저장할 컨테이너
+	D3D12_CPU_DESCRIPTOR_HANDLE m_currentCbvHandle;
 
 	// 이벤트 핸들러 ID 저장용 변수들
 	std::vector<Event::EventDispatcher<Event::CollisionEvent>::HandlerId> m_collisionHandlerIds;
@@ -107,6 +117,7 @@ private:
 	bool CreateLightConstantBuffer();
 	bool CreateTexture(const wchar_t* filename);
 	bool CreateDescHeap();
+	void CreateCube(const PxVec3& position, const PxVec3& dimensions = PxVec3(0.5f));
 
 	// 이벤트 핸들러 등록, 등록 해제 함수
 	void RegisterEventHandlers();
