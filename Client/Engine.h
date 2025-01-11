@@ -12,10 +12,10 @@ public:
 	static Engine& Instance();
 	bool Initialize(HWND hwnd, UINT width, UINT height);
 	void Update();
+	void Render();
 	void BeginRender();
 	void ExecuteRender();
 	void EndRender();
-	void Render();
 	void Cleanup();
 
 	ID3D12Device10* GetDevice() const { return m_device.Get(); }
@@ -122,8 +122,6 @@ private:
 	// 이벤트 핸들러 등록, 등록 해제 함수
 	void RegisterEventHandlers();
 	void UnregisterEventHandlers();
-
-	void UpdateConstantBuffer();
 
 	// 렌더링 헬퍼 함수들
 	void WaitForGpu();

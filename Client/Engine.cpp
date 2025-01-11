@@ -198,9 +198,6 @@ void Engine::Update()
 	// 월드 행렬 업데이트
 	UpdateWorldMatrix();
 
-	// 물체 상수 버퍼 업데이트
-	UpdateConstantBuffer();
-
 	// 회전 각도 업데이트
 	m_rotationAngle += deltaTime;
 
@@ -255,9 +252,6 @@ void Engine::BeginRender()
 	ID3D12DescriptorHeap* ppHeaps[] = { m_descHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-	// Transform CBV 설정 (첫 번째 위치)
-	m_commandList->SetGraphicsRootDescriptorTable(0, m_descHeap->GetGPUDescriptorHandleForHeapStart());
-
 	// Light CBV 설정 (큐브들 뒤에 위치)
 	CD3DX12_GPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
 	lightCbvHandle.Offset(100, // maxCubes
@@ -272,13 +266,14 @@ void Engine::BeginRender()
 
 	// 프리미티브 토폴로지 설정
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// 정점 버퍼, 인덱스 버퍼 설정
 	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	m_commandList->IASetIndexBuffer(&m_indexBufferView);
 }
 
 void Engine::ExecuteRender()
 {
-	//m_commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 	// 각 큐브 렌더링
 	for (auto& cube : m_cubeObjects) {
 		// 상수 버퍼 업데이트
@@ -337,11 +332,6 @@ void Engine::Cleanup()
 
 void Engine::UpdateWorldMatrix()
 {
-	//if (m_physicsBox) {
-	//	// 물리 객체의 변환 행렬을 가져와서 렌더링에 사용할 월드 행렬 업데이트
-	//	m_worldMatrix = m_physicsBox->GetTransformMatrix();
-	//}
-	
 	// 모든 큐브 객체의 월드 행렬 업데이트
 	for (auto& cube : m_cubeObjects) {
 		if (cube.physicsObject) {
@@ -1065,16 +1055,6 @@ void Engine::UnregisterEventHandlers()
 	for (auto id : m_inputHandlerIds) {
 		EventManager::Instance().Unsubscribe<Event::InputEvent>(id);
 	}
-}
-
-void Engine::UpdateConstantBuffer()
-{
-	/*ObjectConstants constants;
-	constants.worldMatrix = XMMatrixTranspose(m_worldMatrix);
-	constants.viewMatrix = XMMatrixTranspose(m_viewMatrix);
-	constants.projectionMatrix = XMMatrixTranspose(m_projectionMatrix);
-
-	memcpy(m_constantBufferMappedData, &constants, sizeof(constants));*/
 }
 
 void Engine::WaitForGpu()

@@ -47858,3 +47858,686 @@ Logging failed: Argument not found.[2024-12-09 09:06:15.516][INFO][5796] 메모리 
 [2025-01-06 16:14:06.018][INFO][19540] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
 [2025-01-06 16:14:06.018][INFO][19540] [ThreadSafeGameObjectAllocator] 소멸됨
 [2025-01-06 16:14:06.018][INFO][19540] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
+[2025-01-11 14:51:19.038][INFO][36004] Engine 초기화 시작
+[2025-01-11 14:51:19.038][INFO][36004] [FrameAllocator0] 크기: 8388608 바이트로 생성됨
+[2025-01-11 14:51:19.038][INFO][36004] [ThreadSafeFrameAllocator0] 생성됨
+[2025-01-11 14:51:19.038][INFO][36004] [FrameAllocator1] 크기: 8388608 바이트로 생성됨
+[2025-01-11 14:51:19.039][INFO][36004] [ThreadSafeFrameAllocator1] 생성됨
+[2025-01-11 14:51:19.039][INFO][36004] [LevelAllocator] 생성됨. 크기: 67108864 바이트
+[2025-01-11 14:51:19.039][INFO][36004] [ThreadSafeLevelAllocator] 생성됨
+[2025-01-11 14:51:19.039][INFO][36004] [PermanentAllocator] 크기: 33554432 바이트로 생성됨
+[2025-01-11 14:51:19.039][INFO][36004] [ThreadSafePermanentAllocator] 생성됨
+[2025-01-11 14:51:19.039][INFO][36004] [GameObjectAllocator] 생성됨. 블록 크기: 1024 bytes, 블록 수: 1024, Total: 1048576 bytes
+[2025-01-11 14:51:19.039][INFO][36004] [ThreadSafeGameObjectAllocator] 생성됨
+[2025-01-11 14:51:19.039][INFO][36004] 메모리 매니저 초기화 완료
+[2025-01-11 14:51:19.039][DEBUG][36004] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::CollisionEvent
+[2025-01-11 14:51:19.039][DEBUG][36004] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::ResourceEvent
+[2025-01-11 14:51:19.039][DEBUG][36004] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::InputEvent
+[2025-01-11 14:51:19.287][INFO][36004] 디바이스 생성 성공
+[2025-01-11 14:51:19.309][INFO][36004] 커맨드 큐 생성 성공
+[2025-01-11 14:51:19.318][INFO][36004] 스왑체인 생성 성공
+[2025-01-11 14:51:19.318][INFO][36004] RTV 디스크립터 힙 생성 성공
+[2025-01-11 14:51:19.318][INFO][36004] RTV 생성 성공
+[2025-01-11 14:51:19.318][INFO][36004] 상수 버퍼 생성 성공
+[2025-01-11 14:51:19.319][INFO][36004] 라이트 상수 버퍼 생성 성공
+[2025-01-11 14:51:19.391][INFO][36004] Engine 초기화 완료
+[2025-01-11 14:51:20.170][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 14:51:20.170][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.170][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.176][DEBUG][36004] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.5, 0.5, 0.5), 노말: (0, 1, 0), 충격량: (4.458291)
+[2025-01-11 14:51:20.188][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 14:51:20.249][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 14:51:20.249][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.249][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.255][DEBUG][36004] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.46567792, 1.5468854, -0.49965298), 노말: (0.98996127, 0.1409839, -0.010008989), 충격량: (0)
+[2025-01-11 14:51:20.309][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 14:51:20.346][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 14:51:20.346][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.346][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.346][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 14:51:20.346][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.346][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.351][DEBUG][36004] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.72676325, 2.4919164, 0.24013191), 노말: (-0.067140624, 0.9531579, -0.29492745), 충격량: (4.978557)
+[2025-01-11 14:51:20.351][DEBUG][36004] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (1.6824534, 0.5, 0.46059182), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 14:51:20.363][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 14:51:20.375][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 14:51:20.375][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.376][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.376][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 14:51:20.381][DEBUG][36004] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.5861616, 1.5153409, 0.073366135), 노말: (0.9948578, 0.020410644, -0.09920367), 충격량: (0)
+[2025-01-11 14:51:20.394][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 14:51:20.485][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 14:51:20.485][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.485][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.491][DEBUG][36004] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.31827343, 0.5, 0.14613464), 노말: (0, 1, 0), 충격량: (9.040413)
+[2025-01-11 14:51:20.503][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 14:51:20.515][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 14:51:20.515][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.515][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.521][DEBUG][36004] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.28899616, 2.2274084, -0.20720445), 노말: (2.9802326e-08, 1, 0), 충격량: (8.359356)
+[2025-01-11 14:51:20.533][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 14:51:20.533][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.533][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.533][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 14:51:20.539][DEBUG][36004] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.3643605, 0.5, 0.15467879), 노말: (0, 1, 0), 충격량: (11.991245)
+[2025-01-11 14:51:20.545][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 14:51:20.563][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 14:51:20.563][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.564][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.564][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 14:51:20.564][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.564][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.570][DEBUG][36004] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.106304675, 2.067188, 0.16002098), 노말: (-0.09181126, 0.99566483, 0.014907418), 충격량: (1.7741926)
+[2025-01-11 14:51:20.570][DEBUG][36004] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.45637843, 0.5, -0.399537), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 14:51:20.576][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 14:51:20.576][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.576][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.582][DEBUG][36004] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.48158377, 3.0574431, -0.49929643), 노말: (0.99336123, 0.1085949, -0.03795686), 충격량: (0)
+[2025-01-11 14:51:20.594][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 14:51:20.612][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 14:51:20.612][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.612][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.618][DEBUG][36004] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (1.5468075, 2.5718062, 0.20823267), 노말: (-0.48421395, 0.6868943, -0.541953), 충격량: (4.796363)
+[2025-01-11 14:51:20.624][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 14:51:20.624][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.624][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.624][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 14:51:20.630][DEBUG][36004] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-1.9039296, 0.5, -0.0457626), 노말: (0, 1, 0), 충격량: (4.9359484)
+[2025-01-11 14:51:20.642][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 14:51:20.673][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 14:51:20.673][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.673][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.679][DEBUG][36004] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.685788, 1.8252017, -0.3581978), 노말: (-0.21975306, 0.9390458, -0.26438925), 충격량: (3.8193622)
+[2025-01-11 14:51:20.721][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 14:51:20.794][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 14:51:20.794][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.794][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.799][DEBUG][36004] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (3.7391062, 0.5, 0.42223787), 노말: (0, 1, 0), 충격량: (7.044326)
+[2025-01-11 14:51:20.812][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 14:51:20.812][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 14:51:20.891][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 14:51:20.891][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.891][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.897][DEBUG][36004] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (1.4081628, 1.2934748, -0.05344419), 노말: (0.60437, 0.2904828, 0.74186033), 충격량: (0)
+[2025-01-11 14:51:20.903][INFO][36004] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 14:51:20.969][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 14:51:20.969][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:20.969][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:20.975][DEBUG][36004] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.7325777, 0.5, 0.4023849), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 14:51:20.981][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 14:51:21.048][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 14:51:21.048][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:21.049][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:21.054][DEBUG][36004] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (2.5060592, 0.5, 0.52487874), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 14:51:21.060][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 14:51:21.091][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 14:51:21.091][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:21.091][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:21.097][DEBUG][36004] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (5.020508, 0.5, -1.6427526), 노말: (0, 1, 0), 충격량: (4.9130135)
+[2025-01-11 14:51:21.109][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 14:51:21.109][DEBUG][36004] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 14:51:21.109][DEBUG][36004] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 14:51:21.115][DEBUG][36004] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-1.8970274, 0.5, -0.61428297), 노말: (0, 1, 0), 충격량: (3.7939727)
+[2025-01-11 14:51:21.121][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 14:51:21.139][INFO][36004] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 14:51:21.255][INFO][36004] 메모리 매니저 종료
+[2025-01-11 14:51:21.255][INFO][36004] [ThreadSafeFrameAllocator0] 소멸됨
+[2025-01-11 14:51:21.255][INFO][36004] [FrameAllocator0] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 14:51:21.255][INFO][36004] [ThreadSafeFrameAllocator1] 소멸됨
+[2025-01-11 14:51:21.255][INFO][36004] [FrameAllocator1] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 14:51:21.255][INFO][36004] [ThreadSafeLevelAllocator] 소멸됨
+[2025-01-11 14:51:21.255][INFO][36004] [LevelAllocator] 소멸됨. 최대 사용량: 0 바이트
+[2025-01-11 14:51:21.255][INFO][36004] [ThreadSafePermanentAllocator] 소멸됨
+[2025-01-11 14:51:21.255][INFO][36004] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 14:51:21.255][INFO][36004] [ThreadSafeGameObjectAllocator] 소멸됨
+[2025-01-11 14:51:21.256][INFO][36004] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
+[2025-01-11 15:36:51.560][INFO][376] Engine 초기화 시작
+[2025-01-11 15:36:51.561][INFO][376] [FrameAllocator0] 크기: 8388608 바이트로 생성됨
+[2025-01-11 15:36:51.561][INFO][376] [ThreadSafeFrameAllocator0] 생성됨
+[2025-01-11 15:36:51.561][INFO][376] [FrameAllocator1] 크기: 8388608 바이트로 생성됨
+[2025-01-11 15:36:51.561][INFO][376] [ThreadSafeFrameAllocator1] 생성됨
+[2025-01-11 15:36:51.561][INFO][376] [LevelAllocator] 생성됨. 크기: 67108864 바이트
+[2025-01-11 15:36:51.561][INFO][376] [ThreadSafeLevelAllocator] 생성됨
+[2025-01-11 15:36:51.561][INFO][376] [PermanentAllocator] 크기: 33554432 바이트로 생성됨
+[2025-01-11 15:36:51.561][INFO][376] [ThreadSafePermanentAllocator] 생성됨
+[2025-01-11 15:36:51.561][INFO][376] [GameObjectAllocator] 생성됨. 블록 크기: 1024 bytes, 블록 수: 1024, Total: 1048576 bytes
+[2025-01-11 15:36:51.562][INFO][376] [ThreadSafeGameObjectAllocator] 생성됨
+[2025-01-11 15:36:51.562][INFO][376] 메모리 매니저 초기화 완료
+[2025-01-11 15:36:51.562][DEBUG][376] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::CollisionEvent
+[2025-01-11 15:36:51.562][DEBUG][376] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::ResourceEvent
+[2025-01-11 15:36:51.562][DEBUG][376] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::InputEvent
+[2025-01-11 15:36:51.797][INFO][376] 디바이스 생성 성공
+[2025-01-11 15:36:51.824][INFO][376] 커맨드 큐 생성 성공
+[2025-01-11 15:36:51.835][INFO][376] 스왑체인 생성 성공
+[2025-01-11 15:36:51.835][INFO][376] RTV 디스크립터 힙 생성 성공
+[2025-01-11 15:36:51.835][INFO][376] RTV 생성 성공
+[2025-01-11 15:36:51.836][INFO][376] 상수 버퍼 생성 성공
+[2025-01-11 15:36:51.836][INFO][376] 라이트 상수 버퍼 생성 성공
+[2025-01-11 15:36:51.896][INFO][376] Engine 초기화 완료
+[2025-01-11 15:36:52.670][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:52.670][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:52.670][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:52.676][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.5, 0.5, 0.5), 노말: (0, 1, 0), 충격량: (4.4551325)
+[2025-01-11 15:36:52.676][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:52.724][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:52.724][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:52.724][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:52.730][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.49794778, 1.8951647, -0.49999985), 노말: (0.9999985, 0.0017298786, -0.00012693735), 충격량: (0)
+[2025-01-11 15:36:52.845][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:52.846][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:52.846][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:52.846][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:52.846][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:52.846][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:52.846][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:52.852][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.50542945, 2.4751394, 0.49706125), 노말: (-1, 1.2403233e-10, 2.9103827e-11), 충격량: (0.06365594)
+[2025-01-11 15:36:52.852][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (1.5, 0.5, 0.5), 노말: (0, 1, 0), 충격량: (5.4424734)
+[2025-01-11 15:36:52.858][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:52.858][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:52.858][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:52.863][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.50003844, 1.4891257, 0.49853042), 노말: (0.0025733241, -0.9999951, 0.0017841839), 충격량: (0.60440475)
+[2025-01-11 15:36:52.869][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:52.876][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:52.924][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:52.954][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:52.954][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:52.954][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:52.960][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.4234451, 3.0670896, 0.48649037), 노말: (1.0477379e-09, 1, 0), 충격량: (1.032682)
+[2025-01-11 15:36:52.972][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:52.972][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:52.973][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:52.973][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:52.979][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.5676315, 1.8232791, -0.4559563), 노말: (0.40086257, -0.9143941, -0.056503218), 충격량: (3.0548508)
+[2025-01-11 15:36:52.985][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:52.985][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:52.985][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:52.991][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.7229332, 0.5, 0.475428), 노말: (0, 1, 0), 충격량: (8.9701805)
+[2025-01-11 15:36:52.991][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:53.021][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:53.051][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:53.051][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.051][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.057][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.47117558, 3.5335095, -0.5000444), 노말: (0.9874837, 0.15771429, 0.0015179035), 충격량: (0)
+[2025-01-11 15:36:53.081][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:53.082][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.082][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.087][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-1.1207745, 1.6304268, -0.13226222), 노말: (-0.83367807, -0.546992, 0.07603062), 충격량: (0)
+[2025-01-11 15:36:53.094][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:53.094][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:53.112][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.112][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.112][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.118][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (1.8712862, 0.5, -0.4689605), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:53.124][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:53.160][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:53.161][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.161][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.166][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (1.6647692, 1.9045488, -0.49530065), 노말: (-0.9090727, 0.40292, 0.106029995), 충격량: (2.6440246)
+[2025-01-11 15:36:53.178][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.178][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.178][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.184][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-1.158746, 0.5, 0.3825974), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:53.184][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.185][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.185][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.190][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (2.3655114, 0.5, -0.41994065), 노말: (0, 1, 0), 충격량: (5.255084)
+[2025-01-11 15:36:53.191][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:53.191][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:53.209][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:53.221][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.221][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.221][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.221][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:53.221][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.221][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.227][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.912496, 0.5, -0.4908992), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:53.227][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (1.6452823, 1.360896, -0.22688295), 노말: (-0.8804131, 0.40882462, 0.24028142), 충격량: (0)
+[2025-01-11 15:36:53.239][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:53.251][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.251][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.251][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.251][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:53.257][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.9179472, 0.5, 0.5394889), 노말: (0, 1, 0), 충격량: (12.553972)
+[2025-01-11 15:36:53.269][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:53.269][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.269][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.275][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.68139553, 2.0929322, -0.39513198), 노말: (0.30829474, 0.9050407, -0.29301158), 충격량: (3.3750348)
+[2025-01-11 15:36:53.281][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:53.318][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:53.318][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.318][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.324][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.6268708, 1.9263628, 0.263379), 노말: (0.66065115, 0.7505052, -0.016791577), 충격량: (0)
+[2025-01-11 15:36:53.330][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:53.330][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:53.366][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.366][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.367][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.372][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-1.1196631, 0.5, -0.3809681), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:53.378][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.378][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.378][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.379][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:53.384][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (3.4559755, 0.5, 0.6839084), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:53.415][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.415][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.415][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.421][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-4.059193, 0.5, -0.39818692), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:53.427][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:53.457][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:36:53.457][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.457][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.463][DEBUG][376] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.094258964, 2.0381548, -0.49261317), 노말: (-0.22035666, -0.91944677, -0.32566956), 충격량: (0)
+[2025-01-11 15:36:53.469][INFO][376] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:36:53.536][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.536][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.536][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.542][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.06496522, 0.5, -1.1133324), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:53.548][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:53.554][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.554][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.554][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.560][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.20807683, 0.5, -2.1131327), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:53.578][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.578][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.579][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.584][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-2.8292835, 0.5, -0.8047316), 노말: (0, 1, 0), 충격량: (4.829748)
+[2025-01-11 15:36:53.609][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:53.645][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:53.736][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:53.736][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:53.736][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:53.742][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-5.725873, 0.5, -1.1849062), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:53.875][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:54.033][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.033][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.033][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.039][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.2457543, 0.5, -0.13587181), 노말: (0, 1, 0), 충격량: (8.614456)
+[2025-01-11 15:36:54.051][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:54.112][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.112][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.112][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.118][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-3.9405196, 0.5, -2.173318), 노말: (0, 1, 0), 충격량: (5.335497)
+[2025-01-11 15:36:54.142][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:54.300][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.300][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.300][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.306][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-8.004235, 0.5, -2.688293), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:54.312][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:54.318][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.318][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.318][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.324][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.8341657, 0.5, -4.981117), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:54.330][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:54.612][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.612][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.612][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.612][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.612][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.612][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.621][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-7.4519787, 0.5, -2.1317182), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:54.621][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-4.9955044, 0.5, -2.2328844), 노말: (0, 1, 0), 충격량: (2.4052193)
+[2025-01-11 15:36:54.627][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.627][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.627][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.633][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.3639447, 0.5, -0.18722151), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:54.645][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:54.645][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:54.663][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.663][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.663][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.669][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-4.4811306, 0.5, -0.96345586), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:54.688][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.688][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.688][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.694][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-2.4205046, 0.5, -5.2383685), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:54.827][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:54.845][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.845][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.845][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.851][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-3.2738237, 0.5, -5.879355), 노말: (0, 1, 0), 충격량: (3.169917)
+[2025-01-11 15:36:54.875][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:54.912][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.912][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.912][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.918][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-2.6971333, 0.5, -6.6936707), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:54.954][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:54.985][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:54.985][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:54.985][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:54.991][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.3746905, 0.5, -0.17840445), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:55.003][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:55.003][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:55.003][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:55.009][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-4.2037, 0.5, -0.39938247), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:55.015][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:55.021][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:36:55.221][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:55.221][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:55.221][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:55.227][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.39681497, 0.5, -0.1624232), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:55.349][INFO][376] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:36:55.349][DEBUG][376] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:36:55.349][DEBUG][376] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:36:55.354][DEBUG][376] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-4.194555, 0.5, -0.37748975), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:36:55.553][INFO][376] 메모리 매니저 종료
+[2025-01-11 15:36:55.553][INFO][376] [ThreadSafeFrameAllocator0] 소멸됨
+[2025-01-11 15:36:55.553][INFO][376] [FrameAllocator0] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 15:36:55.553][INFO][376] [ThreadSafeFrameAllocator1] 소멸됨
+[2025-01-11 15:36:55.553][INFO][376] [FrameAllocator1] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 15:36:55.553][INFO][376] [ThreadSafeLevelAllocator] 소멸됨
+[2025-01-11 15:36:55.553][INFO][376] [LevelAllocator] 소멸됨. 최대 사용량: 0 바이트
+[2025-01-11 15:36:55.553][INFO][376] [ThreadSafePermanentAllocator] 소멸됨
+[2025-01-11 15:36:55.553][INFO][376] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 15:36:55.553][INFO][376] [ThreadSafeGameObjectAllocator] 소멸됨
+[2025-01-11 15:36:55.553][INFO][376] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
+[2025-01-11 15:41:56.347][INFO][12128] Engine 초기화 시작
+[2025-01-11 15:41:56.348][INFO][12128] [FrameAllocator0] 크기: 8388608 바이트로 생성됨
+[2025-01-11 15:41:56.348][INFO][12128] [ThreadSafeFrameAllocator0] 생성됨
+[2025-01-11 15:41:56.348][INFO][12128] [FrameAllocator1] 크기: 8388608 바이트로 생성됨
+[2025-01-11 15:41:56.348][INFO][12128] [ThreadSafeFrameAllocator1] 생성됨
+[2025-01-11 15:41:56.348][INFO][12128] [LevelAllocator] 생성됨. 크기: 67108864 바이트
+[2025-01-11 15:41:56.348][INFO][12128] [ThreadSafeLevelAllocator] 생성됨
+[2025-01-11 15:41:56.348][INFO][12128] [PermanentAllocator] 크기: 33554432 바이트로 생성됨
+[2025-01-11 15:41:56.348][INFO][12128] [ThreadSafePermanentAllocator] 생성됨
+[2025-01-11 15:41:56.348][INFO][12128] [GameObjectAllocator] 생성됨. 블록 크기: 1024 bytes, 블록 수: 1024, Total: 1048576 bytes
+[2025-01-11 15:41:56.348][INFO][12128] [ThreadSafeGameObjectAllocator] 생성됨
+[2025-01-11 15:41:56.348][INFO][12128] 메모리 매니저 초기화 완료
+[2025-01-11 15:41:56.348][DEBUG][12128] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::CollisionEvent
+[2025-01-11 15:41:56.348][DEBUG][12128] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::ResourceEvent
+[2025-01-11 15:41:56.349][DEBUG][12128] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::InputEvent
+[2025-01-11 15:41:56.552][INFO][12128] 디바이스 생성 성공
+[2025-01-11 15:41:56.578][INFO][12128] 커맨드 큐 생성 성공
+[2025-01-11 15:41:56.588][INFO][12128] 스왑체인 생성 성공
+[2025-01-11 15:41:56.588][INFO][12128] RTV 디스크립터 힙 생성 성공
+[2025-01-11 15:41:56.588][INFO][12128] RTV 생성 성공
+[2025-01-11 15:41:56.589][INFO][12128] 상수 버퍼 생성 성공
+[2025-01-11 15:41:56.589][INFO][12128] 라이트 상수 버퍼 생성 성공
+[2025-01-11 15:41:56.666][INFO][12128] Engine 초기화 완료
+[2025-01-11 15:41:57.444][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:41:57.444][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.444][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.450][DEBUG][12128] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.5, 0.5, 0.5), 노말: (0, 1, 0), 충격량: (4.4629173)
+[2025-01-11 15:41:57.450][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:41:57.492][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:41:57.492][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.492][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.498][DEBUG][12128] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.49815413, 1.8793213, 0.4989159), 노말: (0.088770345, 0.9960522, -2.133231e-06), 충격량: (3.4615793)
+[2025-01-11 15:41:57.510][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:41:57.559][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:41:57.559][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.559][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.565][DEBUG][12128] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.3084066, 0.5, 0.4679271), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:41:57.571][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:41:57.650][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:41:57.650][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.650][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.655][DEBUG][12128] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.49718472, 1.9869905, 0.5007557), 노말: (-0.6546821, 0.73519886, -0.17571011), 충격량: (3.0037615)
+[2025-01-11 15:41:57.668][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:41:57.668][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.668][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.674][DEBUG][12128] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.4915704, 0.5, 0.3553625), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:41:57.680][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:41:57.698][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:41:57.698][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.698][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.698][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:41:57.704][DEBUG][12128] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (1.7271081, 0.5, 0.14509127), 노말: (0, 1, 0), 충격량: (9.009994)
+[2025-01-11 15:41:57.710][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:41:57.722][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:41:57.722][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.722][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.728][DEBUG][12128] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.89324814, 1.6008244, 0.19349873), 노말: (-0.59348017, 0.7800342, -0.19831257), 충격량: (1.368322)
+[2025-01-11 15:41:57.729][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:41:57.789][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:41:57.789][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.789][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.795][DEBUG][12128] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.50004935, 2.0557737, -0.415143), 노말: (9.313226e-09, 1, 6.7055225e-08), 충격량: (3.6476853)
+[2025-01-11 15:41:57.807][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:41:57.807][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.807][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.807][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:41:57.813][DEBUG][12128] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.12040293, 0.5, 0.2508825), 노말: (0, 1, 0), 충격량: (7.2165384)
+[2025-01-11 15:41:57.825][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:41:57.831][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:41:57.831][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.831][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.838][DEBUG][12128] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.045143604, 1.5640504, 0.21854736), 노말: (-0.5308174, 0.84532034, 0.060551442), 충격량: (2.5884576)
+[2025-01-11 15:41:57.838][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:41:57.838][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.838][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.838][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:41:57.838][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.838][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.839][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:41:57.844][DEBUG][12128] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.3215655, 0.5, 0.11498839), 노말: (0, 1, 0), 충격량: (4.566276)
+[2025-01-11 15:41:57.844][DEBUG][12128] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-1.599261, 0.5, -0.5481832), 노말: (0, 1, 0), 충격량: (6.657178)
+[2025-01-11 15:41:57.856][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:41:57.856][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.856][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.856][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:41:57.862][DEBUG][12128] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.10510361, 1.6178377, 0.1430549), 노말: (-0.6969866, 0.7065902, -0.12222937), 충격량: (0)
+[2025-01-11 15:41:57.868][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:41:57.898][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:41:57.898][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.899][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.904][DEBUG][12128] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (1.6961248, 1.9974966, -0.091895044), 노말: (0.9870971, -0.001959626, 0.16011101), 충격량: (0)
+[2025-01-11 15:41:57.910][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:41:57.916][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:41:57.916][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.916][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.916][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:41:57.922][DEBUG][12128] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (1.4919518, 2.100304, -0.49361095), 노말: (-0.0948565, 0.9926388, 0.075302005), 충격량: (5.0323844)
+[2025-01-11 15:41:57.928][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:41:57.965][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:41:57.965][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.965][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.965][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:41:57.965][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.965][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.971][DEBUG][12128] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (1.4956422, 0.5, -0.9603462), 노말: (0, 1, 0), 충격량: (9.142285)
+[2025-01-11 15:41:57.971][DEBUG][12128] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-2.8217685, 0.5, 0.41369292), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:41:57.977][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:41:57.995][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:41:57.995][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.995][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.995][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:41:57.995][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:57.995][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:57.995][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:41:58.001][DEBUG][12128] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (2.5868564, 1.9815629, -1.0811121), 노말: (0.9683936, -0.0027934806, 0.24941124), 충격량: (1.3902824)
+[2025-01-11 15:41:58.001][DEBUG][12128] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.087046504, 2.0278203, 0.25081962), 노말: (0.89284295, 0.43746865, -0.10701718), 충격량: (0)
+[2025-01-11 15:41:58.007][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:41:58.025][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:41:58.037][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:41:58.037][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:58.038][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:58.043][DEBUG][12128] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (2.7371268, 1.3795917, -0.58906883), 노말: (0.99116415, -0.07536317, 0.10915176), 충격량: (0.935595)
+[2025-01-11 15:41:58.043][INFO][12128] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:41:58.116][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:41:58.116][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:58.116][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:58.122][DEBUG][12128] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-1.367512, 0.5, 0.07279922), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:41:58.134][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:41:58.159][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:41:58.159][DEBUG][12128] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:41:58.159][DEBUG][12128] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:41:58.164][DEBUG][12128] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (1.0518824, 0.5, 1.0839367), 노말: (0, 1, 0), 충격량: (7.0858064)
+[2025-01-11 15:41:58.165][INFO][12128] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:41:58.294][INFO][12128] 메모리 매니저 종료
+[2025-01-11 15:41:58.294][INFO][12128] [ThreadSafeFrameAllocator0] 소멸됨
+[2025-01-11 15:41:58.294][INFO][12128] [FrameAllocator0] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 15:41:58.294][INFO][12128] [ThreadSafeFrameAllocator1] 소멸됨
+[2025-01-11 15:41:58.294][INFO][12128] [FrameAllocator1] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 15:41:58.294][INFO][12128] [ThreadSafeLevelAllocator] 소멸됨
+[2025-01-11 15:41:58.294][INFO][12128] [LevelAllocator] 소멸됨. 최대 사용량: 0 바이트
+[2025-01-11 15:41:58.294][INFO][12128] [ThreadSafePermanentAllocator] 소멸됨
+[2025-01-11 15:41:58.294][INFO][12128] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 15:41:58.294][INFO][12128] [ThreadSafeGameObjectAllocator] 소멸됨
+[2025-01-11 15:41:58.294][INFO][12128] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
+[2025-01-11 15:53:11.588][INFO][28100] Engine 초기화 시작
+[2025-01-11 15:53:11.589][INFO][28100] [FrameAllocator0] 크기: 8388608 바이트로 생성됨
+[2025-01-11 15:53:11.589][INFO][28100] [ThreadSafeFrameAllocator0] 생성됨
+[2025-01-11 15:53:11.589][INFO][28100] [FrameAllocator1] 크기: 8388608 바이트로 생성됨
+[2025-01-11 15:53:11.589][INFO][28100] [ThreadSafeFrameAllocator1] 생성됨
+[2025-01-11 15:53:11.589][INFO][28100] [LevelAllocator] 생성됨. 크기: 67108864 바이트
+[2025-01-11 15:53:11.589][INFO][28100] [ThreadSafeLevelAllocator] 생성됨
+[2025-01-11 15:53:11.589][INFO][28100] [PermanentAllocator] 크기: 33554432 바이트로 생성됨
+[2025-01-11 15:53:11.589][INFO][28100] [ThreadSafePermanentAllocator] 생성됨
+[2025-01-11 15:53:11.589][INFO][28100] [GameObjectAllocator] 생성됨. 블록 크기: 1024 bytes, 블록 수: 1024, Total: 1048576 bytes
+[2025-01-11 15:53:11.589][INFO][28100] [ThreadSafeGameObjectAllocator] 생성됨
+[2025-01-11 15:53:11.589][INFO][28100] 메모리 매니저 초기화 완료
+[2025-01-11 15:53:11.589][DEBUG][28100] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::CollisionEvent
+[2025-01-11 15:53:11.589][DEBUG][28100] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::ResourceEvent
+[2025-01-11 15:53:11.590][DEBUG][28100] 이벤트 핸들러가 등록됨. ID: 1, 이벤트 타입: struct Event::InputEvent
+[2025-01-11 15:53:11.840][INFO][28100] 디바이스 생성 성공
+[2025-01-11 15:53:11.865][INFO][28100] 커맨드 큐 생성 성공
+[2025-01-11 15:53:11.873][INFO][28100] 스왑체인 생성 성공
+[2025-01-11 15:53:11.873][INFO][28100] RTV 디스크립터 힙 생성 성공
+[2025-01-11 15:53:11.873][INFO][28100] RTV 생성 성공
+[2025-01-11 15:53:11.874][INFO][28100] 상수 버퍼 생성 성공
+[2025-01-11 15:53:11.874][INFO][28100] 라이트 상수 버퍼 생성 성공
+[2025-01-11 15:53:11.936][INFO][28100] Engine 초기화 완료
+[2025-01-11 15:53:12.713][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:12.713][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:12.713][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:12.719][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.5, 0.5, 0.5), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:53:12.725][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:53:12.774][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:12.774][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:12.774][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:12.780][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.498, 1.8685126, -0.49999988), 노말: (0.9999986, 0.001703253, -0.000119843025), 충격량: (0)
+[2025-01-11 15:53:12.895][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:12.895][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:12.895][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:12.895][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:12.895][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:12.895][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:12.895][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:12.901][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.50530756, 2.4550457, 0.49708834), 노말: (-1, 3.5123549e-10, 0), 충격량: (0.06537393)
+[2025-01-11 15:53:12.901][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (1.5, 0.5, 0.5), 노말: (0, 1, 0), 충격량: (5.457553)
+[2025-01-11 15:53:12.907][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:12.907][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:12.907][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:12.913][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.5000401, 1.4690468, 0.49850547), 노말: (1, 0.00015296567, 6.9947846e-06), 충격량: (0.24304236)
+[2025-01-11 15:53:12.913][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:53:13.004][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.004][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.004][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.010][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.50144947, 2.8674047, -0.5018453), 노말: (0.048782434, 0.99687624, 0.062113404), 충격량: (0)
+[2025-01-11 15:53:13.022][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.040][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:13.040][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.040][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.040][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.046][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.61957, 0.5, 0.49598962), 노말: (0, 1, 0), 충격량: (1.8021722)
+[2025-01-11 15:53:13.052][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.052][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.052][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.053][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:53:13.058][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.6195975, 1.4775082, 0.38192013), 노말: (-0.9990786, 0.022440253, 0.036585413), 충격량: (0.37565336)
+[2025-01-11 15:53:13.071][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.083][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.083][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.083][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.089][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.625606, 2.7941332, 0.39734513), 노말: (-0.2670892, 0.9634517, -0.02059528), 충격량: (1.1867696)
+[2025-01-11 15:53:13.107][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.119][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.119][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.119][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.125][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.50666845, 3.2441578, 0.49972832), 노말: (0.86086714, 0.5076199, -0.035068523), 충격량: (2.4202902)
+[2025-01-11 15:53:13.131][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.131][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.131][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.131][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.131][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.131][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.131][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:13.131][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.131][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.131][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.131][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.137][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (1.5065304, 3.0457768, -0.28602746), 노말: (-0.40452948, 0.89983755, -0.16324306), 충격량: (3.8343236)
+[2025-01-11 15:53:13.137][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (0.66672736, 2.6637092, -0.31098205), 노말: (-0.47504407, 0.8444677, -0.2474017), 충격량: (0.75792766)
+[2025-01-11 15:53:13.137][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (0.25272274, 0.5, 0.13768461), 노말: (0, 1, 0), 충격량: (9.632951)
+[2025-01-11 15:53:13.149][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.149][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.149][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.149][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.149][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.149][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:53:13.155][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.7472285, 1.1568478, -0.49311066), 노말: (-0.9946353, 0.06906307, 0.07701273), 충격량: (0)
+[2025-01-11 15:53:13.161][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.179][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.179][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.180][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.180][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.180][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.180][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.180][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.180][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.180][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.185][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.9124042, 1.8397146, -0.020342529), 노말: (-0.9894997, 0.09332432, 0.11036711), 충격량: (0.13632333)
+[2025-01-11 15:53:13.185][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.19263077, 1.9012865, -0.2478425), 노말: (-0.15706366, 0.9586105, -0.23748064), 충격량: (3.2477849)
+[2025-01-11 15:53:13.185][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (-0.8196631, 2.5301313, -0.024463803), 노말: (0.6965694, 0.7071645, -0.12128246), 충격량: (0)
+[2025-01-11 15:53:13.192][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.192][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.192][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.228][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:13.228][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.228][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.234][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-0.14737177, 0.5, -1.1614876), 노말: (0, 1, 0), 충격량: (3.8230066)
+[2025-01-11 15:53:13.258][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:53:13.289][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:13.289][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.289][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.295][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (2.3996255, 0.5, 0.4034804), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:53:13.307][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:53:13.349][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.349][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.349][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.355][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (1.9375945, 2.197541, 0.02247399), 노말: (-0.2641214, 0.95856667, -0.10672332), 충격량: (0)
+[2025-01-11 15:53:13.367][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.397][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 발생.
+[2025-01-11 15:53:13.397][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.397][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.403][DEBUG][28100] 'DynamicBox'와 'DynamicBox'가 충돌 발생. 위치: (1.6269705, 1.9086857, 0.24908778), 노말: (-0.84201515, 0.5259544, -0.119927466), 충격량: (2.4501379)
+[2025-01-11 15:53:13.409][INFO][28100] 'DynamicBox' 와 'DynamicBox'가 충돌 종료.
+[2025-01-11 15:53:13.440][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:13.440][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.440][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.446][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-1.4545443, 0.5, -0.44023633), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:53:13.615][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:53:13.634][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:13.634][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.634][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.640][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (1.0454268, 0.5, -0.5447345), 노말: (0, 1, 0), 충격량: (8.074392)
+[2025-01-11 15:53:13.664][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:53:13.694][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:13.694][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.695][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.700][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (4.20087, 0.5, 0.6613883), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:53:13.712][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:13.713][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.713][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.713][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:53:13.718][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-1.2877958, 0.5, -1.4910839), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:53:13.743][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 종료.
+[2025-01-11 15:53:13.785][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:13.785][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.785][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.785][INFO][28100] 'DynamicBox' 와 'StaticBox'가 충돌 발생.
+[2025-01-11 15:53:13.786][DEBUG][28100] 이벤트가 큐에 추가됨: struct Event::CollisionEvent
+[2025-01-11 15:53:13.786][DEBUG][28100] 이벤트 발행: struct Event::CollisionEvent
+[2025-01-11 15:53:13.791][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (-2.2103443, 0.5, -1.9529812), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:53:13.791][DEBUG][28100] 'DynamicBox'와 'StaticBox'가 충돌 발생. 위치: (5.097104, 0.5, 1.2406155), 노말: (0, 1, 0), 충격량: (0)
+[2025-01-11 15:53:13.922][INFO][28100] 메모리 매니저 종료
+[2025-01-11 15:53:13.923][INFO][28100] [ThreadSafeFrameAllocator0] 소멸됨
+[2025-01-11 15:53:13.923][INFO][28100] [FrameAllocator0] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 15:53:13.923][INFO][28100] [ThreadSafeFrameAllocator1] 소멸됨
+[2025-01-11 15:53:13.923][INFO][28100] [FrameAllocator1] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 15:53:13.923][INFO][28100] [ThreadSafeLevelAllocator] 소멸됨
+[2025-01-11 15:53:13.923][INFO][28100] [LevelAllocator] 소멸됨. 최대 사용량: 0 바이트
+[2025-01-11 15:53:13.923][INFO][28100] [ThreadSafePermanentAllocator] 소멸됨
+[2025-01-11 15:53:13.923][INFO][28100] [PermanentAllocator] 제거됨. 최대 사용량: 0 바이트
+[2025-01-11 15:53:13.923][INFO][28100] [ThreadSafeGameObjectAllocator] 소멸됨
+[2025-01-11 15:53:13.923][INFO][28100] [GameObjectAllocator] 제거됨. 최대 사용량: 0 블록
