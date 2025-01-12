@@ -75,8 +75,7 @@ std::shared_ptr<PhysicsObject> PhysicsEngine::CreateBox(
 	PxRigidActor* actor = nullptr;
 	PxShape* shape = nullptr;
 
-	switch (type)
-	{
+	switch (type) {
 	case PhysicsObjectType::STATIC: {
 		actor = m_physics->createRigidStatic(PxTransform(position));
 		actor->setName("StaticBox");
@@ -102,7 +101,131 @@ std::shared_ptr<PhysicsObject> PhysicsEngine::CreateBox(
 	if (actor && shape) {
 		// 충돌 필터 데이터 설정
 		shape->setSimulationFilterData(CreateFilterData(group, mask));
+		m_scene->addActor(*actor);
+		auto physicsObject = std::make_shared<PhysicsObject>(actor);
+		m_physicsObjects.push_back(physicsObject);
+		return physicsObject;
+	}
 
+	return nullptr;
+}
+
+std::shared_ptr<PhysicsObject> PhysicsEngine::CreateSphere(
+	const PxVec3& position, float radius, PhysicsObjectType type,
+	CollisionGroup group, CollisionGroup mask, float density) {
+
+	PxRigidActor* actor = nullptr;
+	PxShape* shape = nullptr;
+
+	switch (type) {
+	case PhysicsObjectType::STATIC: {
+		actor = m_physics->createRigidStatic(PxTransform(position));
+		actor->setName("StaticSphere");
+		shape = PxRigidActorExt::createExclusiveShape(*actor,
+			PxSphereGeometry(radius), *m_defaultMaterial);
+		break;
+	}
+	case PhysicsObjectType::DYNAMIC: {
+		PxRigidDynamic* dynamicActor = m_physics->createRigidDynamic(PxTransform(position));
+		dynamicActor->setName("DynamicSphere");
+		shape = PxRigidActorExt::createExclusiveShape(*dynamicActor,
+			PxSphereGeometry(radius), *m_defaultMaterial);
+		PxRigidBodyExt::updateMassAndInertia(*dynamicActor, density);
+		actor = dynamicActor;
+		break;
+	}
+	}
+
+	if (actor && shape) {
+		shape->setSimulationFilterData(CreateFilterData(group, mask));
+		m_scene->addActor(*actor);
+		auto physicsObject = std::make_shared<PhysicsObject>(actor);
+		m_physicsObjects.push_back(physicsObject);
+		return physicsObject;
+	}
+
+	return nullptr;
+}
+
+std::shared_ptr<PhysicsObject> PhysicsEngine::CreateCapsule(
+	const PxVec3& position, float radius, float halfHeight, PhysicsObjectType type,
+	CollisionGroup group, CollisionGroup mask, float density) {
+
+	PxRigidActor* actor = nullptr;
+	PxShape* shape = nullptr;
+
+	switch (type) {
+	case PhysicsObjectType::STATIC: {
+		actor = m_physics->createRigidStatic(PxTransform(position));
+		actor->setName("StaticCapsule");
+		shape = PxRigidActorExt::createExclusiveShape(*actor,
+			PxCapsuleGeometry(radius, halfHeight), *m_defaultMaterial);
+		break;
+	}
+	case PhysicsObjectType::DYNAMIC: {
+		PxRigidDynamic* dynamicActor = m_physics->createRigidDynamic(PxTransform(position));
+		dynamicActor->setName("DynamicCapsule");
+		shape = PxRigidActorExt::createExclusiveShape(*dynamicActor,
+			PxCapsuleGeometry(radius, halfHeight), *m_defaultMaterial);
+		PxRigidBodyExt::updateMassAndInertia(*dynamicActor, density);
+		actor = dynamicActor;
+		break;
+	}
+	}
+
+	if (actor && shape) {
+		shape->setSimulationFilterData(CreateFilterData(group, mask));
+		m_scene->addActor(*actor);
+		auto physicsObject = std::make_shared<PhysicsObject>(actor);
+		m_physicsObjects.push_back(physicsObject);
+		return physicsObject;
+	}
+
+	return nullptr;
+}
+
+std::shared_ptr<PhysicsObject> PhysicsEngine::CreateTriangleMesh(
+	const PxVec3& position,
+	const std::vector<PxVec3>& vertices,
+	const std::vector<uint32_t>& indices,
+	PhysicsObjectType type,
+	CollisionGroup group,
+	CollisionGroup mask) {
+
+	// 메시 데이터 생성
+	PxTriangleMeshDesc meshDesc;
+	meshDesc.points.count = static_cast<PxU32>(vertices.size());
+	meshDesc.points.stride = sizeof(PxVec3);
+	meshDesc.points.data = vertices.data();
+	meshDesc.triangles.count = static_cast<PxU32>(indices.size() / 3);
+	meshDesc.triangles.stride = 3 * sizeof(uint32_t);
+	meshDesc.triangles.data = indices.data();
+
+	PxTolerancesScale scale;
+	PxCookingParams params(scale);
+
+	// 메시 쿠킹
+	PxDefaultMemoryOutputStream writeBuffer;
+	PxTriangleMeshCookingResult::Enum result;
+	bool status = PxCookTriangleMesh(params, meshDesc, writeBuffer, &result);
+	if (!status) return nullptr;
+
+	// 쿠킹된 데이터로 메시 생성
+	PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
+	PxTriangleMesh* triangleMesh = m_physics->createTriangleMesh(readBuffer);
+	if (!triangleMesh) return nullptr;
+
+	PxRigidActor* actor = nullptr;
+	PxShape* shape = nullptr;
+
+	// 메시는 주로 정적 객체로 사용
+	actor = m_physics->createRigidStatic(PxTransform(position));
+	actor->setName("TriangleMesh");
+	shape = PxRigidActorExt::createExclusiveShape(*actor,
+		PxTriangleMeshGeometry(triangleMesh), *m_defaultMaterial);
+
+	if (actor && shape) {
+		shape->setSimulationFilterData(CreateFilterData(group, mask));
 		m_scene->addActor(*actor);
 		auto physicsObject = std::make_shared<PhysicsObject>(actor);
 		m_physicsObjects.push_back(physicsObject);

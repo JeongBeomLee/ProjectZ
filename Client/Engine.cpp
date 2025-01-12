@@ -4,6 +4,10 @@
 #include "PhysicsEngine.h"
 #include "MemoryManager.h"
 #include "EventManager.h"
+#include "Transform.h"
+#include "PhysicsBody.h"
+#include "MeshRenderer.h"
+#include "GameObject.h"
 #include "Logger.h"
 #include "Utils.h"
 
@@ -81,10 +85,6 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		Logger::Instance().Fatal("RTV 생성 실패");
 		return false;
 	}
-	if (!CreateConstantBuffer()) {
-		Logger::Instance().Fatal("상수 버퍼 생성 실패");
-		return false;
-	}
 	if (!CreateLightConstantBuffer()) {
 		Logger::Instance().Fatal("라이트 상수 버퍼 생성 실패");
 		return false;
@@ -113,14 +113,6 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		Logger::Instance().Fatal("파이프라인 상태 생성 실패");
 		return false;
 	}
-	if (!CreateVertexBuffer()) {
-		Logger::Instance().Fatal("정점 버퍼 생성 실패");
-		return false;
-	}
-	if (!CreateIndexBuffer()) {
-		Logger::Instance().Fatal("인덱스 버퍼 생성 실패");
-		return false;
-	}
 
 	// 물리 엔진 초기화
 	m_physicsEngine = std::make_unique<PhysicsEngine>();
@@ -137,16 +129,7 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		CollisionGroup::Ground,
 		CollisionGroup::Default | CollisionGroup::Player);
 
-	// 물리 박스 생성 (크기는 렌더링되는 큐브와 동일하게)
-	//m_physicsBox = m_physicsEngine->CreateBox(
-	//	PxVec3(0.0f, 5.0f, 0.0f),  // 시작 위치
-	//	PxVec3(0.5f, 0.5f, 0.5f),  // 크기
-	//	PhysicsObjectType::DYNAMIC, // 동적 객체
-	//	CollisionGroup::Default,    // 기본 그룹
-	//	CollisionGroup::Ground);    // 지면과 충돌
-
 	// 초기 변환 행렬 설정
-	//m_worldMatrix = XMMatrixIdentity();
 	m_viewMatrix = XMMatrixLookAtLH(
 		XMVectorSet(0.0f, 5.0f, -5.0f, 1.0f),  // 카메라 위치
 		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 지점
@@ -159,11 +142,9 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		100.0f                                  // 원평면
 	);
 
-	CreateCube(PxVec3(0.0f, 5.0f, 0.0f));   // 첫 번째 큐브
-	CreateCube(PxVec3(1.0f, 7.0f, 0.0f));   // 두 번째 큐브
-	CreateCube(PxVec3(-1.0f, 9.0f, 0.0f));  // 세 번째 큐브
-	CreateCube(PxVec3(0.0f, 11.0f, 0.0f));  // 네 번째 큐브
-	CreateCube(PxVec3(1.0f, 13.0f, 0.0f));  // 다섯 번째 큐브
+	CreateCube(PxVec3(0.0f, 5.0f, 0.0f), PxVec3(0.5f));  // 기본 큐브
+	CreateCube(PxVec3(0.0f, 10.0f, 0.0f), PxVec3(0.5f));  // 기본 큐브
+	CreateCube(PxVec3(0.0f, 15.0f, 0.0f), PxVec3(0.5f));  // 기본 큐브
 
 	// 회전 애니메이션 초기화
 	m_rotationAngle = 0.0f;
@@ -195,8 +176,10 @@ void Engine::Update()
 	// 물리 엔진 업데이트
 	m_physicsEngine->Update(deltaTime);
 
-	// 월드 행렬 업데이트
-	UpdateWorldMatrix();
+	// 모든 게임 오브젝트 업데이트
+	for (const auto& gameObject : m_gameObjects) {
+		gameObject->Update(deltaTime);
+	}
 
 	// 회전 각도 업데이트
 	m_rotationAngle += deltaTime;
@@ -248,46 +231,50 @@ void Engine::BeginRender()
 	// 루트 시그니처와 디스크립터 힙 설정
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
-	// CBV/SRV 힙 설정
+	// 공통 리소스 설정
 	ID3D12DescriptorHeap* ppHeaps[] = { m_descHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-	// Light CBV 설정 (큐브들 뒤에 위치)
+	// 라이트 CBV 설정
 	CD3DX12_GPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
-	lightCbvHandle.Offset(100, // maxCubes
-		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+	lightCbvHandle.Offset(MAX_OBJECTS, GetDescriptorIncrementSize());
 	m_commandList->SetGraphicsRootDescriptorTable(1, lightCbvHandle);
 
-	// Texture SRV 설정 (라이트 CBV 뒤에 위치)
+	// 텍스처 SRV 설정
 	CD3DX12_GPU_DESCRIPTOR_HANDLE textureSrvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
-	textureSrvHandle.Offset(101, // maxCubes + 1
-		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+	textureSrvHandle.Offset(MAX_OBJECTS + 1, GetDescriptorIncrementSize());
 	m_commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandle);
 
 	// 프리미티브 토폴로지 설정
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// 정점 버퍼, 인덱스 버퍼 설정
-	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	m_commandList->IASetIndexBuffer(&m_indexBufferView);
+	//m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	//m_commandList->IASetIndexBuffer(&m_indexBufferView);
 }
 
 void Engine::ExecuteRender()
 {
 	// 각 큐브 렌더링
-	for (auto& cube : m_cubeObjects) {
-		// 상수 버퍼 업데이트
-		ObjectConstants constants;
-		constants.worldMatrix = XMMatrixTranspose(cube.worldMatrix);
-		constants.viewMatrix = XMMatrixTranspose(m_viewMatrix);
-		constants.projectionMatrix = XMMatrixTranspose(m_projectionMatrix);
-		memcpy(cube.constantBufferMappedData, &constants, sizeof(constants));
+	//for (auto& cube : m_cubeObjects) {
+	//	// 상수 버퍼 업데이트
+	//	ObjectConstants constants;
+	//	constants.worldMatrix = XMMatrixTranspose(cube.worldMatrix);
+	//	constants.viewMatrix = XMMatrixTranspose(m_viewMatrix);
+	//	constants.projectionMatrix = XMMatrixTranspose(m_projectionMatrix);
+	//	memcpy(cube.constantBufferMappedData, &constants, sizeof(constants));
 
-		// Transform CBV 설정 (이제 각 큐브의 고유한 CBV 사용)
-		m_commandList->SetGraphicsRootDescriptorTable(0, cube.cbvHandle);
+	//	// Transform CBV 설정 (이제 각 큐브의 고유한 CBV 사용)
+	//	m_commandList->SetGraphicsRootDescriptorTable(0, cube.cbvHandle);
 
-		// 드로우 콜
-		m_commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+	//	// 드로우 콜
+	//	m_commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+	//}
+	// 모든 게임 오브젝트의 MeshRenderer 렌더링
+	for (const auto& gameObject : m_gameObjects) {
+		if (auto renderer = gameObject->GetComponent<MeshRenderer>()) {
+			renderer->Render(m_commandList.Get());
+		}
 	}
 }
 
@@ -328,16 +315,6 @@ void Engine::Cleanup()
 	UnregisterEventHandlers();
 	m_physicsEngine.reset();
     CloseHandle(m_fenceEvent);
-}
-
-void Engine::UpdateWorldMatrix()
-{
-	// 모든 큐브 객체의 월드 행렬 업데이트
-	for (auto& cube : m_cubeObjects) {
-		if (cube.physicsObject) {
-			cube.worldMatrix = cube.physicsObject->GetTransformMatrix();
-		}
-	}
 }
 
 bool Engine::CreateDevice()
@@ -630,136 +607,6 @@ bool Engine::CreatePipelineState()
 	return true;
 }
 
-bool Engine::CreateVertexBuffer()
-{
-	// 큐브의 정점 데이터
-	Vertex cubeVertices[] = {
-		// 앞면 (z = 0.5f)
-		{ XMFLOAT3(-0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(-0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
-
-		// 뒷면 (z = -0.5f)
-		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
-
-		// 윗면 (y = 0.5f)
-		{ XMFLOAT3(-0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-
-		// 아랫면 (y = -0.5f)
-		{ XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-
-		// 오른쪽면 (x = 0.5f)
-		{ XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-
-		// 왼쪽면 (x = -0.5f)
-		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) }
-	};
-
-
-	const UINT vertexBufferSize = sizeof(cubeVertices);
-
-	// 버퍼 생성
-	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
-	CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
-
-	ThrowIfFailed(m_device->CreateCommittedResource(
-		&heapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&bufferDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_vertexBuffer)));
-
-	// 데이터 복사
-	UINT8* pVertexDataBegin;
-	CD3DX12_RANGE readRange(0, 0);
-	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-	memcpy(pVertexDataBegin, cubeVertices, sizeof(cubeVertices));
-	m_vertexBuffer->Unmap(0, nullptr);
-
-	// 버퍼 뷰 생성
-	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-	m_vertexBufferView.SizeInBytes = vertexBufferSize;
-
-	return true;
-}
-
-bool Engine::CreateIndexBuffer()
-{
-	// 큐브의 인덱스 데이터
-	UINT indices[] = {
-		// 앞면 (0-3)
-		0, 1, 2,    // 첫 번째 삼각형
-		0, 2, 3,    // 두 번째 삼각형
-
-		// 뒷면 (4-7)
-		4, 5, 6,
-		4, 6, 7,
-
-		// 윗면 (8-11)
-		8, 9, 10,
-		8, 10, 11,
-
-		// 아랫면 (12-15)
-		12, 13, 14,
-		12, 14, 15,
-
-		// 오른쪽면 (16-19)
-		16, 17, 18,
-		16, 18, 19,
-
-		// 왼쪽면 (20-23)
-		20, 21, 22,
-		20, 22, 23
-	};
-
-	m_indexCount = ARRAYSIZE(indices);
-	const UINT indexBufferSize = sizeof(indices);
-
-	// 인덱스 버퍼 생성
-	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
-
-	ThrowIfFailed(m_device->CreateCommittedResource(
-		&heapProperties,
-		D3D12_HEAP_FLAG_NONE,
-		&resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_indexBuffer)));
-
-	// 데이터 복사
-	UINT8* pIndexDataBegin;
-	CD3DX12_RANGE readRange(0, 0);
-	ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
-	memcpy(pIndexDataBegin, indices, indexBufferSize);
-	m_indexBuffer->Unmap(0, nullptr);
-
-	// 인덱스 버퍼 뷰 생성
-	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	m_indexBufferView.SizeInBytes = indexBufferSize;
-
-	return true;
-}
-
 bool Engine::CompileShaders()
 {
 	UINT compileFlags = 0;
@@ -790,36 +637,6 @@ bool Engine::CompileShaders()
 		&m_pixelShader,
 		&errorBlob));
 
-	return true;
-}
-
-bool Engine::CreateConstantBuffer()
-{
-	// 상수 버퍼는 256 바이트 정렬이 필요
-	const UINT constantBufferSize = (sizeof(ObjectConstants) + 255) & ~255;
-
-	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
-
-	// 상수 버퍼 생성
-	if(FAILED(m_device->CreateCommittedResource(
-		&heapProperties,
-		D3D12_HEAP_FLAG_NONE,
-		&resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_constantBuffer)))) {
-		return false;
-	}
-
-	// 상수 버퍼를 CPU 메모리에 매핑
-	CD3DX12_RANGE readRange(0, 0);
-	if (FAILED(m_constantBuffer->Map(0, &readRange,
-		reinterpret_cast<void**>(&m_constantBufferMappedData)))) {
-		return false;
-	}
-
-	Logger::Instance().Info("상수 버퍼 생성 성공");
 	return true;
 }
 
@@ -885,33 +702,25 @@ bool Engine::CreateTexture(const wchar_t* filename)
 
 bool Engine::CreateDescHeap()
 {
-	const UINT maxCubes = 100;  // 최대 큐브 개수 설정
-
-	// 디스크립터 힙 생성
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.NumDescriptors = maxCubes + 2;  // 큐브들 + 라이트 + 텍스처
+	heapDesc.NumDescriptors = MAX_OBJECTS + 2;  // 오브젝트 + 라이트 + 텍스처
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
 	ThrowIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_descHeap)));
 
-	// 초기 CPU 디스크립터 핸들 설정 (큐브들의 CBV를 위한 공간)
-	m_currentCbvHandle = m_descHeap->GetCPUDescriptorHandleForHeapStart();
-
-	// 라이트용 CBV 생성 (큐브들 뒤에 위치)
+	// 라이트 CBV 생성
 	CD3DX12_CPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
-	lightCbvHandle.Offset(maxCubes,
-		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+	lightCbvHandle.Offset(MAX_OBJECTS, GetDescriptorIncrementSize());
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC lightCbvDesc = {};
 	lightCbvDesc.BufferLocation = m_lightConstantBuffer->GetGPUVirtualAddress();
 	lightCbvDesc.SizeInBytes = (sizeof(LightConstants) + 255) & ~255;
 	m_device->CreateConstantBufferView(&lightCbvDesc, lightCbvHandle);
 
-	// 텍스처용 SRV 생성 (라이트 CBV 뒤에 위치)
+	// 텍스처 SRV 생성
 	CD3DX12_CPU_DESCRIPTOR_HANDLE textureSrvHandle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
-	textureSrvHandle.Offset(maxCubes + 1,
-		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+	textureSrvHandle.Offset(MAX_OBJECTS + 1, GetDescriptorIncrementSize());
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -923,56 +732,109 @@ bool Engine::CreateDescHeap()
 	return true;
 }
 
+void Engine::CreateCubeMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices)
+{
+	// 큐브의 정점 데이터
+	Vertex cubeVertices[] = {
+		// 앞면 (z = 0.5f)
+		{ XMFLOAT3(-0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(-0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
+
+		// 뒷면 (z = -0.5f)
+		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
+
+		// 윗면 (y = 0.5f)
+		{ XMFLOAT3(-0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+
+		// 아랫면 (y = -0.5f)
+		{ XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+
+		// 오른쪽면 (x = 0.5f)
+		{ XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+
+		// 왼쪽면 (x = -0.5f)
+		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) }
+	};
+
+	// 큐브의 인덱스 데이터
+	UINT cubeIndices[] = {
+		// 앞면 (0-3)
+		0, 1, 2,    // 첫 번째 삼각형
+		0, 2, 3,    // 두 번째 삼각형
+
+		// 뒷면 (4-7)
+		4, 5, 6,
+		4, 6, 7,
+
+		// 윗면 (8-11)
+		8, 9, 10,
+		8, 10, 11,
+
+		// 아랫면 (12-15)
+		12, 13, 14,
+		12, 14, 15,
+
+		// 오른쪽면 (16-19)
+		16, 17, 18,
+		16, 18, 19,
+
+		// 왼쪽면 (20-23)
+		20, 21, 22,
+		20, 22, 23
+	};
+
+	// 정점/인덱스 데이터 복사
+	vertices.assign(std::begin(cubeVertices), std::end(cubeVertices));
+	indices.assign(std::begin(cubeIndices), std::end(cubeIndices));
+
+	Logger::Instance().Info("큐브 메시 데이터 생성 완료");
+}
+
 void Engine::CreateCube(const PxVec3& position, const PxVec3& dimensions)
 {
-	CubeObject cube;
+	auto gameObject = std::make_shared<GameObject>();
+	m_gameObjects.push_back(gameObject);
 
-	// PhysX 물리 객체 생성
-	cube.physicsObject = m_physicsEngine->CreateBox(
-		position,
-		dimensions,
-		PhysicsObjectType::DYNAMIC,
-		CollisionGroup::Default,
-		CollisionGroup::Default | CollisionGroup::Ground
-	);
+	// Transform 설정
+	auto transform = gameObject->GetTransform();
+	transform->SetPosition(XMFLOAT3(position.x, position.y, position.z));
 
-	// 초기 월드 행렬 설정
-	cube.worldMatrix = XMMatrixIdentity();
+	// PhysicsBody 추가
+	auto physicsBody = gameObject->AddComponent<PhysicsBody>();
+	PhysicsBody::BoxParams boxParams;
+	boxParams.dimensions = dimensions;
+	physicsBody->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Ground);
+	physicsBody->CreateBody(PhysicsObjectType::DYNAMIC, PhysicsShapeType::Box, boxParams);
 
-	// 상수 버퍼 생성
-	const UINT constantBufferSize = (sizeof(ObjectConstants) + 255) & ~255;
+	// MeshRenderer 추가
+	auto renderer = gameObject->AddComponent<MeshRenderer>();
 
-	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
+	// 큐브 메시 데이터 생성
+	std::vector<Vertex> vertices;
+	std::vector<UINT> indices;
+	CreateCubeMeshData(vertices, indices);  // 이 함수는 기존의 큐브 정점/인덱스 데이터를 생성
 
-	ThrowIfFailed(m_device->CreateCommittedResource(
-		&heapProperties,
-		D3D12_HEAP_FLAG_NONE,
-		&resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&cube.constantBuffer)));
+	renderer->CreateResources(vertices, indices, L"Texture/checker.dds");
 
-	// 상수 버퍼 매핑
-	CD3DX12_RANGE readRange(0, 0);
-	ThrowIfFailed(cube.constantBuffer->Map(0, &readRange,
-		reinterpret_cast<void**>(&cube.constantBufferMappedData)));
-
-	// CBV 생성
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-	cbvDesc.BufferLocation = cube.constantBuffer->GetGPUVirtualAddress();
-	cbvDesc.SizeInBytes = constantBufferSize;
-
-	// CBV 디스크립터 생성
-	cube.cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_descHeap->GetGPUDescriptorHandleForHeapStart());
-	cube.cbvHandle.ptr += m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * m_cubeObjects.size();
-
-	// CPU 디스크립터 핸들로 CBV 생성
-	m_device->CreateConstantBufferView(&cbvDesc, m_currentCbvHandle);
-	m_currentCbvHandle.ptr += m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	// 컨테이너에 추가
-	m_cubeObjects.push_back(cube);
+	Logger::Instance().Info("큐브 게임 오브젝트 생성됨. 위치: ({}, {}, {})",
+		position.x, position.y, position.z);
 }
 
 void Engine::RegisterEventHandlers()

@@ -2,8 +2,7 @@
 #include "PhysicsTypes.h"
 class PhysicsObject;
 class ContactReportCallback;
-class PhysicsEngine
-{
+class PhysicsEngine {
 public:
 	PhysicsEngine();
 	~PhysicsEngine();
@@ -21,9 +20,35 @@ public:
 		CollisionGroup mask = CollisionGroup::Default,       // 眠啊
 		float density = 1.0f);
 
+	std::shared_ptr<PhysicsObject> CreateSphere(
+		const PxVec3& position,
+		float radius,
+		PhysicsObjectType type = PhysicsObjectType::DYNAMIC,
+		CollisionGroup group = CollisionGroup::Default,
+		CollisionGroup mask = CollisionGroup::Default,
+		float density = 1.0f);
+
+	std::shared_ptr<PhysicsObject> CreateCapsule(
+		const PxVec3& position,
+		float radius,
+		float halfHeight,
+		PhysicsObjectType type = PhysicsObjectType::DYNAMIC,
+		CollisionGroup group = CollisionGroup::Default,
+		CollisionGroup mask = CollisionGroup::Default,
+		float density = 1.0f);
+
+	std::shared_ptr<PhysicsObject> CreateTriangleMesh(
+		const PxVec3& position,
+		const std::vector<PxVec3>& vertices,
+		const std::vector<uint32_t>& indices,
+		PhysicsObjectType type = PhysicsObjectType::STATIC,
+		CollisionGroup group = CollisionGroup::Default,
+		CollisionGroup mask = CollisionGroup::Default);
+
 	std::shared_ptr<PhysicsObject> CreateGroundPlane();
 
-	static PxFilterData CreateFilterData(CollisionGroup group, 
+	static PxFilterData CreateFilterData(
+		CollisionGroup group, 
 		CollisionGroup mask = CollisionGroup::Default);
 
 	// 拱府 按眉 包府

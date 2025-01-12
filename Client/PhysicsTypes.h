@@ -2,6 +2,13 @@
 #include "PhysX/include/PxPhysicsAPI.h"
 using namespace physx;
 
+enum class PhysicsShapeType {
+    Box,
+    Sphere,
+    Capsule,
+    TriangleMesh
+};
+
 enum class CollisionGroup : PxU32 {
     Default = (1 << 0),     // 기본 그룹
     Player = (1 << 1),      // 플레이어

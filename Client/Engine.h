@@ -4,6 +4,7 @@
 
 class PhysicsObject;
 class PhysicsEngine;
+class GameObject;
 class Engine {
 public:
 	Engine();
@@ -20,6 +21,14 @@ public:
 
 	ID3D12Device10* GetDevice() const { return m_device.Get(); }
 	ID3D12CommandQueue* GetCommandQueue() const { return m_commandQueue.Get(); }
+	PhysicsEngine* GetPhysicsEngine() const { return m_physicsEngine.get(); }
+	XMMATRIX& GetViewMatrix() { return m_viewMatrix; }
+	XMMATRIX& GetProjectionMatrix() { return m_projectionMatrix; }
+	ID3D12DescriptorHeap* GetDescriptorHeap() const { return m_descHeap.Get(); }
+	UINT AllocateDescriptor() { return m_currentDescriptorIndex++; }
+	UINT GetDescriptorIncrementSize() const {
+		return m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
 
 private:
 	// 화면 크기
@@ -44,19 +53,13 @@ private:
 	HANDLE m_fenceEvent;
 	UINT m_frameIndex;
 
-	ComPtr<ID3D12Resource> m_vertexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-	ComPtr<ID3D12Resource> m_indexBuffer;
-	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
-	UINT m_indexCount;
-
 	// 셰이더 관련 멤버
 	ComPtr<ID3DBlob> m_vertexShader;
 	ComPtr<ID3DBlob> m_pixelShader;
 
-	// 상수 버퍼
-	ComPtr<ID3D12Resource> m_constantBuffer;
-	UINT8* m_constantBufferMappedData;
+	// 디스크립터 힙 관리
+	UINT m_currentDescriptorIndex = 0;
+	static const UINT MAX_OBJECTS = 100;  // 최대 오브젝트 수
 
 	// 라이팅 관련
 	ComPtr<ID3D12Resource> m_lightConstantBuffer;
@@ -77,28 +80,15 @@ private:
 
 	// 물리 엔진
 	std::unique_ptr<PhysicsEngine> m_physicsEngine;
-
-	// 물리 객체
-	//std::shared_ptr<PhysicsObject> m_physicsBox;
-	struct CubeObject {
-		std::shared_ptr<PhysicsObject> physicsObject;  // 물리 객체
-		XMMATRIX worldMatrix;                          // 월드 변환 행렬
-		ComPtr<ID3D12Resource> constantBuffer;         // 각 큐브의 상수 버퍼
-		UINT8* constantBufferMappedData;               // 매핑된 상수 버퍼 데이터
-		D3D12_GPU_DESCRIPTOR_HANDLE cbvHandle;         // CBV 디스크립터 핸들
-	};
 	std::shared_ptr<PhysicsObject> m_ground;
 
-	std::vector<CubeObject> m_cubeObjects;  // 큐브 객체들을 저장할 컨테이너
+	std::vector<std::shared_ptr<GameObject>> m_gameObjects;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_currentCbvHandle;
 
 	// 이벤트 핸들러 ID 저장용 변수들
 	std::vector<Event::EventDispatcher<Event::CollisionEvent>::HandlerId> m_collisionHandlerIds;
 	std::vector<Event::EventDispatcher<Event::ResourceEvent>::HandlerId> m_resourceHandlerIds;
 	std::vector<Event::EventDispatcher<Event::InputEvent>::HandlerId> m_inputHandlerIds;
-
-	// 월드 행렬 업데이트 함수
-	void UpdateWorldMatrix();
 
 	// 초기화 헬퍼 함수들
 	bool CreateDevice();
@@ -110,13 +100,11 @@ private:
 	bool CreateFence();
 	bool CreateRootSignature();
 	bool CreatePipelineState();
-	bool CreateVertexBuffer();
-	bool CreateIndexBuffer();
 	bool CompileShaders();
-	bool CreateConstantBuffer();
 	bool CreateLightConstantBuffer();
 	bool CreateTexture(const wchar_t* filename);
 	bool CreateDescHeap();
+	void CreateCubeMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices);
 	void CreateCube(const PxVec3& position, const PxVec3& dimensions = PxVec3(0.5f));
 
 	// 이벤트 핸들러 등록, 등록 해제 함수

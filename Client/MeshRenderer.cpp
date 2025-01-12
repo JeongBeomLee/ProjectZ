@@ -1,0 +1,240 @@
+#include "pch.h"
+#include "MeshRenderer.h"
+#include "GameObject.h"
+#include "Transform.h"
+#include "Engine.h"
+#include "Logger.h"
+
+MeshRenderer::MeshRenderer()
+    : m_resources(std::make_unique<MeshResources>()) 
+{
+}
+
+MeshRenderer::~MeshRenderer() 
+{
+    Destroy();
+}
+
+void MeshRenderer::Initialize() 
+{
+    Logger::Instance().Debug("MeshRenderer 초기화됨");
+}
+
+void MeshRenderer::Update(float deltaTime) 
+{
+    if (!m_isInitialized || !IsEnabled()) return;
+    UpdateConstantBuffer();
+}
+
+void MeshRenderer::Destroy() 
+{
+    m_resources.reset();
+    m_isInitialized = false;
+}
+
+bool MeshRenderer::CreateResources(const std::vector<Vertex>& vertices,
+    const std::vector<UINT>& indices,
+    const std::wstring& texturePath) 
+{
+    auto device = Engine::Instance().GetDevice();
+    if (!device) return false;
+
+    if (!CreateVertexBuffer(vertices)) return false;
+    if (!CreateIndexBuffer(indices)) return false;
+    if (!CreateConstantBuffer()) return false;
+	if (!CreateConstantBufferView(device)) return false;
+    if (!CreateTextureResource(texturePath)) return false;
+
+    m_isInitialized = true;
+    return true;
+}
+
+void MeshRenderer::Render(ID3D12GraphicsCommandList* commandList) 
+{
+    if (!m_isInitialized || !IsEnabled()) return;
+
+    // 상수 버퍼 뷰 설정
+    commandList->SetGraphicsRootDescriptorTable(0, m_resources->cbvHandle);
+
+    // 정점 버퍼 설정
+    commandList->IASetVertexBuffers(0, 1, &m_resources->vertexBufferView);
+    commandList->IASetIndexBuffer(&m_resources->indexBufferView);
+
+    // 드로우 콜
+    commandList->DrawIndexedInstanced(m_resources->indexCount, 1, 0, 0, 0);
+}
+
+void MeshRenderer::UpdateConstantBuffer() 
+{
+    if (!m_resources->constantBufferMappedData) return;
+
+    auto transform = GetGameObject()->GetTransform();
+
+    // 상수 버퍼 데이터 업데이트
+    ObjectConstants constants;
+    constants.worldMatrix = XMMatrixTranspose(transform->GetWorldMatrix());
+    constants.viewMatrix = XMMatrixTranspose(Engine::Instance().GetViewMatrix());
+    constants.projectionMatrix = XMMatrixTranspose(Engine::Instance().GetProjectionMatrix());
+
+    memcpy(m_resources->constantBufferMappedData, &constants, sizeof(ObjectConstants));
+}
+
+bool MeshRenderer::CreateVertexBuffer(const std::vector<Vertex>& vertices) 
+{
+    auto device = Engine::Instance().GetDevice();
+
+    const UINT vertexBufferSize = static_cast<UINT>(vertices.size() * sizeof(Vertex));
+
+    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
+
+    HRESULT hr = device->CreateCommittedResource(
+        &heapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &resourceDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&m_resources->vertexBuffer));
+
+    if (FAILED(hr)) {
+        Logger::Instance().Error("정점 버퍼 생성 실패");
+        return false;
+    }
+
+    // 데이터 복사
+    UINT8* pVertexDataBegin;
+    CD3DX12_RANGE readRange(0, 0);
+    hr = m_resources->vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
+    if (FAILED(hr)) return false;
+
+    memcpy(pVertexDataBegin, vertices.data(), vertexBufferSize);
+    m_resources->vertexBuffer->Unmap(0, nullptr);
+
+    // 버퍼 뷰 생성
+    m_resources->vertexBufferView.BufferLocation = m_resources->vertexBuffer->GetGPUVirtualAddress();
+    m_resources->vertexBufferView.StrideInBytes = sizeof(Vertex);
+    m_resources->vertexBufferView.SizeInBytes = vertexBufferSize;
+
+    return true;
+}
+
+bool MeshRenderer::CreateIndexBuffer(const std::vector<UINT>& indices) 
+{
+    auto device = Engine::Instance().GetDevice();
+
+    const UINT indexBufferSize = static_cast<UINT>(indices.size() * sizeof(UINT));
+    m_resources->indexCount = static_cast<UINT>(indices.size());
+
+    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
+
+    HRESULT hr = device->CreateCommittedResource(
+        &heapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &resourceDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&m_resources->indexBuffer));
+
+    if (FAILED(hr)) {
+        Logger::Instance().Error("인덱스 버퍼 생성 실패");
+        return false;
+    }
+
+    // 데이터 복사
+    UINT8* pIndexDataBegin;
+    CD3DX12_RANGE readRange(0, 0);
+    hr = m_resources->indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin));
+    if (FAILED(hr)) return false;
+
+    memcpy(pIndexDataBegin, indices.data(), indexBufferSize);
+    m_resources->indexBuffer->Unmap(0, nullptr);
+
+    // 버퍼 뷰 생성
+    m_resources->indexBufferView.BufferLocation = m_resources->indexBuffer->GetGPUVirtualAddress();
+    m_resources->indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+    m_resources->indexBufferView.SizeInBytes = indexBufferSize;
+
+    return true;
+}
+
+bool MeshRenderer::CreateConstantBuffer() 
+{
+    auto device = Engine::Instance().GetDevice();
+
+    const UINT constantBufferSize = (sizeof(ObjectConstants) + 255) & ~255;
+
+    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
+
+    HRESULT hr = device->CreateCommittedResource(
+        &heapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &resourceDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&m_resources->constantBuffer));
+
+    if (FAILED(hr)) {
+        Logger::Instance().Error("상수 버퍼 생성 실패");
+        return false;
+    }
+
+    // 상수 버퍼 매핑
+    CD3DX12_RANGE readRange(0, 0);
+    hr = m_resources->constantBuffer->Map(0, &readRange,
+        reinterpret_cast<void**>(&m_resources->constantBufferMappedData));
+    if (FAILED(hr)) return false;
+
+    return true;
+}
+
+bool MeshRenderer::CreateConstantBufferView(ID3D12Device* device)
+{
+	UINT descriptorIndex = Engine::Instance().AllocateDescriptor();
+    auto descHeap = Engine::Instance().GetDescriptorHeap();
+	UINT descriptorSize = Engine::Instance().GetDescriptorIncrementSize();
+	if (!descHeap) return false;
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle(descHeap->GetCPUDescriptorHandleForHeapStart());
+    cbvHandle.Offset(descriptorIndex, descriptorSize);
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+    cbvDesc.BufferLocation = m_resources->constantBuffer->GetGPUVirtualAddress();
+    cbvDesc.SizeInBytes = (sizeof(ObjectConstants) + 255) & ~255;
+    device->CreateConstantBufferView(&cbvDesc, cbvHandle);
+
+    // GPU 디스크립터 핸들 저장
+    m_resources->cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+        descHeap->GetGPUDescriptorHandleForHeapStart(),
+        descriptorIndex,
+        descriptorSize);
+
+	return true;
+}
+
+bool MeshRenderer::CreateTextureResource(const std::wstring& texturePath)
+{
+	auto device = Engine::Instance().GetDevice();
+	auto commandQueue = Engine::Instance().GetCommandQueue();
+	if (!device || !commandQueue) return false;
+
+    // 리소스 업로드 배치 생성
+    DirectX::ResourceUploadBatch resourceUpload(device);
+    resourceUpload.Begin();
+
+    // DDS 텍스처 로드
+    if (FAILED(DirectX::CreateDDSTextureFromFile(
+        device,
+        resourceUpload,
+        texturePath.c_str(),
+        m_resources->texture.ReleaseAndGetAddressOf()))) {
+        return false;
+    }
+
+    // 리소스 업로드 실행
+    auto uploadResourcesFinished = resourceUpload.End(commandQueue);
+    uploadResourcesFinished.wait();
+
+    return true;
+}
