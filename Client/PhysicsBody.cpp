@@ -178,9 +178,9 @@ void PhysicsBody::UpdatePhysicsTransform() {
         XMConvertToDegrees(roll)
     ));
 
-    XMFLOAT3 scaleFloat;
-    XMStoreFloat3(&scaleFloat, scale);
-    transform->SetScale(scaleFloat);
+    //XMFLOAT3 scaleFloat;
+    //XMStoreFloat3(&scaleFloat, scale);
+    //transform->SetScale(scaleFloat);
 }
 
 void PhysicsBody::AddForce(const PxVec3& force, PxForceMode::Enum mode) {

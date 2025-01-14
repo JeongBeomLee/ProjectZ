@@ -70,7 +70,6 @@ private:
 	ComPtr<ID3D12Resource> m_texture;
 	
 	// 변환 행렬 (카메라)
-	//XMMATRIX m_worldMatrix;
 	XMMATRIX m_viewMatrix;
 	XMMATRIX m_projectionMatrix;
 
@@ -80,7 +79,6 @@ private:
 
 	// 물리 엔진
 	std::unique_ptr<PhysicsEngine> m_physicsEngine;
-	std::shared_ptr<PhysicsObject> m_ground;
 
 	std::vector<std::shared_ptr<GameObject>> m_gameObjects;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_currentCbvHandle;
@@ -104,8 +102,16 @@ private:
 	bool CreateLightConstantBuffer();
 	bool CreateTexture(const wchar_t* filename);
 	bool CreateDescHeap();
+
 	void CreateCubeMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices);
+	void CreateSphereMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices,
+		float radius, int slices = 15, int stacks = 15);
+	void CreateCapsuleMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices,
+		float radius, float height, int slices = 15, int stacks = 15);
+
 	void CreateCube(const PxVec3& position, const PxVec3& dimensions = PxVec3(0.5f));
+	void CreateSphere(const PxVec3& position, float radius = 0.5f);
+	void CreateCapsule(const PxVec3& position, float radius = 0.3f, float height = 1.0f);
 
 	// 이벤트 핸들러 등록, 등록 해제 함수
 	void RegisterEventHandlers();

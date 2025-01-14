@@ -121,17 +121,9 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		return false;
 	}
 
-	// 지면 생성
-	m_ground = m_physicsEngine->CreateBox(
-		PxVec3(0.0f, 0.0f, 0.0f),
-		PxVec3(100.0f, 0.5f, 100.0f),
-		PhysicsObjectType::STATIC,
-		CollisionGroup::Ground,
-		CollisionGroup::Default | CollisionGroup::Player);
-
 	// 초기 변환 행렬 설정
 	m_viewMatrix = XMMatrixLookAtLH(
-		XMVectorSet(0.0f, 5.0f, -5.0f, 1.0f),  // 카메라 위치
+		XMVectorSet(0.0f, 6.0f, -5.0f, 1.0f),  // 카메라 위치
 		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 지점
 		XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f)    // 업 벡터
 	);
@@ -142,9 +134,31 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		100.0f                                  // 원평면
 	);
 
-	CreateCube(PxVec3(0.0f, 5.0f, 0.0f), PxVec3(0.5f));  // 기본 큐브
-	CreateCube(PxVec3(0.0f, 10.0f, 0.0f), PxVec3(0.5f));  // 기본 큐브
-	CreateCube(PxVec3(0.0f, 15.0f, 0.0f), PxVec3(0.5f));  // 기본 큐브
+	// 지면 생성 (정적 박스)
+	auto ground = std::make_shared<GameObject>();
+	m_gameObjects.push_back(ground);
+
+	auto groundPhysics = ground->AddComponent<PhysicsBody>();
+	PhysicsBody::BoxParams groundParams;
+	groundPhysics->SetCollisionGroup(CollisionGroup::Ground);
+	groundPhysics->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Player);
+	groundParams.dimensions = PxVec3(100.0f, 0.5f, 100.0f);
+	groundPhysics->CreateBody(PhysicsObjectType::STATIC, PhysicsShapeType::Box, groundParams);
+
+	// 여러 물리 객체들 생성
+	float startHeight = 5.0f;
+
+	// 큐브들 생성
+	CreateCube(PxVec3(0.0f, startHeight, 0.0f));
+	CreateCube(PxVec3(0.0f, startHeight + 10.0f, 0.0f));
+
+	// 구체들 생성
+	CreateSphere(PxVec3(2.0f, startHeight, 2.0f));
+	CreateSphere(PxVec3(2.0f, startHeight + 10.0f, 2.0f));
+
+	// 캡슐들 생성
+	CreateCapsule(PxVec3(-2.0f, startHeight, -2.0f));
+	CreateCapsule(PxVec3(-2.0f, startHeight + 10.0f, -2.0f));
 
 	// 회전 애니메이션 초기화
 	m_rotationAngle = 0.0f;
@@ -255,21 +269,6 @@ void Engine::BeginRender()
 
 void Engine::ExecuteRender()
 {
-	// 각 큐브 렌더링
-	//for (auto& cube : m_cubeObjects) {
-	//	// 상수 버퍼 업데이트
-	//	ObjectConstants constants;
-	//	constants.worldMatrix = XMMatrixTranspose(cube.worldMatrix);
-	//	constants.viewMatrix = XMMatrixTranspose(m_viewMatrix);
-	//	constants.projectionMatrix = XMMatrixTranspose(m_projectionMatrix);
-	//	memcpy(cube.constantBufferMappedData, &constants, sizeof(constants));
-
-	//	// Transform CBV 설정 (이제 각 큐브의 고유한 CBV 사용)
-	//	m_commandList->SetGraphicsRootDescriptorTable(0, cube.cbvHandle);
-
-	//	// 드로우 콜
-	//	m_commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
-	//}
 	// 모든 게임 오브젝트의 MeshRenderer 렌더링
 	for (const auto& gameObject : m_gameObjects) {
 		if (auto renderer = gameObject->GetComponent<MeshRenderer>()) {
@@ -734,77 +733,219 @@ bool Engine::CreateDescHeap()
 
 void Engine::CreateCubeMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices)
 {
-	// 큐브의 정점 데이터
-	Vertex cubeVertices[] = {
-		// 앞면 (z = 0.5f)
+	// 정점 데이터
+	vertices = {
+		// 전면 (z = 0.5f)
 		{ XMFLOAT3(-0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
 		{ XMFLOAT3(-0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
 		{ XMFLOAT3(0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
 		{ XMFLOAT3(0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
 
-		// 뒷면 (z = -0.5f)
+		// 후면 (z = -0.5f)
 		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
 		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
 		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
 		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
 
-		// 윗면 (y = 0.5f)
+		// 상면 (y = 0.5f)
 		{ XMFLOAT3(-0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
 		{ XMFLOAT3(0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
 		{ XMFLOAT3(0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
 		{ XMFLOAT3(-0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
 
-		// 아랫면 (y = -0.5f)
+		// 하면 (y = -0.5f)
 		{ XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
 		{ XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
 		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
 		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
 
-		// 오른쪽면 (x = 0.5f)
+		// 우면 (x = 0.5f)
 		{ XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
 		{ XMFLOAT3(0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
 		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
 		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
 
-		// 왼쪽면 (x = -0.5f)
+		// 좌면 (x = -0.5f)
 		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
 		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
 		{ XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
 		{ XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) }
 	};
 
-	// 큐브의 인덱스 데이터
-	UINT cubeIndices[] = {
-		// 앞면 (0-3)
-		0, 1, 2,    // 첫 번째 삼각형
-		0, 2, 3,    // 두 번째 삼각형
+	// 인덱스 데이터
+	indices = {
+		// 전면
+		0, 1, 2,    0, 2, 3,
 
-		// 뒷면 (4-7)
-		4, 5, 6,
-		4, 6, 7,
+		// 후면
+		4, 5, 6,    4, 6, 7,
 
-		// 윗면 (8-11)
-		8, 9, 10,
-		8, 10, 11,
+		// 상면
+		8, 9, 10,   8, 10, 11,
 
-		// 아랫면 (12-15)
-		12, 13, 14,
-		12, 14, 15,
+		// 하면
+		12, 13, 14, 12, 14, 15,
 
-		// 오른쪽면 (16-19)
-		16, 17, 18,
-		16, 18, 19,
+		// 우면
+		16, 17, 18, 16, 18, 19,
 
-		// 왼쪽면 (20-23)
-		20, 21, 22,
-		20, 22, 23
+		// 좌면
+		20, 21, 22, 20, 22, 23
 	};
 
-	// 정점/인덱스 데이터 복사
-	vertices.assign(std::begin(cubeVertices), std::end(cubeVertices));
-	indices.assign(std::begin(cubeIndices), std::end(cubeIndices));
-
 	Logger::Instance().Info("큐브 메시 데이터 생성 완료");
+}
+
+void Engine::CreateSphereMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices, float radius, int slices, int stacks)
+{
+	vertices.clear();
+	indices.clear();
+
+	// vertices 벡터의 예상 크기를 미리 할당하여 성능 개선
+	vertices.reserve((stacks + 1) * (slices + 1));
+	indices.reserve(stacks * slices * 6);
+
+	// 모든 정점 생성 (극점 포함)
+	for (int i = 0; i <= stacks; ++i) {
+		float phi = i * XM_PI / stacks;
+		float sinPhi = sinf(phi);
+		float cosPhi = cosf(phi);
+
+		for (int j = 0; j <= slices; ++j) {
+			float theta = j * XM_2PI / slices;
+			float sinTheta = sinf(theta);
+			float cosTheta = cosf(theta);
+
+			// 정점 위치 계산
+			XMFLOAT3 pos = {
+				radius * sinPhi * cosTheta,
+				radius * cosPhi,
+				radius * sinPhi * sinTheta
+			};
+
+			// 노말 벡터는 정규화된 위치 벡터
+			XMFLOAT3 normal = {
+				sinPhi * cosTheta,
+				cosPhi,
+				sinPhi * sinTheta
+			};
+
+			// UV 좌표 계산 개선
+			// U: 0 to 1 (theta 기준)
+			// V: 0 to 1 (phi 기준)
+			XMFLOAT2 tex = {
+				(float)j / slices,           // U
+				1.0f - (float)i / stacks     // V (반전하여 텍스처 방향 수정)
+			};
+
+			vertices.push_back({ pos, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), normal, tex });
+		}
+	}
+
+    // 인덱스 생성
+	for (int i = 0; i < stacks; ++i) {
+		for (int j = 0; j < slices; ++j) {
+			int current = i * (slices + 1) + j;
+			int next = current + 1;
+			int bottom = (i + 1) * (slices + 1) + j;
+			int bottomNext = bottom + 1;
+
+			// 상단 삼각형
+			indices.push_back(current);
+			indices.push_back(bottom);
+			indices.push_back(next);
+
+			// 하단 삼각형
+			indices.push_back(bottom);
+			indices.push_back(bottomNext);
+			indices.push_back(next);
+		}
+	}
+}
+
+void Engine::CreateCapsuleMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices, float radius, float height, int slices, int stacks)
+{
+	vertices.clear();
+	indices.clear();
+
+	float halfHeight = height * 0.5f;
+	int halfStacks = stacks / 2;
+	float phiStep = XM_PI / stacks;
+	float thetaStep = 2.0f * XM_PI / slices;
+
+	// 상단 반구
+	for (int i = 0; i <= halfStacks; ++i) {
+		float phi = i * phiStep;
+
+		for (int j = 0; j <= slices; ++j) {
+			float theta = j * thetaStep;
+
+			XMFLOAT3 pos = {
+				radius * sinf(phi) * cosf(theta),
+				halfHeight + radius * cosf(phi),
+				radius * sinf(phi) * sinf(theta)
+			};
+
+			XMFLOAT3 normal = {
+				sinf(phi) * cosf(theta),
+				cosf(phi),
+				sinf(phi) * sinf(theta)
+			};
+
+			XMFLOAT2 tex = {
+				theta / (2.0f * XM_PI),
+				phi / XM_PI
+			};
+
+			vertices.push_back({ pos, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), normal, tex });
+		}
+	}
+
+	// 하단 반구
+	for (int i = halfStacks; i <= stacks; ++i) {
+		float phi = i * phiStep;
+
+		for (int j = 0; j <= slices; ++j) {
+			float theta = j * thetaStep;
+
+			XMFLOAT3 pos = {
+				radius * sinf(phi) * cosf(theta),
+				-halfHeight + radius * cosf(phi),
+				radius * sinf(phi) * sinf(theta)
+			};
+
+			XMFLOAT3 normal = {
+				sinf(phi) * cosf(theta),
+				cosf(phi),
+				sinf(phi) * sinf(theta)
+			};
+
+			XMFLOAT2 tex = {
+				theta / (2.0f * XM_PI),
+				phi / XM_PI
+			};
+
+			vertices.push_back({ pos, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), normal, tex });
+		}
+	}
+
+	// 인덱스 생성
+	for (int i = 0; i < stacks; ++i) {
+		for (int j = 0; j < slices; ++j) {
+			int current = i * (slices + 1) + j;
+			int next = current + 1;
+			int bottom = (i + 1) * (slices + 1) + j;
+			int bottomNext = bottom + 1;
+
+			indices.push_back(current);
+			indices.push_back(bottom);
+			indices.push_back(next);
+
+			indices.push_back(next);
+			indices.push_back(bottom);
+			indices.push_back(bottomNext);
+		}
+	}
 }
 
 void Engine::CreateCube(const PxVec3& position, const PxVec3& dimensions)
@@ -835,6 +976,55 @@ void Engine::CreateCube(const PxVec3& position, const PxVec3& dimensions)
 
 	Logger::Instance().Info("큐브 게임 오브젝트 생성됨. 위치: ({}, {}, {})",
 		position.x, position.y, position.z);
+}
+
+void Engine::CreateSphere(const PxVec3& position, float radius)
+{
+	auto gameObject = std::make_shared<GameObject>();
+	m_gameObjects.push_back(gameObject);
+
+	auto transform = gameObject->GetTransform();
+	transform->SetPosition(XMFLOAT3(position.x, position.y, position.z));
+
+	auto physicsBody = gameObject->AddComponent<PhysicsBody>();
+	PhysicsBody::SphereParams sphereParams;
+	sphereParams.radius = radius;
+	physicsBody->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Ground);
+	physicsBody->CreateBody(PhysicsObjectType::DYNAMIC, PhysicsShapeType::Sphere, sphereParams);
+
+	auto renderer = gameObject->AddComponent<MeshRenderer>();
+	std::vector<Vertex> vertices;
+	std::vector<UINT> indices;
+	CreateSphereMeshData(vertices, indices, radius);
+	renderer->CreateResources(vertices, indices, L"Texture/checker.dds");
+
+	Logger::Instance().Info("구체 생성됨. 위치: ({}, {}, {}), 반지름: {}",
+		position.x, position.y, position.z, radius);
+}
+
+void Engine::CreateCapsule(const PxVec3& position, float radius, float height)
+{
+	auto gameObject = std::make_shared<GameObject>();
+	m_gameObjects.push_back(gameObject);
+
+	auto transform = gameObject->GetTransform();
+	transform->SetPosition(XMFLOAT3(position.x, position.y, position.z));
+
+	auto physicsBody = gameObject->AddComponent<PhysicsBody>();
+	PhysicsBody::CapsuleParams capsuleParams;
+	capsuleParams.radius = radius;
+	capsuleParams.halfHeight = height * 0.5f;
+	physicsBody->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Ground);
+	physicsBody->CreateBody(PhysicsObjectType::DYNAMIC, PhysicsShapeType::Capsule, capsuleParams);
+
+	auto renderer = gameObject->AddComponent<MeshRenderer>();
+	std::vector<Vertex> vertices;
+	std::vector<UINT> indices;
+	CreateCapsuleMeshData(vertices, indices, radius, height);
+	renderer->CreateResources(vertices, indices, L"Texture/checker.dds");
+
+	Logger::Instance().Info("캡슐 생성됨. 위치: ({}, {}, {}), 반지름: {}, 높이: {}",
+		position.x, position.y, position.z, radius, height);
 }
 
 void Engine::RegisterEventHandlers()

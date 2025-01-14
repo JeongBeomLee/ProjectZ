@@ -92,8 +92,6 @@ std::shared_ptr<PhysicsObject> PhysicsEngine::CreateBox(
 		actor = dynamicActor;
 		break;
 	}
-	case PhysicsObjectType::KINEMATIC:
-		break;
 	default:
 		break;
 	}
