@@ -89,10 +89,6 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		Logger::Instance().Fatal("라이트 상수 버퍼 생성 실패");
 		return false;
 	}
-	if (!CreateTexture(L"Texture/checker.dds")) {
-		Logger::Instance().Fatal("텍스처 생성 실패");
-		return false;
-	}
 	if (!CreateDescHeap()) {
 		Logger::Instance().Fatal("디스크립터 힙 생성 실패");
 		return false;
@@ -255,16 +251,12 @@ void Engine::BeginRender()
 	m_commandList->SetGraphicsRootDescriptorTable(1, lightCbvHandle);
 
 	// 텍스처 SRV 설정
-	CD3DX12_GPU_DESCRIPTOR_HANDLE textureSrvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
-	textureSrvHandle.Offset(MAX_OBJECTS + 1, GetDescriptorIncrementSize());
-	m_commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandle);
+	//CD3DX12_GPU_DESCRIPTOR_HANDLE textureSrvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
+	//textureSrvHandle.Offset(MAX_OBJECTS + 1, GetDescriptorIncrementSize());
+	//m_commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandle);
 
 	// 프리미티브 토폴로지 설정
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	// 정점 버퍼, 인덱스 버퍼 설정
-	//m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	//m_commandList->IASetIndexBuffer(&m_indexBufferView);
 }
 
 void Engine::ExecuteRender()
@@ -677,38 +669,17 @@ bool Engine::CreateLightConstantBuffer()
 	return true;
 }
 
-bool Engine::CreateTexture(const wchar_t* filename)
-{
-	// 리소스 업로드 배치 생성
-	DirectX::ResourceUploadBatch resourceUpload(m_device.Get());
-	resourceUpload.Begin();
-
-	// DDS 텍스처 로드
-	if (FAILED(DirectX::CreateDDSTextureFromFile(
-		m_device.Get(),
-		resourceUpload,
-		filename,
-		m_texture.ReleaseAndGetAddressOf()))) {
-		return false;
-	}
-
-	// 리소스 업로드 실행
-	auto uploadResourcesFinished = resourceUpload.End(m_commandQueue.Get());
-	uploadResourcesFinished.wait();
-
-	return true;
-}
-
 bool Engine::CreateDescHeap()
 {
+	// MAX_OBJECTS(CBVs) + 1(Light CBV) + MAX_OBJECTS(SRVs)
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.NumDescriptors = MAX_OBJECTS + 2;  // 오브젝트 + 라이트 + 텍스처
+	heapDesc.NumDescriptors = MAX_OBJECTS * 2 + 1;
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
 	ThrowIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_descHeap)));
 
-	// 라이트 CBV 생성
+	// 라이트 CBV 생성 (MAX_OBJECTS 위치에)
 	CD3DX12_CPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
 	lightCbvHandle.Offset(MAX_OBJECTS, GetDescriptorIncrementSize());
 
@@ -717,17 +688,11 @@ bool Engine::CreateDescHeap()
 	lightCbvDesc.SizeInBytes = (sizeof(LightConstants) + 255) & ~255;
 	m_device->CreateConstantBufferView(&lightCbvDesc, lightCbvHandle);
 
-	// 텍스처 SRV 생성
-	CD3DX12_CPU_DESCRIPTOR_HANDLE textureSrvHandle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
-	textureSrvHandle.Offset(MAX_OBJECTS + 1, GetDescriptorIncrementSize());
+	// 인덱스 초기화
+	m_currentCbvIndex = 0;
+	m_currentSrvIndex = 0;
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = m_texture->GetDesc().Format;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = m_texture->GetDesc().MipLevels;
-	m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, textureSrvHandle);
-
+	Logger::Instance().Info("디스크립터 힙 생성 완료. 총 디스크립터 수: {}", MAX_OBJECTS * 2 + 1);
 	return true;
 }
 
@@ -996,7 +961,7 @@ void Engine::CreateSphere(const PxVec3& position, float radius)
 	std::vector<Vertex> vertices;
 	std::vector<UINT> indices;
 	CreateSphereMeshData(vertices, indices, radius);
-	renderer->CreateResources(vertices, indices, L"Texture/checker.dds");
+	renderer->CreateResources(vertices, indices, L"Texture/pinkchecker.dds");
 
 	Logger::Instance().Info("구체 생성됨. 위치: ({}, {}, {}), 반지름: {}",
 		position.x, position.y, position.z, radius);
@@ -1021,7 +986,7 @@ void Engine::CreateCapsule(const PxVec3& position, float radius, float height)
 	std::vector<Vertex> vertices;
 	std::vector<UINT> indices;
 	CreateCapsuleMeshData(vertices, indices, radius, height);
-	renderer->CreateResources(vertices, indices, L"Texture/checker.dds");
+	renderer->CreateResources(vertices, indices, L"Texture/yellowchecker.dds");
 
 	Logger::Instance().Info("캡슐 생성됨. 위치: ({}, {}, {}), 반지름: {}, 높이: {}",
 		position.x, position.y, position.z, radius, height);

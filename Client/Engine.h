@@ -24,11 +24,11 @@ public:
 	PhysicsEngine* GetPhysicsEngine() const { return m_physicsEngine.get(); }
 	XMMATRIX& GetViewMatrix() { return m_viewMatrix; }
 	XMMATRIX& GetProjectionMatrix() { return m_projectionMatrix; }
+
 	ID3D12DescriptorHeap* GetDescriptorHeap() const { return m_descHeap.Get(); }
-	UINT AllocateDescriptor() { return m_currentDescriptorIndex++; }
-	UINT GetDescriptorIncrementSize() const {
-		return m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
+	UINT GetCbvDescriptorIndex() { return m_currentCbvIndex++; }
+	UINT GetSrvDescriptorIndex() { return MAX_OBJECTS + 1 + m_currentSrvIndex++; }
+	UINT GetDescriptorIncrementSize() const { return m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV); }
 
 private:
 	// 화면 크기
@@ -58,17 +58,15 @@ private:
 	ComPtr<ID3DBlob> m_pixelShader;
 
 	// 디스크립터 힙 관리
-	UINT m_currentDescriptorIndex = 0;
 	static const UINT MAX_OBJECTS = 100;  // 최대 오브젝트 수
+	UINT m_currentCbvIndex = 0;  // CBV 할당을 위한 인덱스
+	UINT m_currentSrvIndex = 0;  // SRV 할당을 위한 인덱스
 
 	// 라이팅 관련
 	ComPtr<ID3D12Resource> m_lightConstantBuffer;
 	UINT8* m_lightConstantBufferMappedData;
 	LightConstants m_lightConstants;
 
-	// 텍스처 관련 멤버
-	ComPtr<ID3D12Resource> m_texture;
-	
 	// 변환 행렬 (카메라)
 	XMMATRIX m_viewMatrix;
 	XMMATRIX m_projectionMatrix;
@@ -100,7 +98,6 @@ private:
 	bool CreatePipelineState();
 	bool CompileShaders();
 	bool CreateLightConstantBuffer();
-	bool CreateTexture(const wchar_t* filename);
 	bool CreateDescHeap();
 
 	void CreateCubeMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices);

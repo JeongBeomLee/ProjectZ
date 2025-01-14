@@ -41,6 +41,7 @@ private:
     bool CreateConstantBuffer();
 	bool CreateConstantBufferView(ID3D12Device* device);
     bool CreateTextureResource(const std::wstring& texturePath);
+	bool CreateShaderResourceView(ID3D12Device* device);
 
     std::unique_ptr<MeshResources> m_resources;
     bool m_isInitialized = false;

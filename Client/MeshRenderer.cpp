@@ -41,9 +41,12 @@ bool MeshRenderer::CreateResources(const std::vector<Vertex>& vertices,
 
     if (!CreateVertexBuffer(vertices)) return false;
     if (!CreateIndexBuffer(indices)) return false;
+
     if (!CreateConstantBuffer()) return false;
 	if (!CreateConstantBufferView(device)) return false;
+
     if (!CreateTextureResource(texturePath)) return false;
+	if (!CreateShaderResourceView(device)) return false;
 
     m_isInitialized = true;
     return true;
@@ -56,6 +59,9 @@ void MeshRenderer::Render(ID3D12GraphicsCommandList* commandList)
     // 상수 버퍼 뷰 설정
     commandList->SetGraphicsRootDescriptorTable(0, m_resources->cbvHandle);
 
+    // 텍스처 SRV 설정
+    commandList->SetGraphicsRootDescriptorTable(2, m_resources->srvHandle);
+
     // 정점 버퍼 설정
     commandList->IASetVertexBuffers(0, 1, &m_resources->vertexBufferView);
     commandList->IASetIndexBuffer(&m_resources->indexBufferView);
@@ -66,7 +72,10 @@ void MeshRenderer::Render(ID3D12GraphicsCommandList* commandList)
 
 void MeshRenderer::UpdateConstantBuffer() 
 {
-    if (!m_resources->constantBufferMappedData) return;
+    if (!m_resources->constantBufferMappedData) {
+		Logger::Instance().Error("상수 버퍼 매핑 실패");
+		return;
+    }
 
     auto transform = GetGameObject()->GetTransform();
 
@@ -191,7 +200,7 @@ bool MeshRenderer::CreateConstantBuffer()
 
 bool MeshRenderer::CreateConstantBufferView(ID3D12Device* device)
 {
-	UINT descriptorIndex = Engine::Instance().AllocateDescriptor();
+	UINT descriptorIndex = Engine::Instance().GetCbvDescriptorIndex();
     auto descHeap = Engine::Instance().GetDescriptorHeap();
 	UINT descriptorSize = Engine::Instance().GetDescriptorIncrementSize();
 	if (!descHeap) return false;
@@ -237,4 +246,33 @@ bool MeshRenderer::CreateTextureResource(const std::wstring& texturePath)
     uploadResourcesFinished.wait();
 
     return true;
+}
+
+bool MeshRenderer::CreateShaderResourceView(ID3D12Device* device)
+{
+    // SRV 생성
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Format = m_resources->texture->GetDesc().Format;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = m_resources->texture->GetDesc().MipLevels;
+
+    // 디스크립터 할당 및 생성
+    auto descHeap = Engine::Instance().GetDescriptorHeap();
+	if (!descHeap) return false;
+    UINT descriptorIndex = Engine::Instance().GetSrvDescriptorIndex();
+	UINT descriptorSize = Engine::Instance().GetDescriptorIncrementSize();
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(descHeap->GetCPUDescriptorHandleForHeapStart());
+    srvHandle.Offset(descriptorIndex, descriptorSize);
+
+    device->CreateShaderResourceView(m_resources->texture.Get(), &srvDesc, srvHandle);
+
+    // GPU 핸들 저장
+    m_resources->srvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+        descHeap->GetGPUDescriptorHandleForHeapStart(),
+        descriptorIndex,
+        descriptorSize);
+
+	return true;
 }
