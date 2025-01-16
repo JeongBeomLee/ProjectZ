@@ -4,6 +4,7 @@
 #include "PhysicsEngine.h"
 #include "MemoryManager.h"
 #include "EventManager.h"
+#include "SceneManager.h"
 #include "Transform.h"
 #include "PhysicsBody.h"
 #include "MeshRenderer.h"
@@ -130,31 +131,8 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		100.0f                                  // 원평면
 	);
 
-	// 지면 생성 (정적 박스)
-	auto ground = std::make_shared<GameObject>();
-	m_gameObjects.push_back(ground);
-
-	auto groundPhysics = ground->AddComponent<PhysicsBody>();
-	PhysicsBody::BoxParams groundParams;
-	groundPhysics->SetCollisionGroup(CollisionGroup::Ground);
-	groundPhysics->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Player);
-	groundParams.dimensions = PxVec3(100.0f, 0.5f, 100.0f);
-	groundPhysics->CreateBody(PhysicsObjectType::STATIC, PhysicsShapeType::Box, groundParams);
-
-	// 여러 물리 객체들 생성
-	float startHeight = 5.0f;
-
-	// 큐브들 생성
-	CreateCube(PxVec3(0.0f, startHeight, 0.0f));
-	CreateCube(PxVec3(0.0f, startHeight + 10.0f, 0.0f));
-
-	// 구체들 생성
-	CreateSphere(PxVec3(2.0f, startHeight, 2.0f));
-	CreateSphere(PxVec3(2.0f, startHeight + 10.0f, 2.0f));
-
-	// 캡슐들 생성
-	CreateCapsule(PxVec3(-2.0f, startHeight, -2.0f));
-	CreateCapsule(PxVec3(-2.0f, startHeight + 10.0f, -2.0f));
+	// 기본 씬 생성
+	CreateDefaultScene();
 
 	// 회전 애니메이션 초기화
 	m_rotationAngle = 0.0f;
@@ -172,13 +150,12 @@ void Engine::Update()
 	// 모든 큐에 있는 이벤트 처리
 	EventManager::Instance().Update();
 	
-	// 델타 시간 계산
 	ULONGLONG currentTick = GetTickCount64();
 	float deltaTime = (currentTick - m_lastTick) / 1000.0f;
 	m_lastTick = currentTick;
 
 	// deltaTime이 0이하인 경우 최소값으로 설정
-	if (deltaTime <= 0.0f) {
+	if (deltaTime < 0.0f) {
 		deltaTime = 1.0f / 600.0f;  // 기본 프레임 레이트
 		//Logger::Instance().Warning("0 또는 음수 DT 감지, 기본 값 사용: {}", deltaTime);
 	}
@@ -186,27 +163,11 @@ void Engine::Update()
 	// 물리 엔진 업데이트
 	m_physicsEngine->Update(deltaTime);
 
-	// 모든 게임 오브젝트 업데이트
-	for (const auto& gameObject : m_gameObjects) {
-		gameObject->Update(deltaTime);
-	}
-
-	// 회전 각도 업데이트
-	m_rotationAngle += deltaTime;
-
-	// 라이트 방향 업데이트 (원을 그리며 회전)
-	float lightAngle = m_rotationAngle * 0.5f;  // 큐브보다 천천히 회전
-	m_lightConstants.lightDirection.x = sinf(lightAngle);
-	m_lightConstants.lightDirection.z = cosf(lightAngle);
-	m_lightConstants.lightDirection.y = -0.5f;  // 약간 위에서 비추도록
-
-	// 정규화
-	XMVECTOR lightDir = XMLoadFloat4(&m_lightConstants.lightDirection);
-	lightDir = XMVector3Normalize(lightDir);
-	XMStoreFloat4(&m_lightConstants.lightDirection, lightDir);
+	// 씬 매니저를 통한 현재 씬 업데이트
+	SceneManager::Instance().Update(deltaTime);
 
 	// 라이트 상수 버퍼 업데이트
-	memcpy(m_lightConstantBufferMappedData, &m_lightConstants, sizeof(m_lightConstants));
+	UpdateLightConstant(deltaTime);
 }
 
 void Engine::BeginRender()
@@ -250,23 +211,13 @@ void Engine::BeginRender()
 	lightCbvHandle.Offset(MAX_OBJECTS, GetDescriptorIncrementSize());
 	m_commandList->SetGraphicsRootDescriptorTable(1, lightCbvHandle);
 
-	// 텍스처 SRV 설정
-	//CD3DX12_GPU_DESCRIPTOR_HANDLE textureSrvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
-	//textureSrvHandle.Offset(MAX_OBJECTS + 1, GetDescriptorIncrementSize());
-	//m_commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandle);
-
 	// 프리미티브 토폴로지 설정
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void Engine::ExecuteRender()
 {
-	// 모든 게임 오브젝트의 MeshRenderer 렌더링
-	for (const auto& gameObject : m_gameObjects) {
-		if (auto renderer = gameObject->GetComponent<MeshRenderer>()) {
-			renderer->Render(m_commandList.Get());
-		}
-	}
+	SceneManager::Instance().Render(m_commandList.Get());
 }
 
 void Engine::EndRender()
@@ -303,6 +254,7 @@ void Engine::Render()
 void Engine::Cleanup()
 {
 	WaitForGpu();
+	SceneManager::Instance().Clear();
 	UnregisterEventHandlers();
 	m_physicsEngine.reset();
     CloseHandle(m_fenceEvent);
@@ -696,6 +648,26 @@ bool Engine::CreateDescHeap()
 	return true;
 }
 
+void Engine::UpdateLightConstant(float deltaTime)
+{
+	// 회전 각도 업데이트
+	m_rotationAngle += deltaTime;
+
+	// 라이트 방향 업데이트 (원을 그리며 회전)
+	float lightAngle = m_rotationAngle * 0.5f;  // 큐브보다 천천히 회전
+	m_lightConstants.lightDirection.x = sinf(lightAngle);
+	m_lightConstants.lightDirection.z = cosf(lightAngle);
+	m_lightConstants.lightDirection.y = -0.5f;  // 약간 위에서 비추도록
+
+	// 정규화
+	XMVECTOR lightDir = XMLoadFloat4(&m_lightConstants.lightDirection);
+	lightDir = XMVector3Normalize(lightDir);
+	XMStoreFloat4(&m_lightConstants.lightDirection, lightDir);
+
+	// 라이트 상수 버퍼 업데이트
+	memcpy(m_lightConstantBufferMappedData, &m_lightConstants, sizeof(m_lightConstants));
+}
+
 void Engine::CreateCubeMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices)
 {
 	// 정점 데이터
@@ -916,7 +888,7 @@ void Engine::CreateCapsuleMeshData(std::vector<Vertex>& vertices, std::vector<UI
 void Engine::CreateCube(const PxVec3& position, const PxVec3& dimensions)
 {
 	auto gameObject = std::make_shared<GameObject>();
-	m_gameObjects.push_back(gameObject);
+	//m_gameObjects.push_back(gameObject);
 
 	// Transform 설정
 	auto transform = gameObject->GetTransform();
@@ -946,7 +918,7 @@ void Engine::CreateCube(const PxVec3& position, const PxVec3& dimensions)
 void Engine::CreateSphere(const PxVec3& position, float radius)
 {
 	auto gameObject = std::make_shared<GameObject>();
-	m_gameObjects.push_back(gameObject);
+	//m_gameObjects.push_back(gameObject);
 
 	auto transform = gameObject->GetTransform();
 	transform->SetPosition(XMFLOAT3(position.x, position.y, position.z));
@@ -970,7 +942,7 @@ void Engine::CreateSphere(const PxVec3& position, float radius)
 void Engine::CreateCapsule(const PxVec3& position, float radius, float height)
 {
 	auto gameObject = std::make_shared<GameObject>();
-	m_gameObjects.push_back(gameObject);
+	//m_gameObjects.push_back(gameObject);
 
 	auto transform = gameObject->GetTransform();
 	transform->SetPosition(XMFLOAT3(position.x, position.y, position.z));
@@ -990,6 +962,62 @@ void Engine::CreateCapsule(const PxVec3& position, float radius, float height)
 
 	Logger::Instance().Info("캡슐 생성됨. 위치: ({}, {}, {}), 반지름: {}, 높이: {}",
 		position.x, position.y, position.z, radius, height);
+}
+
+void Engine::CreateDemonstrationObjects(Scene* scene, const PxVec3& position)
+{
+	auto cube = scene->CreateGameObject("Cube");
+	cube->GetTransform()->SetPosition(XMFLOAT3(position.x, position.y, position.z));
+
+	auto cubePhysics = cube->AddComponent<PhysicsBody>();
+	PhysicsBody::BoxParams cubeParams;
+	cubeParams.dimensions = PxVec3(0.5f);
+	cubePhysics->SetCollisionGroup(CollisionGroup::Default);
+	cubePhysics->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Ground);
+	cubePhysics->CreateBody(PhysicsObjectType::DYNAMIC, PhysicsShapeType::Box, cubeParams);
+
+	auto cubeRenderer = cube->AddComponent<MeshRenderer>();
+	std::vector<Vertex> cubeVertices;
+	std::vector<UINT> cubeIndices;
+	CreateCubeMeshData(cubeVertices, cubeIndices);
+	cubeRenderer->CreateResources(cubeVertices, cubeIndices, L"Texture/checker.dds");
+}
+
+void Engine::CreateDefaultScene()
+{
+	auto& sceneManager = SceneManager::Instance();
+	auto defaultScene = sceneManager.CreateScene("Default Scene");
+
+	// 지면 생성
+	auto ground = defaultScene->CreateGameObject("Ground");
+	auto groundPhysics = ground->AddComponent<PhysicsBody>();
+	PhysicsBody::BoxParams groundParams;
+	groundParams.dimensions = PxVec3(20.0f, 0.5f, 20.0f);
+	groundPhysics->SetCollisionGroup(CollisionGroup::Ground);
+	groundPhysics->SetCollisionMask(CollisionGroup::Default);
+	groundPhysics->CreateBody(PhysicsObjectType::STATIC, PhysicsShapeType::Box, groundParams);
+
+	auto groundRenderer = ground->AddComponent<MeshRenderer>();
+	std::vector<Vertex> groundVertices;
+	std::vector<UINT> groundIndices;
+	CreateCubeMeshData(groundVertices, groundIndices);
+	groundRenderer->CreateResources(groundVertices, groundIndices, L"Texture/mintchecker.dds");
+
+	// 테스트 오브젝트 생성
+	float startHeight = 20.0f;
+	float spacing = 2.0f;
+
+	for (int i = 0; i < 5; ++i) {
+		PxVec3 position(
+			(i % 2 == 0) ? spacing : -spacing,
+			startHeight + (i * 2.0f),
+			0.0f
+		);
+		CreateDemonstrationObjects(defaultScene, position);
+	}
+
+	// 씬 로드
+	sceneManager.LoadScene(defaultScene);
 }
 
 void Engine::RegisterEventHandlers()

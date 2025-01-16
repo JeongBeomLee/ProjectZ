@@ -37,6 +37,10 @@ bool PhysicsBody::CreateBody(PhysicsObjectType type,
 
     auto transform = GetGameObject()->GetTransform();
     auto position = transform->GetPosition();
+	transform->SetScale(XMFLOAT3(
+        params.dimensions.x, 
+        params.dimensions.y,
+        params.dimensions.z));
 
     m_physicsObject = Engine::Instance().GetPhysicsEngine()->CreateBox(
         PxVec3(position.x, position.y, position.z),
@@ -156,6 +160,10 @@ void PhysicsBody::UpdatePhysicsTransform() {
     XMVECTOR scale, rotationQuat, translation;
     XMMatrixDecompose(&scale, &rotationQuat, &translation, worldMatrix);
 
+	// x축으로 90도 회전
+	XMMATRIX rotationMatrix = XMMatrixRotationY(XMConvertToRadians(90.0f));
+	rotationQuat = XMQuaternionMultiply(rotationQuat, XMQuaternionRotationMatrix(rotationMatrix));
+
     // Transform 컴포넌트 업데이트
     auto transform = GetGameObject()->GetTransform();
 
@@ -163,14 +171,16 @@ void PhysicsBody::UpdatePhysicsTransform() {
     XMStoreFloat3(&position, translation);
     transform->SetPosition(position);
 
-    // 쿼터니온을 오일러 각으로 변환
+    // 회전 설정 - 쿼터니온을 오일러 각으로 변환
     XMFLOAT4 quat;
     XMStoreFloat4(&quat, rotationQuat);
-    float pitch = asinf(-2.0f * (quat.x * quat.z - quat.w * quat.y));
-    float yaw = atan2f(2.0f * (quat.x * quat.y + quat.w * quat.z),
-        quat.w * quat.w + quat.x * quat.x - quat.y * quat.y - quat.z * quat.z);
-    float roll = atan2f(2.0f * (quat.y * quat.z + quat.w * quat.x),
-        quat.w * quat.w - quat.x * quat.x - quat.y * quat.y + quat.z * quat.z);
+
+    // 오일러 각 계산 (XYZ 순서)
+    float yaw = atan2f(2.0f * (quat.w * quat.y + quat.x * quat.z),
+        1.0f - 2.0f * (quat.y * quat.y + quat.x * quat.x));
+    float pitch = asinf(2.0f * (quat.w * quat.x - quat.z * quat.y));
+    float roll = atan2f(2.0f * (quat.w * quat.z + quat.y * quat.x),
+        1.0f - 2.0f * (quat.x * quat.x + quat.z * quat.z));
 
     transform->SetRotation(XMFLOAT3(
         XMConvertToDegrees(pitch),
@@ -178,9 +188,9 @@ void PhysicsBody::UpdatePhysicsTransform() {
         XMConvertToDegrees(roll)
     ));
 
-    //XMFLOAT3 scaleFloat;
-    //XMStoreFloat3(&scaleFloat, scale);
-    //transform->SetScale(scaleFloat);
+    XMFLOAT3 scaleFloat;
+    XMStoreFloat3(&scaleFloat, scale);
+    transform->SetScale(scaleFloat);
 }
 
 void PhysicsBody::AddForce(const PxVec3& force, PxForceMode::Enum mode) {

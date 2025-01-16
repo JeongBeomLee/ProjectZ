@@ -5,6 +5,7 @@
 class PhysicsObject;
 class PhysicsEngine;
 class GameObject;
+class Scene;
 class Engine {
 public:
 	Engine();
@@ -66,20 +67,17 @@ private:
 	ComPtr<ID3D12Resource> m_lightConstantBuffer;
 	UINT8* m_lightConstantBufferMappedData;
 	LightConstants m_lightConstants;
+	float m_rotationAngle;
 
 	// 변환 행렬 (카메라)
 	XMMATRIX m_viewMatrix;
 	XMMATRIX m_projectionMatrix;
 
-	// for animation
-	float m_rotationAngle;
+	// 타이머
 	ULONGLONG m_lastTick;
 
 	// 물리 엔진
 	std::unique_ptr<PhysicsEngine> m_physicsEngine;
-
-	std::vector<std::shared_ptr<GameObject>> m_gameObjects;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_currentCbvHandle;
 
 	// 이벤트 핸들러 ID 저장용 변수들
 	std::vector<Event::EventDispatcher<Event::CollisionEvent>::HandlerId> m_collisionHandlerIds;
@@ -100,6 +98,8 @@ private:
 	bool CreateLightConstantBuffer();
 	bool CreateDescHeap();
 
+	void UpdateLightConstant(float deltaTime);
+
 	void CreateCubeMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices);
 	void CreateSphereMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices,
 		float radius, int slices = 15, int stacks = 15);
@@ -109,6 +109,9 @@ private:
 	void CreateCube(const PxVec3& position, const PxVec3& dimensions = PxVec3(0.5f));
 	void CreateSphere(const PxVec3& position, float radius = 0.5f);
 	void CreateCapsule(const PxVec3& position, float radius = 0.3f, float height = 1.0f);
+
+	void CreateDemonstrationObjects(Scene* scene, const PxVec3& position);
+	void CreateDefaultScene();
 
 	// 이벤트 핸들러 등록, 등록 해제 함수
 	void RegisterEventHandlers();

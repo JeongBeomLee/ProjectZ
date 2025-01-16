@@ -168,6 +168,8 @@
     <ClInclude Include="PhysicsObject.h" />
     <ClInclude Include="PhysicsTypes.h" />
     <ClInclude Include="PoolAllocator.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneManager.h" />
     <ClInclude Include="StackAllocator.h" />
     <ClInclude Include="ThreadSafeAllocator.h" />
     <ClInclude Include="Transform.h" />
@@ -197,6 +199,8 @@
     <ClCompile Include="PhysicsEngine.cpp" />
     <ClCompile Include="PhysicsObject.cpp" />
     <ClCompile Include="PoolAllocator.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="StackAllocator.cpp" />
     <ClCompile Include="ThreadSafeAllocator.cpp" />
     <ClCompile Include="Transform.cpp" />
