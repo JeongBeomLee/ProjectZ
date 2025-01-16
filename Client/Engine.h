@@ -6,6 +6,7 @@ class PhysicsObject;
 class PhysicsEngine;
 class GameObject;
 class Scene;
+class Camera;
 class Engine {
 public:
 	Engine();
@@ -23,8 +24,10 @@ public:
 	ID3D12Device10* GetDevice() const { return m_device.Get(); }
 	ID3D12CommandQueue* GetCommandQueue() const { return m_commandQueue.Get(); }
 	PhysicsEngine* GetPhysicsEngine() const { return m_physicsEngine.get(); }
-	XMMATRIX& GetViewMatrix() { return m_viewMatrix; }
-	XMMATRIX& GetProjectionMatrix() { return m_projectionMatrix; }
+
+	Camera* GetMainCamera() const { return m_mainCamera; }
+	XMMATRIX GetViewMatrix() const;
+	XMMATRIX GetProjectionMatrix() const;
 
 	ID3D12DescriptorHeap* GetDescriptorHeap() const { return m_descHeap.Get(); }
 	UINT GetCbvDescriptorIndex() { return m_currentCbvIndex++; }
@@ -67,11 +70,12 @@ private:
 	ComPtr<ID3D12Resource> m_lightConstantBuffer;
 	UINT8* m_lightConstantBufferMappedData;
 	LightConstants m_lightConstants;
-	float m_rotationAngle;
+	float m_rotationAngle = 0.0f;
 
 	// 변환 행렬 (카메라)
-	XMMATRIX m_viewMatrix;
-	XMMATRIX m_projectionMatrix;
+	//XMMATRIX m_viewMatrix;
+	//XMMATRIX m_projectionMatrix;
+	Camera* m_mainCamera = nullptr;
 
 	// 물리 엔진
 	std::unique_ptr<PhysicsEngine> m_physicsEngine;

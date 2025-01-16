@@ -19,6 +19,7 @@ public:
     XMFLOAT3 GetPosition() const { return m_position; }
     XMFLOAT3 GetRotation() const { return m_rotation; }
     XMFLOAT3 GetScale() const { return m_scale; }
+	bool IsDirty() const { return m_isDirty; }
 
     // 변환 행렬 관련
     XMMATRIX GetWorldMatrix() const;

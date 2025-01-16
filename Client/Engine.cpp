@@ -10,6 +10,7 @@
 #include "PhysicsBody.h"
 #include "MeshRenderer.h"
 #include "GameObject.h"
+#include "Camera.h"
 #include "Logger.h"
 #include "Utils.h"
 
@@ -119,28 +120,11 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		return false;
 	}
 
-	// 초기 변환 행렬 설정
-	m_viewMatrix = XMMatrixLookAtLH(
-		XMVectorSet(0.0f, 6.0f, -5.0f, 1.0f),  // 카메라 위치
-		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 지점
-		XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f)    // 업 벡터
-	);
-	m_projectionMatrix = XMMatrixPerspectiveFovLH(
-		XM_PIDIV4,                              // 시야각(45도)
-		m_aspectRatio,                          // 화면 비율
-		0.1f,                                   // 근평면
-		100.0f                                  // 원평면
-	);
-
 	// 기본 씬 생성
 	CreateDefaultScene();
 
-	// 회전 애니메이션 초기화
-	m_rotationAngle = 0.0f;
-
 	// 타이머 초기화
 	TimeManager::Instance().Initialize();
-
 	Logger::Instance().Info("Engine 초기화 완료");
 	return true;
 }
@@ -985,6 +969,19 @@ void Engine::CreateDefaultScene()
 	auto& sceneManager = SceneManager::Instance();
 	auto defaultScene = sceneManager.CreateScene("Default Scene");
 
+	// 메인 카메라 생성
+	auto cameraObject = defaultScene->CreateGameObject("Main Camera");
+	m_mainCamera = cameraObject->AddComponent<Camera>();
+
+	// 카메라 초기 위치 및 속성 설정
+	cameraObject->GetTransform()->SetPosition(XMFLOAT3(0.0f, 5.0f, -5.0f));
+	m_mainCamera->SetPerspectiveProperties(
+		XM_PIDIV4,           // 90도 시야각
+		static_cast<float>(m_width) / static_cast<float>(m_height),
+		0.1f,                // 근평면
+		1000.0f              // 원평면
+	);
+
 	// 지면 생성
 	auto ground = defaultScene->CreateGameObject("Ground");
 	auto groundPhysics = ground->AddComponent<PhysicsBody>();
@@ -1131,4 +1128,14 @@ void Engine::MoveToNextFrame()
 
 	// 5. 다음 프레임의 Fence값 설정
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
+}
+
+XMMATRIX Engine::GetViewMatrix() const 
+{
+	return m_mainCamera ? m_mainCamera->GetViewMatrix() : XMMatrixIdentity();
+}
+
+XMMATRIX Engine::GetProjectionMatrix() const 
+{
+	return m_mainCamera ? m_mainCamera->GetProjectionMatrix() : XMMatrixIdentity();
 }

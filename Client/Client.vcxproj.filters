@@ -43,9 +43,6 @@
     <Filter Include="GameObject">
       <UniqueIdentifier>{2e09b558-3a3e-43bb-b492-f027fc9463c6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Component\Physics">
-      <UniqueIdentifier>{a2fd0fe9-66c9-40fd-8d50-d86fe410a76b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Scene">
       <UniqueIdentifier>{c647015c-f70a-410b-b3a8-622827f3bed6}</UniqueIdentifier>
     </Filter>
@@ -54,6 +51,18 @@
     </Filter>
     <Filter Include="TimeManager">
       <UniqueIdentifier>{3c6affcd-3b30-4e0e-b095-fd3baacfbb13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\PhysicsBody">
+      <UniqueIdentifier>{a2fd0fe9-66c9-40fd-8d50-d86fe410a76b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Camera">
+      <UniqueIdentifier>{3118b624-77a6-454d-9ea9-46335880e52c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\MeshRenderer">
+      <UniqueIdentifier>{d7925e6a-4d72-4100-8c5c-97270294912a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Transform">
+      <UniqueIdentifier>{c3d3142f-dd7b-43cb-9636-53119c028625}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -123,17 +132,11 @@
     <ClInclude Include="Component.h">
       <Filter>Component</Filter>
     </ClInclude>
-    <ClInclude Include="MeshRenderer.h">
-      <Filter>Component</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>Component</Filter>
-    </ClInclude>
     <ClInclude Include="PhysicsObject.h">
-      <Filter>Component\Physics</Filter>
+      <Filter>Component\PhysicsBody</Filter>
     </ClInclude>
     <ClInclude Include="PhysicsBody.h">
-      <Filter>Component\Physics</Filter>
+      <Filter>Component\PhysicsBody</Filter>
     </ClInclude>
     <ClInclude Include="Scene.h">
       <Filter>Scene</Filter>
@@ -143,6 +146,15 @@
     </ClInclude>
     <ClInclude Include="TimeManager.h">
       <Filter>TimeManager</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Component\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshRenderer.h">
+      <Filter>Component\MeshRenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Component\Transform</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -188,17 +200,11 @@
     <ClCompile Include="GameObject.cpp">
       <Filter>GameObject</Filter>
     </ClCompile>
-    <ClCompile Include="MeshRenderer.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
-    <ClCompile Include="Transform.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
     <ClCompile Include="PhysicsObject.cpp">
-      <Filter>Component\Physics</Filter>
+      <Filter>Component\PhysicsBody</Filter>
     </ClCompile>
     <ClCompile Include="PhysicsBody.cpp">
-      <Filter>Component\Physics</Filter>
+      <Filter>Component\PhysicsBody</Filter>
     </ClCompile>
     <ClCompile Include="Scene.cpp">
       <Filter>Scene</Filter>
@@ -208,6 +214,15 @@
     </ClCompile>
     <ClCompile Include="TimeManager.cpp">
       <Filter>TimeManager</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Component\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshRenderer.cpp">
+      <Filter>Component\MeshRenderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Component\Transform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
