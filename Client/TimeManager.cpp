@@ -2,19 +2,22 @@
 #include "TimeManager.h"
 #include "Logger.h"
 
-TimeManager& TimeManager::Instance() {
+TimeManager& TimeManager::Instance() 
+{
     static TimeManager instance;
     return instance;
 }
 
-void TimeManager::Initialize() {
+void TimeManager::Initialize() 
+{
     m_prevTime = std::chrono::steady_clock::now();
     m_currentTime = m_prevTime;
 
     Logger::Instance().Info("TimeManager 초기화됨");
 }
 
-void TimeManager::Update() {
+void TimeManager::Update() 
+{
     m_currentTime = std::chrono::steady_clock::now();
 
     // 델타 타임 계산 (초 단위)

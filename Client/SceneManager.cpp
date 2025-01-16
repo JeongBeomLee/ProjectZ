@@ -2,12 +2,14 @@
 #include "SceneManager.h"
 #include "Logger.h"
 
-SceneManager& SceneManager::Instance() {
+SceneManager& SceneManager::Instance() 
+{
     static SceneManager instance;
     return instance;
 }
 
-Scene* SceneManager::CreateScene(const std::string& name) {
+Scene* SceneManager::CreateScene(const std::string& name) 
+{
     // 이미 존재하는 씬인지 확인
     if (m_sceneMap.find(name) != m_sceneMap.end()) {
         Logger::Instance().Warning("이미 존재하는 씬 이름입니다: {}", name);
@@ -24,7 +26,8 @@ Scene* SceneManager::CreateScene(const std::string& name) {
     return scenePtr;
 }
 
-void SceneManager::LoadScene(Scene* scene) {
+void SceneManager::LoadScene(Scene* scene) 
+{
     if (!scene) {
         Logger::Instance().Error("유효하지 않은 씬입니다.");
         return;
@@ -50,7 +53,8 @@ void SceneManager::LoadScene(Scene* scene) {
     m_currentScene->Initialize();
 }
 
-void SceneManager::LoadScene(const std::string& name) {
+void SceneManager::LoadScene(const std::string& name) 
+{
     Scene* scene = GetScene(name);
     if (scene) {
         LoadScene(scene);
@@ -60,7 +64,8 @@ void SceneManager::LoadScene(const std::string& name) {
     }
 }
 
-Scene* SceneManager::GetScene(const std::string& name) const {
+Scene* SceneManager::GetScene(const std::string& name) const 
+{
     auto it = m_sceneMap.find(name);
     if (it != m_sceneMap.end()) {
         return it->second;
@@ -68,7 +73,8 @@ Scene* SceneManager::GetScene(const std::string& name) const {
     return nullptr;
 }
 
-void SceneManager::DestroyScene(Scene* scene) {
+void SceneManager::DestroyScene(Scene* scene) 
+{
     if (!scene) return;
 
     // 현재 씬인 경우 nullptr로 설정
@@ -96,26 +102,30 @@ void SceneManager::DestroyScene(Scene* scene) {
     Logger::Instance().Info("씬이 제거되었습니다: {}", scene->GetName());
 }
 
-void SceneManager::DestroyScene(const std::string& name) {
+void SceneManager::DestroyScene(const std::string& name) 
+{
     Scene* scene = GetScene(name);
     if (scene) {
         DestroyScene(scene);
     }
 }
 
-void SceneManager::Update(float deltaTime) {
+void SceneManager::Update(float deltaTime) 
+{
     if (m_currentScene) {
         m_currentScene->Update(deltaTime);
     }
 }
 
-void SceneManager::Render(ID3D12GraphicsCommandList* commandList) {
+void SceneManager::Render(ID3D12GraphicsCommandList* commandList) 
+{
     if (m_currentScene) {
         m_currentScene->Render(commandList);
     }
 }
 
-void SceneManager::Clear() {
+void SceneManager::Clear() 
+{
     m_currentScene = nullptr;
     m_scenes.clear();
     m_sceneMap.clear();

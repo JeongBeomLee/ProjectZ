@@ -48,6 +48,8 @@ bool MeshRenderer::CreateResources(const std::vector<Vertex>& vertices,
     if (!CreateTextureResource(texturePath)) return false;
 	if (!CreateShaderResourceView(device)) return false;
 
+    UpdateBoundingSphere(vertices);
+
     m_isInitialized = true;
     return true;
 }
@@ -88,7 +90,42 @@ void MeshRenderer::UpdateConstantBuffer()
     memcpy(m_resources->constantBufferMappedData, &constants, sizeof(ObjectConstants));
 }
 
-bool MeshRenderer::CreateVertexBuffer(const std::vector<Vertex>& vertices) 
+void MeshRenderer::UpdateBoundingSphere(const std::vector<Vertex>& vertices)
+{
+    if (vertices.empty()) {
+        m_boundingSphereCenter = XMFLOAT3(0, 0, 0);
+        m_boundingSphereRadius = 1.0f;
+        return;
+    }
+
+    // 중심점 계산
+    XMFLOAT3 center(0, 0, 0);
+    for (const auto& vertex : vertices) {
+        center.x += vertex.position.x;
+        center.y += vertex.position.y;
+        center.z += vertex.position.z;
+    }
+
+    float invCount = 1.0f / vertices.size();
+    center.x *= invCount;
+    center.y *= invCount;
+    center.z *= invCount;
+
+    // 반지름 계산
+    float maxRadiusSq = 0.0f;
+    for (const auto& vertex : vertices) {
+        float dx = vertex.position.x - center.x;
+        float dy = vertex.position.y - center.y;
+        float dz = vertex.position.z - center.z;
+        float distSq = dx * dx + dy * dy + dz * dz;
+        maxRadiusSq = std::max(maxRadiusSq, distSq);
+    }
+
+    m_boundingSphereCenter = center;
+    m_boundingSphereRadius = std::sqrt(maxRadiusSq);
+}
+
+bool MeshRenderer::CreateVertexBuffer(const std::vector<Vertex>& vertices)
 {
     auto device = Engine::Instance().GetDevice();
 

@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Scene.h"
 #include "MeshRenderer.h"
+#include "Engine.h"
+#include "Camera.h"
 #include "Logger.h"
 
 Scene::Scene(const std::string& name)
@@ -9,12 +11,14 @@ Scene::Scene(const std::string& name)
     Logger::Instance().Info("Scene '{}' 생성됨", m_name);
 }
 
-Scene::~Scene() {
+Scene::~Scene() 
+{
     Destroy();
     Logger::Instance().Info("Scene '{}' 소멸됨", m_name);
 }
 
-void Scene::Initialize() {
+void Scene::Initialize() 
+{
     Logger::Instance().Info("Scene '{}' 초기화 시작", m_name);
 
     for (const auto& gameObject : m_gameObjects) {
@@ -22,7 +26,8 @@ void Scene::Initialize() {
     }
 }
 
-void Scene::Update(float deltaTime) {
+void Scene::Update(float deltaTime) 
+{
     if (!m_isActive) return;
 
     for (const auto& gameObject : m_gameObjects) {
@@ -30,17 +35,35 @@ void Scene::Update(float deltaTime) {
     }
 }
 
-void Scene::Render(ID3D12GraphicsCommandList* commandList) {
+void Scene::Render(ID3D12GraphicsCommandList* commandList) 
+{
     if (!m_isActive) return;
+
+    // 현재 카메라 가져오기
+    auto camera = Engine::Instance().GetMainCamera();
+    if (!camera) return;
 
     for (const auto& gameObject : m_gameObjects) {
         if (auto renderer = gameObject->GetComponent<MeshRenderer>()) {
-            renderer->Render(commandList);
+            // 월드 공간에서의 바운딩 스피어 중심점 계산
+            XMFLOAT3 worldCenter;
+            XMStoreFloat3(&worldCenter,
+                XMVector3Transform(
+                    XMLoadFloat3(&renderer->GetBoundingSphereCenter()),
+                    gameObject->GetTransform()->GetWorldMatrix()
+                )
+            );
+
+            // 프러스텀 컬링 검사
+            if (camera->IsInFrustum(worldCenter, renderer->GetBoundingSphereRadius())) {
+                renderer->Render(commandList);
+            }
         }
     }
 }
 
-void Scene::Destroy() {
+void Scene::Destroy() 
+{
     Logger::Instance().Info("Scene '{}' 정리 시작", m_name);
 
     for (const auto& gameObject : m_gameObjects) {
@@ -50,7 +73,8 @@ void Scene::Destroy() {
     m_gameObjectMap.clear();
 }
 
-GameObject* Scene::CreateGameObject(const std::string& name) {
+GameObject* Scene::CreateGameObject(const std::string& name) 
+{
     auto gameObject = std::make_shared<GameObject>();
     auto rawPtr = gameObject.get();
 
@@ -68,7 +92,8 @@ GameObject* Scene::CreateGameObject(const std::string& name) {
     return rawPtr;
 }
 
-void Scene::DestroyGameObject(GameObject* gameObject) {
+void Scene::DestroyGameObject(GameObject* gameObject) 
+{
     if (!gameObject) return;
 
     // gameObjectMap에서 제거
@@ -90,7 +115,8 @@ void Scene::DestroyGameObject(GameObject* gameObject) {
     );
 }
 
-GameObject* Scene::FindGameObject(const std::string& name) {
+GameObject* Scene::FindGameObject(const std::string& name) 
+{
     auto it = m_gameObjectMap.find(name);
     if (it != m_gameObjectMap.end()) {
         return it->second;

@@ -19,12 +19,14 @@ Camera::Camera()
     Logger::Instance().Debug("Camera 컴포넌트 생성됨");
 }
 
-void Camera::Initialize() {
+void Camera::Initialize() 
+{
     UpdateViewMatrix();
     UpdateProjectionMatrix();
 }
 
-void Camera::Update(float deltaTime) {
+void Camera::Update(float deltaTime) 
+{
     if (m_isDirty || GetGameObject()->GetTransform()->IsDirty()) {
         UpdateViewMatrix();
         UpdateProjectionMatrix();
@@ -38,7 +40,8 @@ void Camera::Destroy()
 	Logger::Instance().Debug("Camera 컴포넌트 제거됨");
 }
 
-void Camera::UpdateViewMatrix() {
+void Camera::UpdateViewMatrix() 
+{
     auto transform = GetGameObject()->GetTransform();
     const XMMATRIX& worldMatrix = transform->GetWorldMatrix();
 
@@ -47,7 +50,8 @@ void Camera::UpdateViewMatrix() {
     m_viewMatrix = XMMatrixInverse(&determinant, worldMatrix);
 }
 
-void Camera::UpdateProjectionMatrix() {
+void Camera::UpdateProjectionMatrix() 
+{
     if (m_projectionType == ProjectionType::Perspective) {
         // 원근 투영 행렬 생성
         m_projectionMatrix = XMMatrixPerspectiveFovLH(
@@ -71,7 +75,8 @@ void Camera::UpdateProjectionMatrix() {
         m_projectionType == ProjectionType::Perspective ? "원근" : "직교");
 }
 
-void Camera::UpdateFrustumPlanes() {
+void Camera::UpdateFrustumPlanes() 
+{
     // 뷰-투영 행렬 계산
     XMMATRIX viewProj = m_viewMatrix * m_projectionMatrix;
 
@@ -104,7 +109,8 @@ void Camera::UpdateFrustumPlanes() {
         m._14 - m._13, m._24 - m._23, m._34 - m._33, m._44 - m._43));
 }
 
-bool Camera::IsInFrustum(const XMFLOAT3& point, float radius) const {
+bool Camera::IsInFrustum(const XMFLOAT3& point, float radius) const 
+{
     // 바운딩 스피어의 중심을 각 평면에 대해 테스트
     XMVECTOR p = XMLoadFloat3(&point);
 

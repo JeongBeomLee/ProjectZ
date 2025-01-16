@@ -35,6 +35,11 @@ public:
     // 상수 버퍼 업데이트
     void UpdateConstantBuffer();
 
+    // 바운딩 스피어 정보
+    const XMFLOAT3& GetBoundingSphereCenter() const { return m_boundingSphereCenter; }
+    float GetBoundingSphereRadius() const { return m_boundingSphereRadius; }
+    void UpdateBoundingSphere(const std::vector<Vertex>& vertices);
+
 private:
     bool CreateVertexBuffer(const std::vector<Vertex>& vertices);
     bool CreateIndexBuffer(const std::vector<UINT>& indices);
@@ -45,4 +50,7 @@ private:
 
     std::unique_ptr<MeshResources> m_resources;
     bool m_isInitialized = false;
+
+    XMFLOAT3 m_boundingSphereCenter;
+    float m_boundingSphereRadius;
 };
