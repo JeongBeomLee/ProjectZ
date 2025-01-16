@@ -27,7 +27,7 @@ bool PhysicsEngine::Initialize()
 	if (!CreateScene()) return false;
 
 	// 기본 물리 material 생성
-	m_defaultMaterial = m_physics->createMaterial(0.5f, 0.5f, 0.5f); // 동적 마찰, 정적 마찰, 반발력
+	m_defaultMaterial = m_physics->createMaterial(0.5f, 0.5f, 0.4f); // 동적 마찰, 정적 마찰, 반발력
 	if (!m_defaultMaterial) return false;
 
 	return true;

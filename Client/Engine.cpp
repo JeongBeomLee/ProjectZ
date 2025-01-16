@@ -5,6 +5,7 @@
 #include "MemoryManager.h"
 #include "EventManager.h"
 #include "SceneManager.h"
+#include "TimeManager.h"
 #include "Transform.h"
 #include "PhysicsBody.h"
 #include "MeshRenderer.h"
@@ -136,7 +137,9 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 
 	// 회전 애니메이션 초기화
 	m_rotationAngle = 0.0f;
-	m_lastTick = GetTickCount64();
+
+	// 타이머 초기화
+	TimeManager::Instance().Initialize();
 
 	Logger::Instance().Info("Engine 초기화 완료");
 	return true;
@@ -144,21 +147,15 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 
 void Engine::Update()
 {
+	// 타이머 업데이트
+	TimeManager::Instance().Update();
+	float deltaTime = TimeManager::Instance().GetDeltaTime();
+
 	// 프레임 메모리 초기화
 	Memory::BeginFrameMemory();
 
 	// 모든 큐에 있는 이벤트 처리
 	EventManager::Instance().Update();
-	
-	ULONGLONG currentTick = GetTickCount64();
-	float deltaTime = (currentTick - m_lastTick) / 1000.0f;
-	m_lastTick = currentTick;
-
-	// deltaTime이 0이하인 경우 최소값으로 설정
-	if (deltaTime < 0.0f) {
-		deltaTime = 1.0f / 600.0f;  // 기본 프레임 레이트
-		//Logger::Instance().Warning("0 또는 음수 DT 감지, 기본 값 사용: {}", deltaTime);
-	}
 
 	// 물리 엔진 업데이트
 	m_physicsEngine->Update(deltaTime);

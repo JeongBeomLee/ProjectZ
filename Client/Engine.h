@@ -73,9 +73,6 @@ private:
 	XMMATRIX m_viewMatrix;
 	XMMATRIX m_projectionMatrix;
 
-	// 타이머
-	ULONGLONG m_lastTick;
-
 	// 물리 엔진
 	std::unique_ptr<PhysicsEngine> m_physicsEngine;
 

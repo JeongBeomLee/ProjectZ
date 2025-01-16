@@ -172,6 +172,7 @@
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="StackAllocator.h" />
     <ClInclude Include="ThreadSafeAllocator.h" />
+    <ClInclude Include="TimeManager.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="WinResource.h" />
@@ -203,6 +204,7 @@
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="StackAllocator.cpp" />
     <ClCompile Include="ThreadSafeAllocator.cpp" />
+    <ClCompile Include="TimeManager.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -52,6 +52,9 @@
     <Filter Include="Scene\Manager">
       <UniqueIdentifier>{739a47dc-0f6c-46ac-ac25-e462c977db12}</UniqueIdentifier>
     </Filter>
+    <Filter Include="TimeManager">
+      <UniqueIdentifier>{3c6affcd-3b30-4e0e-b095-fd3baacfbb13}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -138,6 +141,9 @@
     <ClInclude Include="SceneManager.h">
       <Filter>Scene\Manager</Filter>
     </ClInclude>
+    <ClInclude Include="TimeManager.h">
+      <Filter>TimeManager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -199,6 +205,9 @@
     </ClCompile>
     <ClCompile Include="SceneManager.cpp">
       <Filter>Scene\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="TimeManager.cpp">
+      <Filter>TimeManager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
