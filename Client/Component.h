@@ -4,6 +4,14 @@
 class GameObject;
 class Component {
 public:
+    enum class UpdatePriority {
+        Default = 0,           // 기본 우선순위
+        Camera = 50,          // 카메라는 Transform보다 먼저 업데이트
+        Physics = 80,         // 물리는 Transform보다 먼저 업데이트
+        Transform = 100,      // Transform은 중간 정도의 우선순위
+        Renderer = 150        // 렌더러는 Transform 이후에 업데이트
+    };
+
     Component() = default;
     virtual ~Component() = default;
 
@@ -27,7 +35,12 @@ public:
     virtual void Enable() { m_isEnabled = true; }
     virtual void Disable() { m_isEnabled = false; }
 
+    // 우선순위 관련 메서드 추가
+    void SetUpdatePriority(UpdatePriority priority) { m_updatePriority = priority; }
+    UpdatePriority GetUpdatePriority() const { return m_updatePriority; }
+
 protected:
     GameObject* m_gameObject = nullptr;
     bool m_isEnabled = true;
+	UpdatePriority m_updatePriority = UpdatePriority::Default;
 };

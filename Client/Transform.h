@@ -3,7 +3,7 @@
 
 class Transform : public Component {
 public:
-    Transform() = default;
+    Transform();
     ~Transform() override = default;
 
     // Component 인터페이스 구현
@@ -19,6 +19,10 @@ public:
     XMFLOAT3 GetPosition() const { return m_position; }
     XMFLOAT3 GetRotation() const { return m_rotation; }
     XMFLOAT3 GetScale() const { return m_scale; }
+    XMFLOAT3 GetForward() const;
+	XMFLOAT3 GetRight() const;
+	XMFLOAT3 GetUp() const;
+
 	bool IsDirty() const { return m_isDirty; }
 
     // 변환 행렬 관련

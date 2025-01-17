@@ -3,6 +3,11 @@
 #include "GameObject.h"
 //#include "Logger.h"
 
+Transform::Transform()
+{
+	m_updatePriority = UpdatePriority::Transform;
+}
+
 void Transform::Initialize()
 {
     UpdateWorldMatrix();
@@ -42,6 +47,45 @@ void Transform::SetScale(const XMFLOAT3& scale)
 {
     m_scale = scale;
     m_isDirty = true;
+}
+
+XMFLOAT3 Transform::GetForward() const
+{
+    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(
+        XMConvertToRadians(m_rotation.x),
+        XMConvertToRadians(m_rotation.y),
+        XMConvertToRadians(m_rotation.z));
+
+    XMVECTOR forward = XMVector3TransformNormal(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), rotationMatrix);
+    XMFLOAT3 result;
+    XMStoreFloat3(&result, forward);
+    return result;
+}
+
+XMFLOAT3 Transform::GetRight() const
+{
+    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(
+        XMConvertToRadians(m_rotation.x),
+        XMConvertToRadians(m_rotation.y),
+        XMConvertToRadians(m_rotation.z));
+
+    XMVECTOR right = XMVector3TransformNormal(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), rotationMatrix);
+    XMFLOAT3 result;
+    XMStoreFloat3(&result, right);
+    return result;
+}
+
+XMFLOAT3 Transform::GetUp() const
+{
+    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(
+        XMConvertToRadians(m_rotation.x),
+        XMConvertToRadians(m_rotation.y),
+        XMConvertToRadians(m_rotation.z));
+
+    XMVECTOR up = XMVector3TransformNormal(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), rotationMatrix);
+    XMFLOAT3 result;
+    XMStoreFloat3(&result, up);
+    return result;
 }
 
 XMMATRIX Transform::GetWorldMatrix() const

@@ -16,6 +16,7 @@ Camera::Camera()
     , m_orthoHeight(720.0f)
     , m_isDirty(true)
 {
+    m_updatePriority = UpdatePriority::Camera;
     Logger::Instance().Debug("Camera 컴포넌트 생성됨");
 }
 
@@ -27,11 +28,17 @@ void Camera::Initialize()
 
 void Camera::Update(float deltaTime) 
 {
-    if (m_isDirty || GetGameObject()->GetTransform()->IsDirty()) {
+    auto transform = GetGameObject()->GetTransform();
+
+    if (transform->IsDirty() || m_isDirty) {
         UpdateViewMatrix();
-        UpdateProjectionMatrix();
+
+        if (m_isDirty) {
+            UpdateProjectionMatrix();
+            m_isDirty = false;
+        }
+
         UpdateFrustumPlanes();
-        m_isDirty = false;
     }
 }
 
@@ -71,8 +78,8 @@ void Camera::UpdateProjectionMatrix()
         );
     }
 
-    Logger::Instance().Debug("카메라 투영 행렬이 업데이트됨. 타입: {}",
-        m_projectionType == ProjectionType::Perspective ? "원근" : "직교");
+    //Logger::Instance().Debug("카메라 투영 행렬이 업데이트됨. 타입: {}",
+    //    m_projectionType == ProjectionType::Perspective ? "원근" : "직교");
 }
 
 void Camera::UpdateFrustumPlanes() 
@@ -125,4 +132,59 @@ bool Camera::IsInFrustum(const XMFLOAT3& point, float radius) const
     }
 
     return true;
+}
+
+// Test
+void Camera::MoveForward(float distance)
+{
+    auto transform = GetGameObject()->GetTransform();
+    auto forward = transform->GetForward();
+    auto position = transform->GetPosition();
+
+    position.x += forward.x * distance * m_movementSpeed;
+    position.y += forward.y * distance * m_movementSpeed;
+    position.z += forward.z * distance * m_movementSpeed;
+
+    transform->SetPosition(position);
+}
+
+void Camera::MoveRight(float distance)
+{
+    auto transform = GetGameObject()->GetTransform();
+    auto right = transform->GetRight();
+    auto position = transform->GetPosition();
+
+    position.x += right.x * distance * m_movementSpeed;
+    position.y += right.y * distance * m_movementSpeed;
+    position.z += right.z * distance * m_movementSpeed;
+
+    transform->SetPosition(position);
+}
+
+void Camera::MoveUp(float distance)
+{
+    auto transform = GetGameObject()->GetTransform();
+    auto up = transform->GetUp();
+    auto position = transform->GetPosition();
+
+    position.x += up.x * distance * m_movementSpeed;
+    position.y += up.y * distance * m_movementSpeed;
+    position.z += up.z * distance * m_movementSpeed;
+
+    transform->SetPosition(position);
+}
+
+void Camera::Rotate(float pitch, float yaw, float roll) 
+{
+    auto transform = GetGameObject()->GetTransform();
+    auto rotation = transform->GetRotation();
+
+    rotation.x += pitch * m_rotationSpeed;
+    rotation.y += yaw * m_rotationSpeed;
+	rotation.z += roll * m_rotationSpeed;
+
+    // 피치 각도 제한 (-89도 ~ 89도)
+    rotation.x = std::max(-89.0f, std::min(89.0f, rotation.x));
+
+    transform->SetRotation(rotation);
 }

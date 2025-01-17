@@ -33,8 +33,20 @@ void GameObject::Update(float deltaTime)
 {
     if (!m_isActive) return;
 
-    // 모든 컴포넌트 업데이트
-    for (auto component : m_components) {
+    // 우선순위에 따라 컴포넌트 정렬
+    std::vector<Component*> sortedComponents;
+	sortedComponents.reserve(m_components.size());
+    for (auto& component : m_components) {
+        sortedComponents.push_back(component);
+    }
+
+    std::sort(sortedComponents.begin(), sortedComponents.end(),
+        [](const Component* a, const Component* b) {
+            return static_cast<int>(a->GetUpdatePriority()) < static_cast<int>(b->GetUpdatePriority());
+        });
+
+    // 정렬된 순서대로 업데이트
+    for (auto component : sortedComponents) {
         if (component->IsEnabled()) {
             component->Update(deltaTime);
         }

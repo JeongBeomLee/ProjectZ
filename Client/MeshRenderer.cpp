@@ -8,6 +8,8 @@
 MeshRenderer::MeshRenderer()
     : m_resources(std::make_unique<MeshResources>()) 
 {
+    m_updatePriority = UpdatePriority::Renderer;
+	Logger::Instance().Debug("MeshRenderer ÄÄÆ÷³ÍÆ® »ý¼ºµÊ");
 }
 
 MeshRenderer::~MeshRenderer() 

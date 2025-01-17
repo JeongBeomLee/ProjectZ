@@ -51,6 +51,17 @@ public:
     void UpdateFrustumPlanes();
     bool IsInFrustum(const XMFLOAT3& point, float radius) const;
 
+    // Test
+    // 카메라 이동 및 회전 속도 설정
+    void SetMovementSpeed(float speed) { m_movementSpeed = speed; }
+    void SetRotationSpeed(float speed) { m_rotationSpeed = speed; }
+
+    // 테스트용 카메라 움직임 메서드
+    void MoveForward(float distance);
+    void MoveRight(float distance);
+    void MoveUp(float distance);
+    void Rotate(float pitch, float yaw, float roll);
+
 private:
     // 변환 행렬
     XMMATRIX m_viewMatrix;
@@ -73,4 +84,9 @@ private:
     XMVECTOR m_frustumPlanes[6];
 
     bool m_isDirty;
+
+    // Test
+    // 카메라 이동 관련 변수
+    float m_movementSpeed = 5.0f;    // 초당 5 유닛
+    float m_rotationSpeed = 2.0f;    // 초당 2도
 };
