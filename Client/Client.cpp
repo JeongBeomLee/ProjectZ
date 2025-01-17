@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "Client.h"
 #include "Engine.h"
+#include "InputManager.h"
 
 #define MAX_LOADSTRING 100
 
@@ -107,6 +108,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
+    case WM_MOUSEMOVE: {
+        int x = GET_X_LPARAM(lParam);
+        int y = GET_Y_LPARAM(lParam);
+        InputManager::Instance().ProcessMouseMove(x, y);
+        break;
+    }
     case WM_COMMAND: {
             int wmId = LOWORD(wParam);
             // 메뉴 선택을 구문 분석합니다:

@@ -6,6 +6,7 @@
 #include "EventManager.h"
 #include "SceneManager.h"
 #include "TimeManager.h"
+#include "InputManager.h"
 #include "Transform.h"
 #include "PhysicsBody.h"
 #include "MeshRenderer.h"
@@ -124,6 +125,9 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		return false;
 	}
 
+	// 입력 매니저 초기화
+	InputManager::Instance().Initialize(hwnd);
+
 	// 기본 씬 생성
 	CreateDefaultScene();
 
@@ -139,30 +143,33 @@ void Engine::Update()
 	TimeManager::Instance().Update();
 	float deltaTime = TimeManager::Instance().GetDeltaTime();
 
+	// 입력 업데이트
+	InputManager::Instance().Update();
+
 	////////////////////////
 	// 카메라 테스트 동작 //
 	////////////////////////
-	static float totalTime = 0.0f;
-	totalTime += deltaTime;
+	//static float totalTime = 0.0f;
+	//totalTime += deltaTime;
 
-	if (m_mainCamera) {
-		// 원형 움직임
-		float radius = 10.0f;
-		float circleSpeed = 0.5f;
-		float height = 5.0f;
+	//if (m_mainCamera) {
+	//	// 원형 움직임
+	//	float radius = 10.0f;
+	//	float circleSpeed = 0.5f;
+	//	float height = 5.0f;
 
-		// 카메라 위치 계산
-		float x = radius * std::cos(totalTime * circleSpeed);
-		float z = radius * std::sin(totalTime * circleSpeed);
+	//	// 카메라 위치 계산
+	//	float x = radius * std::cos(totalTime * circleSpeed);
+	//	float z = radius * std::sin(totalTime * circleSpeed);
 
-		// 카메라 위치 및 회전 설정
-		auto cameraTransform = m_mainCamera->GetGameObject()->GetTransform();
-		cameraTransform->SetPosition(XMFLOAT3(x, height, z));
+	//	// 카메라 위치 및 회전 설정
+	//	auto cameraTransform = m_mainCamera->GetGameObject()->GetTransform();
+	//	cameraTransform->SetPosition(XMFLOAT3(x, height, z));
 
-		// 항상 원점을 바라보도록 회전
-		float yaw = std::atan2(-x, -z) * (180.0f / XM_PI);
-		cameraTransform->SetRotation(XMFLOAT3(30.0f, yaw, 0.0f));
-	}
+	//	// 항상 원점을 바라보도록 회전
+	//	float yaw = std::atan2(-x, -z) * (180.0f / XM_PI);
+	//	cameraTransform->SetRotation(XMFLOAT3(30.0f, yaw, 0.0f));
+	//}
 	////////////////////////
 
 	// 프레임 메모리 초기화
@@ -1061,10 +1068,15 @@ void Engine::CreateDefaultScene()
 
 	// 메인 카메라 생성
 	auto cameraObject = defaultScene->CreateGameObject("Main Camera");
-	m_mainCamera = cameraObject->AddComponent<Camera>();
+	auto cameraTransform = cameraObject->GetTransform();
 
-	// 카메라 초기 위치 설정 - 모든 큐브가 보이도록 위치 조정
-	cameraObject->GetTransform()->SetPosition(XMFLOAT3(0.0f, 5.0f, -5.0f));
+	cameraTransform->SetPosition(XMFLOAT3(0.0f, 5.0f, -10.0f));
+	cameraTransform->SetRotation(XMFLOAT3(30.0f, 0.0f, 0.0f));
+
+	m_mainCamera = cameraObject->AddComponent<Camera>();
+	m_mainCamera->EnableControl(true);
+	m_mainCamera->SetMoveSpeed(10.0f);  // 이동 속도 설정
+	m_mainCamera->SetRotateSpeed(0.1f);  // 회전 속도 설정
 	m_mainCamera->SetPerspectiveProperties(
 		XM_PIDIV4,           // 90도 시야각
 		static_cast<float>(m_width) / static_cast<float>(m_height),

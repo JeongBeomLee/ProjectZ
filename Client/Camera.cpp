@@ -2,6 +2,7 @@
 #include "Camera.h"
 #include "GameObject.h"
 #include "Transform.h"
+#include "InputManager.h"
 #include "Logger.h"
 
 Camera::Camera()
@@ -28,6 +29,10 @@ void Camera::Initialize()
 
 void Camera::Update(float deltaTime) 
 {
+    if (m_controlEnabled) {
+        ProcessInput(deltaTime);
+    }
+
     auto transform = GetGameObject()->GetTransform();
 
     if (transform->IsDirty() || m_isDirty) {
@@ -134,6 +139,77 @@ bool Camera::IsInFrustum(const XMFLOAT3& point, float radius) const
     return true;
 }
 
+void Camera::ProcessInput(float deltaTime)
+{
+    if (!m_controlEnabled) return;
+
+    auto& input = InputManager::Instance();
+    auto transform = GetGameObject()->GetTransform();
+
+    // 현재 회전값 가져오기
+    auto rotation = transform->GetRotation();
+
+    // 마우스 입력으로 회전 처리
+    if (input.IsMouseButtonDown(1)) {  // 우클릭 중일 때
+        if (!input.IsRelativeMouseMode()) {
+            input.SetMouseMode(true);  // 상대 마우스 모드 활성화
+            ShowCursor(FALSE);
+        }
+
+        POINT mouseDelta = input.GetMouseDelta();
+        rotation.x += mouseDelta.y * m_rotateSpeed;
+        rotation.y += mouseDelta.x * m_rotateSpeed;
+
+        // 상하 회전 제한 (-89도 ~ 89도)
+        rotation.x = std::max(-89.0f, std::min(89.0f, rotation.x));
+
+        transform->SetRotation(rotation);
+    }
+    else if (input.IsRelativeMouseMode()) {
+        input.SetMouseMode(false);  // 상대 마우스 모드 비활성화
+		ShowCursor(TRUE);
+    }
+
+    // 키보드 입력으로 이동 처리
+    float moveDistance = m_moveSpeed * deltaTime;
+    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(
+        XMConvertToRadians(rotation.x),
+        XMConvertToRadians(rotation.y),
+        XMConvertToRadians(rotation.z));
+
+    auto position = transform->GetPosition();
+    XMVECTOR posVector = XMLoadFloat3(&position);
+
+    // 전후좌우 이동
+    if (input.IsKeyDown('W')) {  // 전진
+        XMVECTOR forward = XMVector3TransformNormal(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), rotationMatrix);
+        posVector += forward * moveDistance;
+    }
+    if (input.IsKeyDown('S')) {  // 후진
+        XMVECTOR forward = XMVector3TransformNormal(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), rotationMatrix);
+        posVector -= forward * moveDistance;
+    }
+    if (input.IsKeyDown('A')) {  // 좌측 이동
+        XMVECTOR right = XMVector3TransformNormal(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), rotationMatrix);
+        posVector -= right * moveDistance;
+    }
+    if (input.IsKeyDown('D')) {  // 우측 이동
+        XMVECTOR right = XMVector3TransformNormal(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), rotationMatrix);
+        posVector += right * moveDistance;
+    }
+
+    // 상하 이동
+    if (input.IsKeyDown('E')) {  // 상승
+        posVector += XMVectorSet(0.0f, moveDistance, 0.0f, 0.0f);
+    }
+    if (input.IsKeyDown('Q')) {  // 하강
+        posVector -= XMVectorSet(0.0f, moveDistance, 0.0f, 0.0f);
+    }
+
+    XMStoreFloat3(&position, posVector);
+    transform->SetPosition(position);
+}
+
 // Test
 void Camera::MoveForward(float distance)
 {
@@ -141,9 +217,9 @@ void Camera::MoveForward(float distance)
     auto forward = transform->GetForward();
     auto position = transform->GetPosition();
 
-    position.x += forward.x * distance * m_movementSpeed;
-    position.y += forward.y * distance * m_movementSpeed;
-    position.z += forward.z * distance * m_movementSpeed;
+    position.x += forward.x * distance * m_moveSpeed;
+    position.y += forward.y * distance * m_moveSpeed;
+    position.z += forward.z * distance * m_moveSpeed;
 
     transform->SetPosition(position);
 }
@@ -154,9 +230,9 @@ void Camera::MoveRight(float distance)
     auto right = transform->GetRight();
     auto position = transform->GetPosition();
 
-    position.x += right.x * distance * m_movementSpeed;
-    position.y += right.y * distance * m_movementSpeed;
-    position.z += right.z * distance * m_movementSpeed;
+    position.x += right.x * distance * m_moveSpeed;
+    position.y += right.y * distance * m_moveSpeed;
+    position.z += right.z * distance * m_moveSpeed;
 
     transform->SetPosition(position);
 }
@@ -167,9 +243,9 @@ void Camera::MoveUp(float distance)
     auto up = transform->GetUp();
     auto position = transform->GetPosition();
 
-    position.x += up.x * distance * m_movementSpeed;
-    position.y += up.y * distance * m_movementSpeed;
-    position.z += up.z * distance * m_movementSpeed;
+    position.x += up.x * distance * m_moveSpeed;
+    position.y += up.y * distance * m_moveSpeed;
+    position.z += up.z * distance * m_moveSpeed;
 
     transform->SetPosition(position);
 }
@@ -179,9 +255,9 @@ void Camera::Rotate(float pitch, float yaw, float roll)
     auto transform = GetGameObject()->GetTransform();
     auto rotation = transform->GetRotation();
 
-    rotation.x += pitch * m_rotationSpeed;
-    rotation.y += yaw * m_rotationSpeed;
-	rotation.z += roll * m_rotationSpeed;
+    rotation.x += pitch * m_rotateSpeed;
+    rotation.y += yaw * m_rotateSpeed;
+	rotation.z += roll * m_rotateSpeed;
 
     // 피치 각도 제한 (-89도 ~ 89도)
     rotation.x = std::max(-89.0f, std::min(89.0f, rotation.x));

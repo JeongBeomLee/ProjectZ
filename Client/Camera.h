@@ -51,10 +51,14 @@ public:
     void UpdateFrustumPlanes();
     bool IsInFrustum(const XMFLOAT3& point, float radius) const;
 
-    // Test
-    // 카메라 이동 및 회전 속도 설정
-    void SetMovementSpeed(float speed) { m_movementSpeed = speed; }
-    void SetRotationSpeed(float speed) { m_rotationSpeed = speed; }
+    // 카메라 이동/회전 제어
+    void ProcessInput(float deltaTime);
+    void EnableControl(bool enable) { m_controlEnabled = enable; }
+    bool IsControlEnabled() const { return m_controlEnabled; }
+
+    // 카메라 이동/회전 속도 설정
+    void SetMoveSpeed(float speed) { m_moveSpeed = speed; }
+    void SetRotateSpeed(float speed) { m_rotateSpeed = speed; }
 
     // 테스트용 카메라 움직임 메서드
     void MoveForward(float distance);
@@ -85,8 +89,8 @@ private:
 
     bool m_isDirty;
 
-    // Test
-    // 카메라 이동 관련 변수
-    float m_movementSpeed = 5.0f;    // 초당 5 유닛
-    float m_rotationSpeed = 2.0f;    // 초당 2도
+    // 카메라 제어 관련 멤버 변수
+    bool m_controlEnabled = false;
+    float m_moveSpeed = 5.0f;
+    float m_rotateSpeed = 0.1f;
 };

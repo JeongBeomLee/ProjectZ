@@ -64,6 +64,9 @@
     <Filter Include="Component\Transform">
       <UniqueIdentifier>{c3d3142f-dd7b-43cb-9636-53119c028625}</UniqueIdentifier>
     </Filter>
+    <Filter Include="InputManager">
+      <UniqueIdentifier>{1d484531-84a9-41fd-a258-aa9d81db172b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -156,6 +159,9 @@
     <ClInclude Include="Transform.h">
       <Filter>Component\Transform</Filter>
     </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>InputManager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -223,6 +229,9 @@
     </ClCompile>
     <ClCompile Include="Transform.cpp">
       <Filter>Component\Transform</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>InputManager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

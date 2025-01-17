@@ -156,6 +156,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="IAllocator.h" />
+    <ClInclude Include="InputManager.h" />
     <ClInclude Include="LinearAllocator.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="MemoryManager.h">
@@ -187,6 +188,7 @@
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="IAllocator.cpp" />
+    <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="LinearAllocator.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="MemoryManager.cpp">
