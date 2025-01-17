@@ -42,14 +42,22 @@ private:
 
 	// DirectX 12 객체
 	ComPtr<ID3D12Device10> m_device;
+
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
-	ComPtr<IDXGISwapChain4> m_swapChain;
-	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
-	ComPtr<ID3D12DescriptorHeap> m_descHeap;  // 하나의 힙으로 통합
-	ComPtr<ID3D12Resource2> m_renderTargets[FRAME_BUFFER_COUNT];
 	ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 	ComPtr<ID3D12GraphicsCommandList7> m_commandList;
+
+	ComPtr<IDXGISwapChain4> m_swapChain;
+	ComPtr<ID3D12Resource2> m_renderTargets[FRAME_BUFFER_COUNT];
+	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
+
+	ComPtr<ID3D12DescriptorHeap> m_descHeap;
+
 	ComPtr<ID3D12Fence1> m_fence;
+
+	ComPtr<ID3D12Resource> m_depthStencilBuffer;
+	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
+
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	ComPtr<ID3D12PipelineState> m_pipelineState;
 
@@ -93,6 +101,7 @@ private:
 	bool CreateRenderTargetViews();
 	bool CreateCommandAllocatorAndList();
 	bool CreateFence();
+	bool CreateDepthStencilBuffer();
 	bool CreateRootSignature();
 	bool CreatePipelineState();
 	bool CompileShaders();

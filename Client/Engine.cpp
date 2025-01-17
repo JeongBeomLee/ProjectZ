@@ -104,6 +104,10 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		Logger::Instance().Fatal("펜스 생성 실패");
 		return false;
 	}
+	if (!CreateDepthStencilBuffer()) {
+		Logger::Instance().Fatal("깊이 스텐실 버퍼 생성 실패");
+		return false;
+	}
 	if (!CreateRootSignature()) {
 		Logger::Instance().Fatal("루트 시그니처 생성 실패");
 		return false;
@@ -200,7 +204,13 @@ void Engine::BeginRender()
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
 		m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_frameIndex, GetRtvDescriptorSize());
-	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+
+	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
+	// 깊이 버퍼 초기화
+	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
+		1.0f, 0, 0, nullptr);
 
 	// 화면 클리어
 	const float clearColor[] = { 0.0f, 0.0f, 0.2f, 1.0f };
@@ -413,6 +423,8 @@ bool Engine::CreateCommandAllocatorAndList()
 		IID_PPV_ARGS(&m_commandList)));
 
 	ThrowIfFailed(m_commandList->Close());
+
+	Logger::Instance().Info("커맨드 할당자 및 커맨드 리스트 생성 성공");
 	return true;
 }
 
@@ -428,6 +440,56 @@ bool Engine::CreateFence()
 		return false;
 	}
 
+	Logger::Instance().Info("펜스 생성 성공");
+	return true;
+}
+
+bool Engine::CreateDepthStencilBuffer()
+{
+	D3D12_RESOURCE_DESC depthStencilDesc = {};
+	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	depthStencilDesc.Alignment = 0;
+	depthStencilDesc.Width = m_width;
+	depthStencilDesc.Height = m_height;
+	depthStencilDesc.DepthOrArraySize = 1;
+	depthStencilDesc.MipLevels = 1;
+	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilDesc.SampleDesc.Count = 1;
+	depthStencilDesc.SampleDesc.Quality = 0;
+	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	D3D12_CLEAR_VALUE optClear;
+	optClear.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	optClear.DepthStencil.Depth = 1.0f;
+	optClear.DepthStencil.Stencil = 0;
+
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	ThrowIfFailed(m_device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&depthStencilDesc,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&optClear,
+		IID_PPV_ARGS(&m_depthStencilBuffer)));
+
+	// DSV 힙 생성
+	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+	dsvHeapDesc.NumDescriptors = 1;
+	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
+
+	// DSV 생성
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+	m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), &dsvDesc,
+		m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+
+	Logger::Instance().Info("깊이 스텐실 버퍼 생성 성공");
 	return true;
 }
 
@@ -540,8 +602,10 @@ bool Engine::CreatePipelineState()
 	psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
 	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState.DepthEnable = FALSE;
+	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	psoDesc.DepthStencilState.DepthEnable = TRUE;
 	psoDesc.DepthStencilState.StencilEnable = FALSE;
+	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	psoDesc.NumRenderTargets = 1;
