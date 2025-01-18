@@ -67,6 +67,12 @@
     <Filter Include="InputManager">
       <UniqueIdentifier>{1d484531-84a9-41fd-a258-aa9d81db172b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{400054f7-268e-4f5b-8710-fd5918785e43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Manager">
+      <UniqueIdentifier>{45a57fcc-0702-4090-b77b-d1a054a1f9fd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -162,6 +168,15 @@
     <ClInclude Include="InputManager.h">
       <Filter>InputManager</Filter>
     </ClInclude>
+    <ClInclude Include="IResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -232,6 +247,12 @@
     </ClCompile>
     <ClCompile Include="InputManager.cpp">
       <Filter>InputManager</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshResource.cpp">
+      <Filter>Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

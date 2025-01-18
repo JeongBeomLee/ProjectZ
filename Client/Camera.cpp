@@ -210,7 +210,6 @@ void Camera::ProcessInput(float deltaTime)
     transform->SetPosition(position);
 }
 
-// Test
 void Camera::MoveForward(float distance)
 {
     auto transform = GetGameObject()->GetTransform();

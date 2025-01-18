@@ -23,7 +23,8 @@ struct VSInput
     float3 position : POSITION;
     float4 color : COLOR;
     float3 normal : NORMAL;
-    float2 texCoord : TEXCOORD; // 텍스처 좌표 추가
+    float3 tangent : TANGENT;
+    float2 texCoord : TEXCOORD;
 };
 
 struct PSInput
@@ -31,6 +32,7 @@ struct PSInput
     float4 position : SV_POSITION;
     float4 color : COLOR;
     float3 normal : NORMAL;
+    float3 tangent : TANGENT;
     float3 worldPos : POSITION;
     float2 texCoord : TEXCOORD; // 텍스처 좌표 추가
 };
@@ -48,8 +50,11 @@ PSInput VSMain(VSInput input)
     // 노말 벡터를 월드 공간으로 변환
     result.normal = normalize(mul(input.normal, (float3x3) worldMatrix));
     
+    // 탄젠트 벡터를 월드 공간으로 변환
+    result.tangent = normalize(mul(input.tangent, (float3x3) worldMatrix));
+    
     result.color = input.color;
-    result.texCoord = input.texCoord; // 텍스처 좌표 전달
+    result.texCoord = input.texCoord;
     
     return result;
 }
