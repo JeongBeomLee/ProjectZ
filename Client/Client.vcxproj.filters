@@ -16,9 +16,6 @@
     <Filter Include="Engine">
       <UniqueIdentifier>{5ca6b723-d64a-4664-804c-e2e448162e90}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shaders">
-      <UniqueIdentifier>{277f6d03-2f82-46c1-8408-359184e63781}</UniqueIdentifier>
-    </Filter>
     <Filter Include="PhysXEngine">
       <UniqueIdentifier>{234d8cde-b033-423e-99a3-ee97e74cf614}</UniqueIdentifier>
     </Filter>
@@ -72,6 +69,9 @@
     </Filter>
     <Filter Include="Resource\Manager">
       <UniqueIdentifier>{45a57fcc-0702-4090-b77b-d1a054a1f9fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Shaders">
+      <UniqueIdentifier>{277f6d03-2f82-46c1-8408-359184e63781}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -177,6 +177,15 @@
     <ClInclude Include="MeshResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
+    <ClInclude Include="ShaderResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager.h">
+      <Filter>Resource\Manager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -254,6 +263,15 @@
     <ClCompile Include="MeshResource.cpp">
       <Filter>Resource</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager.cpp">
+      <Filter>Resource\Manager</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc">
@@ -269,11 +287,11 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shaders.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <FxCompile Include="Resources\Shaders\Default.hlsl">
+      <Filter>Resource\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

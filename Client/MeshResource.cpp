@@ -157,6 +157,7 @@ void MeshResource::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 
         vertex.color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
         subMesh.vertices.push_back(vertex);
+    }
 
     // 인덱스 데이터 변환
     for (UINT i = 0; i < mesh->mNumFaces; i++) {

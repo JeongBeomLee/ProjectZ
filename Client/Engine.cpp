@@ -7,6 +7,8 @@
 #include "SceneManager.h"
 #include "TimeManager.h"
 #include "InputManager.h"
+#include "ResourceManager.h"
+#include "ShaderResource.h"
 #include "Transform.h"
 #include "PhysicsBody.h"
 #include "MeshRenderer.h"
@@ -43,7 +45,6 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	// 로거 초기화
 	Logger::Instance().AddOutput(std::make_unique<DebugOutput>());
 	Logger::Instance().AddOutput(std::make_unique<FileOutput>("Game.log"));
-
 	Logger::Instance().Info("Engine 초기화 시작");
 
 	m_width = width;
@@ -113,8 +114,20 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		Logger::Instance().Fatal("루트 시그니처 생성 실패");
 		return false;
 	}
-	if (!CreatePipelineState()) {
-		Logger::Instance().Fatal("파이프라인 상태 생성 실패");
+
+	// 기본 셰이더 생성
+	auto& resourceManager = ResourceManager::Instance();
+	auto vertexShader = resourceManager.CreateShader("DefaultVS", "Resources/Shaders/Default.hlsl",
+		ShaderResource::ShaderType::Vertex);
+	auto pixelShader = resourceManager.CreateShader("DefaultPS", "Resources/Shaders/Default.hlsl",
+		ShaderResource::ShaderType::Pixel);
+
+	if (!vertexShader || !pixelShader) {
+		Logger::Instance().Fatal("기본 셰이더 생성 실패");
+		return false;
+	}
+
+	if (!CreatePipelineState(vertexShader.get(), pixelShader.get())) {
 		return false;
 	}
 
@@ -145,32 +158,6 @@ void Engine::Update()
 
 	// 입력 업데이트
 	InputManager::Instance().Update();
-
-	////////////////////////
-	// 카메라 테스트 동작 //
-	////////////////////////
-	//static float totalTime = 0.0f;
-	//totalTime += deltaTime;
-
-	//if (m_mainCamera) {
-	//	// 원형 움직임
-	//	float radius = 10.0f;
-	//	float circleSpeed = 0.5f;
-	//	float height = 5.0f;
-
-	//	// 카메라 위치 계산
-	//	float x = radius * std::cos(totalTime * circleSpeed);
-	//	float z = radius * std::sin(totalTime * circleSpeed);
-
-	//	// 카메라 위치 및 회전 설정
-	//	auto cameraTransform = m_mainCamera->GetGameObject()->GetTransform();
-	//	cameraTransform->SetPosition(XMFLOAT3(x, height, z));
-
-	//	// 항상 원점을 바라보도록 회전
-	//	float yaw = std::atan2(-x, -z) * (180.0f / XM_PI);
-	//	cameraTransform->SetRotation(XMFLOAT3(30.0f, yaw, 0.0f));
-	//}
-	////////////////////////
 
 	// 프레임 메모리 초기화
 	Memory::BeginFrameMemory();
@@ -230,10 +217,12 @@ void Engine::BeginRender()
 	ID3D12DescriptorHeap* ppHeaps[] = { m_descHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-	// 라이트 CBV 설정
-	CD3DX12_GPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
-	lightCbvHandle.Offset(MAX_OBJECTS, GetDescriptorIncrementSize());
-	m_commandList->SetGraphicsRootDescriptorTable(1, lightCbvHandle);
+	// Light CBV를 위치 2에 바인딩 (Transform CBV는 0, Material CBV는 1)
+	CD3DX12_GPU_DESCRIPTOR_HANDLE lightCbvHandle(
+		m_descHeap->GetGPUDescriptorHandleForHeapStart(),
+		GetLightDescriptorOffset(),
+		GetDescriptorIncrementSize());
+	m_commandList->SetGraphicsRootDescriptorTable(2, lightCbvHandle);
 
 	// 프리미티브 토폴로지 설정
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -519,49 +508,74 @@ bool Engine::CreateRootSignature()
 	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	// 디스크립터 테이블 설정
-	D3D12_DESCRIPTOR_RANGE ranges[3] = {};
+	D3D12_DESCRIPTOR_RANGE ranges[5] = {};
 
-	// 변환 행렬용 range
+	// Transform CBV (register b0)
 	ranges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	ranges[0].NumDescriptors = 1;
-	ranges[0].BaseShaderRegister = 0;	// b0 레지스터
+	ranges[0].BaseShaderRegister = 0;
 	ranges[0].RegisterSpace = 0;
 	ranges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	// 라이팅용 range
+	// Material CBV (register b1)
 	ranges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	ranges[1].NumDescriptors = 1;
-	ranges[1].BaseShaderRegister = 1;	// b1 레지스터
+	ranges[1].BaseShaderRegister = 1;
 	ranges[1].RegisterSpace = 0;
 	ranges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	// 텍스처용 range
-	ranges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	// Light CBV (register b2)
+	ranges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	ranges[2].NumDescriptors = 1;
-	ranges[2].BaseShaderRegister = 0;	// t0 레지스터
+	ranges[2].BaseShaderRegister = 2;
 	ranges[2].RegisterSpace = 0;
 	ranges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	// 루트 파라미터 설정
-	D3D12_ROOT_PARAMETER rootParameters[3] = {};
+	// TextureFlags CBV (register b3)
+	ranges[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	ranges[3].NumDescriptors = 1;
+	ranges[3].BaseShaderRegister = 3;
+	ranges[3].RegisterSpace = 0;
+	ranges[3].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	// 변환 행렬용 파라미터
+	// Textures SRV (register t0-t4)
+	ranges[4].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	ranges[4].NumDescriptors = 5;
+	ranges[4].BaseShaderRegister = 0;
+	ranges[4].RegisterSpace = 0;
+	ranges[4].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	D3D12_ROOT_PARAMETER rootParameters[5] = {};
+
+	// Transform CBV Table (Vertex Shader)
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
 	rootParameters[0].DescriptorTable.pDescriptorRanges = &ranges[0];
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
-	// 라이팅용 파라미터
+	// Material CBV Table (Pixel Shader)
 	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
 	rootParameters[1].DescriptorTable.pDescriptorRanges = &ranges[1];
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	// 텍스처용 파라미터
+	// Light CBV Table (Pixel Shader)
 	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
 	rootParameters[2].DescriptorTable.pDescriptorRanges = &ranges[2];
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	// TextureFlags CBV Table (Pixel Shader)
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[3].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[3].DescriptorTable.pDescriptorRanges = &ranges[3];
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	// Textures SRV Table (Pixel Shader)
+	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[4].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[4].DescriptorTable.pDescriptorRanges = &ranges[4];
+	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	// 루트 시그니처 생성
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
@@ -581,11 +595,8 @@ bool Engine::CreateRootSignature()
 	return true;
 }
 
-bool Engine::CreatePipelineState()
+bool Engine::CreatePipelineState(ShaderResource* vertexShader, ShaderResource* pixelShader)
 {
-	// 셰이더 컴파일 및 로드
-	CompileShaders();
-
 	// 정점 입력 레이아웃 정의
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
 	{
@@ -605,8 +616,8 @@ bool Engine::CreatePipelineState()
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 	psoDesc.pRootSignature = m_rootSignature.Get();
-	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShader.Get());
-	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShader.Get());
+	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader->GetShaderByteCode());
+	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader->GetShaderByteCode());
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
 	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
@@ -621,46 +632,7 @@ bool Engine::CreatePipelineState()
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	psoDesc.SampleDesc.Count = 1;
 
-	HRESULT hr = m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
-
-	if (FAILED(hr)) {
-		return false;
-	}
-
-	return true;
-}
-
-bool Engine::CompileShaders()
-{
-	UINT compileFlags = 0;
-	IFDEBUG(compileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;);
-	ComPtr<ID3DBlob> errorBlob = nullptr;
-
-	// 버텍스 셰이더 컴파일
-	ThrowIfFailed(D3DCompileFromFile(
-		L"shaders.hlsl",
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"VSMain",
-		"vs_5_0",
-		compileFlags,
-		0,
-		&m_vertexShader,
-		&errorBlob));
-
-	// 픽셀 셰이더 컴파일
-	ThrowIfFailed(D3DCompileFromFile(
-		L"shaders.hlsl",
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"PSMain",
-		"ps_5_0",
-		compileFlags,
-		0,
-		&m_pixelShader,
-		&errorBlob));
-
-	return true;
+	return SUCCEEDED(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 }
 
 bool Engine::CreateLightConstantBuffer()
@@ -703,17 +675,24 @@ bool Engine::CreateLightConstantBuffer()
 
 bool Engine::CreateDescHeap()
 {
-	// MAX_OBJECTS(CBVs) + 1(Light CBV) + MAX_OBJECTS(SRVs)
+	// 힙 생성
+	// MAX_OBJECTS(CBVs) 
+	// + 1(Light CBV) 
+	// + MAX_OBJECTS(Material CBVs) 
+	// + MAX_OBJECTS(TextureFlags CBVs) 
+	// + MAX_OBJECTS * 5(Albedo, Normal, Metallic-Roughness, Emissive, Occlusion SRVs)
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.NumDescriptors = MAX_OBJECTS * 2 + 1;
+	heapDesc.NumDescriptors = TOTAL_DESCRIPTOR_COUNT;
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
 	ThrowIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_descHeap)));
 
 	// 라이트 CBV 생성 (MAX_OBJECTS 위치에)
-	CD3DX12_CPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
-	lightCbvHandle.Offset(MAX_OBJECTS, GetDescriptorIncrementSize());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE lightCbvHandle(
+		m_descHeap->GetCPUDescriptorHandleForHeapStart(),
+		DESCRIPTOR_LIGHT_CBV,
+		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC lightCbvDesc = {};
 	lightCbvDesc.BufferLocation = m_lightConstantBuffer->GetGPUVirtualAddress();
@@ -1078,7 +1057,7 @@ void Engine::CreateDemonstrationObjects(Scene* scene, const PxVec3& position)
 	std::vector<Vertex> cubeVertices;
 	std::vector<UINT> cubeIndices;
 	CreateCubeMeshData(cubeVertices, cubeIndices);
-	cubeRenderer->CreateResources(cubeVertices, cubeIndices, L"Texture/checker.dds");
+	cubeRenderer->CreateResources(cubeVertices, cubeIndices, L"Resources/Texture/checker.dds");
 }
 
 void Engine::CreateDefaultScene()
@@ -1117,7 +1096,7 @@ void Engine::CreateDefaultScene()
 	std::vector<Vertex> groundVertices;
 	std::vector<UINT> groundIndices;
 	CreateCubeMeshData(groundVertices, groundIndices);
-	groundRenderer->CreateResources(groundVertices, groundIndices, L"Texture/mintchecker.dds");
+	groundRenderer->CreateResources(groundVertices, groundIndices, L"Resources/Texture/mintchecker.dds");
 
 	// 테스트 오브젝트 생성
 	float startHeight = 20.0f;

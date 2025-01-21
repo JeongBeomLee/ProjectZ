@@ -29,7 +29,7 @@ bool ShaderResource::Load()
         wPath.c_str(),
         nullptr,
         D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        "main",                     // 엔트리 포인트
+        GetEntryPoint().c_str(),    // 엔트리 포인트
         GetShaderProfile().c_str(), // 셰이더 타겟
         compileFlags,
         0,
@@ -62,6 +62,22 @@ void ShaderResource::Unload()
 bool ShaderResource::IsLoaded() const
 {
     return m_isLoaded;
+}
+
+std::string ShaderResource::GetEntryPoint() const
+{
+	switch (m_shaderType) {
+	case ShaderType::Vertex:
+		return "VSMain";
+	case ShaderType::Pixel:
+		return "PSMain";
+	case ShaderType::Compute:
+		return "CSMain";
+	case ShaderType::Geometry:
+		return "GSMain";
+	default:
+		return "";
+	}
 }
 
 std::string ShaderResource::GetShaderProfile() const

@@ -22,7 +22,7 @@ public:
     ShaderType GetShaderType() const { return m_shaderType; }
 
 private:
-    std::wstring GetShaderTarget() const;
+	std::string GetEntryPoint() const;
     std::string GetShaderProfile() const;
 
 private:

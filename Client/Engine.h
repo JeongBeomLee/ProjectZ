@@ -7,6 +7,7 @@ class PhysicsEngine;
 class GameObject;
 class Scene;
 class Camera;
+class ShaderResource;
 class Engine {
 public:
 	Engine();
@@ -29,10 +30,16 @@ public:
 	XMMATRIX GetViewMatrix() const;
 	XMMATRIX GetProjectionMatrix() const;
 
-	ID3D12DescriptorHeap* GetDescriptorHeap() const { return m_descHeap.Get(); }
+	ID3D12DescriptorHeap* GetDescHeap() const { return m_descHeap.Get(); }
 	UINT GetCbvDescriptorIndex() { return m_currentCbvIndex++; }
 	UINT GetSrvDescriptorIndex() { return MAX_OBJECTS + 1 + m_currentSrvIndex++; }
 	UINT GetDescriptorIncrementSize() const { return m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV); }
+
+	// 디스크립터 접근 메서드
+	UINT GetTransformDescriptorOffset(UINT index) const { return DESCRIPTOR_TRANSFORM_CBV_START + index; }
+	UINT GetLightDescriptorOffset() const { return DESCRIPTOR_LIGHT_CBV; }
+	UINT GetMaterialDescriptorOffset(UINT index) const { return DESCRIPTOR_MATERIAL_START + index * 2; }  // Material CBV와 TextureFlags CBV가 연속으로 배치
+	UINT GetTextureDescriptorOffset(UINT materialIndex) const { return DESCRIPTOR_TEXTURE_START + materialIndex * 5; }  // 5개의 텍스처가 연속으로 배치
 
 private:
 	// 화면 크기
@@ -66,11 +73,25 @@ private:
 	UINT m_frameIndex;
 
 	// 셰이더 관련 멤버
-	ComPtr<ID3DBlob> m_vertexShader;
-	ComPtr<ID3DBlob> m_pixelShader;
+	//ComPtr<ID3DBlob> m_vertexShader;
+	//ComPtr<ID3DBlob> m_pixelShader;
 
 	// 디스크립터 힙 관리
-	static const UINT MAX_OBJECTS = 100;  // 최대 오브젝트 수
+	static constexpr UINT MAX_OBJECTS = 100;  // 최대 오브젝트 수
+	static constexpr UINT MAX_MATERIALS = 100;
+
+	// 디스크립터 레이아웃 관련 상수
+	// Transform CBV 시작 위치 (0 ~ 99)
+	static constexpr UINT DESCRIPTOR_TRANSFORM_CBV_START = 0;
+	// Light CBV 위치 (100)
+	static constexpr UINT DESCRIPTOR_LIGHT_CBV = MAX_OBJECTS;
+	// Material CBV, TextureFlags CBV 시작 위치 (101 ~ 300)
+	static constexpr UINT DESCRIPTOR_MATERIAL_START = MAX_OBJECTS + 1;
+	// 텍스처 SRV 시작 위치 (301 ~)
+	static constexpr UINT DESCRIPTOR_TEXTURE_START = MAX_OBJECTS + MAX_MATERIALS * 2 + 1;
+	// CBV들 + 텍스처(albedo, normal, metallic-roughness, emissive, occlusion)
+	static constexpr UINT TOTAL_DESCRIPTOR_COUNT = DESCRIPTOR_TEXTURE_START + MAX_MATERIALS * 5;
+
 	UINT m_currentCbvIndex = 0;  // CBV 할당을 위한 인덱스
 	UINT m_currentSrvIndex = 0;  // SRV 할당을 위한 인덱스
 
@@ -81,8 +102,6 @@ private:
 	float m_rotationAngle = 0.0f;
 
 	// 변환 행렬 (카메라)
-	//XMMATRIX m_viewMatrix;
-	//XMMATRIX m_projectionMatrix;
 	Camera* m_mainCamera = nullptr;
 
 	// 물리 엔진
@@ -103,8 +122,8 @@ private:
 	bool CreateFence();
 	bool CreateDepthStencilBuffer();
 	bool CreateRootSignature();
-	bool CreatePipelineState();
-	bool CompileShaders();
+	bool CreatePipelineState(ShaderResource* vertexShader, ShaderResource* pixelShader);
+	//bool CompileShaders();
 	bool CreateLightConstantBuffer();
 	bool CreateDescHeap();
 
