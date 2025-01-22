@@ -157,7 +157,6 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="IAllocator.h" />
     <ClInclude Include="InputManager.h" />
-    <ClInclude Include="IResource.h" />
     <ClInclude Include="LinearAllocator.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="MemoryManager.h">
@@ -165,7 +164,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">아니오</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="MeshRenderer.h" />
-    <ClInclude Include="MeshResource.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsBody.h" />
     <ClInclude Include="PhysicsEngine.h" />
@@ -175,7 +173,6 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="StackAllocator.h" />
-    <ClInclude Include="TextureResource.h" />
     <ClInclude Include="ThreadSafeAllocator.h" />
     <ClInclude Include="TimeManager.h" />
     <ClInclude Include="Transform.h" />
@@ -199,7 +196,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">아니오</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="MeshRenderer.cpp" />
-    <ClCompile Include="MeshResource.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -211,7 +207,6 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="StackAllocator.cpp" />
-    <ClCompile Include="TextureResource.cpp" />
     <ClCompile Include="ThreadSafeAllocator.cpp" />
     <ClCompile Include="TimeManager.cpp" />
     <ClCompile Include="Transform.cpp" />

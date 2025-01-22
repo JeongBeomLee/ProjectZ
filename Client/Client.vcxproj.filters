@@ -168,15 +168,6 @@
     <ClInclude Include="InputManager.h">
       <Filter>InputManager</Filter>
     </ClInclude>
-    <ClInclude Include="IResource.h">
-      <Filter>Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureResource.h">
-      <Filter>Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshResource.h">
-      <Filter>Resource</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -247,12 +238,6 @@
     </ClCompile>
     <ClCompile Include="InputManager.cpp">
       <Filter>InputManager</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureResource.cpp">
-      <Filter>Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshResource.cpp">
-      <Filter>Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
