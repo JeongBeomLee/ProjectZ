@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "Transform.h"
 #include "Engine.h"
+#include "ResourceManager.h"
 #include "Logger.h"
 
 MeshRenderer::MeshRenderer()
@@ -36,7 +37,7 @@ void MeshRenderer::Destroy()
 
 bool MeshRenderer::CreateResources(const std::vector<Vertex>& vertices,
     const std::vector<UINT>& indices,
-    const std::wstring& texturePath) 
+    const std::string& texturePath) 
 {
     auto device = Engine::Instance().GetDevice();
     if (!device) return false;
@@ -47,8 +48,12 @@ bool MeshRenderer::CreateResources(const std::vector<Vertex>& vertices,
     if (!CreateConstantBuffer()) return false;
 	if (!CreateConstantBufferView(device)) return false;
 
-    if (!CreateTextureResource(texturePath)) return false;
-	if (!CreateShaderResourceView(device)) return false;
+    m_textureResource = 
+        Resource::ResourceManager::Instance().Load<Resource::TextureResource>(texturePath);
+    if (!m_textureResource) {
+        Logger::Instance().Error("텍스처 리소스 로드 실패: {}", texturePath);
+        return false;
+    }
 
     UpdateBoundingSphere(vertices);
 
@@ -64,7 +69,7 @@ void MeshRenderer::Render(ID3D12GraphicsCommandList* commandList)
     commandList->SetGraphicsRootDescriptorTable(0, m_resources->cbvHandle);
 
     // 텍스처 SRV 설정
-    commandList->SetGraphicsRootDescriptorTable(2, m_resources->srvHandle);
+    commandList->SetGraphicsRootDescriptorTable(2, m_textureResource->GetGPUSRVHandle());
 
     // 정점 버퍼 설정
     commandList->IASetVertexBuffers(0, 1, &m_resources->vertexBufferView);
@@ -254,61 +259,6 @@ bool MeshRenderer::CreateConstantBufferView(ID3D12Device* device)
 
     // GPU 디스크립터 핸들 저장
     m_resources->cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-        descHeap->GetGPUDescriptorHandleForHeapStart(),
-        descriptorIndex,
-        descriptorSize);
-
-	return true;
-}
-
-bool MeshRenderer::CreateTextureResource(const std::wstring& texturePath)
-{
-	auto device = Engine::Instance().GetDevice();
-	auto commandQueue = Engine::Instance().GetCommandQueue();
-	if (!device || !commandQueue) return false;
-
-    // 리소스 업로드 배치 생성
-    DirectX::ResourceUploadBatch resourceUpload(device);
-    resourceUpload.Begin();
-
-    // DDS 텍스처 로드
-    if (FAILED(DirectX::CreateDDSTextureFromFile(
-        device,
-        resourceUpload,
-        texturePath.c_str(),
-        m_resources->texture.ReleaseAndGetAddressOf()))) {
-        return false;
-    }
-
-    // 리소스 업로드 실행
-    auto uploadResourcesFinished = resourceUpload.End(commandQueue);
-    uploadResourcesFinished.wait();
-
-    return true;
-}
-
-bool MeshRenderer::CreateShaderResourceView(ID3D12Device* device)
-{
-    // SRV 생성
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Format = m_resources->texture->GetDesc().Format;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = m_resources->texture->GetDesc().MipLevels;
-
-    // 디스크립터 할당 및 생성
-    auto descHeap = Engine::Instance().GetDescriptorHeap();
-	if (!descHeap) return false;
-    UINT descriptorIndex = Engine::Instance().GetSrvDescriptorIndex();
-	UINT descriptorSize = Engine::Instance().GetDescriptorIncrementSize();
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(descHeap->GetCPUDescriptorHandleForHeapStart());
-    srvHandle.Offset(descriptorIndex, descriptorSize);
-
-    device->CreateShaderResourceView(m_resources->texture.Get(), &srvDesc, srvHandle);
-
-    // GPU 핸들 저장
-    m_resources->srvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
         descHeap->GetGPUDescriptorHandleForHeapStart(),
         descriptorIndex,
         descriptorSize);

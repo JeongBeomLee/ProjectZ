@@ -1007,7 +1007,7 @@ void Engine::CreateCube(const PxVec3& position, const PxVec3& dimensions)
 	std::vector<UINT> indices;
 	CreateCubeMeshData(vertices, indices);  // 이 함수는 기존의 큐브 정점/인덱스 데이터를 생성
 
-	renderer->CreateResources(vertices, indices, L"Texture/checker.dds");
+	renderer->CreateResources(vertices, indices, "Texture/checker.dds");
 
 	Logger::Instance().Info("큐브 게임 오브젝트 생성됨. 위치: ({}, {}, {})",
 		position.x, position.y, position.z);
@@ -1031,7 +1031,7 @@ void Engine::CreateSphere(const PxVec3& position, float radius)
 	std::vector<Vertex> vertices;
 	std::vector<UINT> indices;
 	CreateSphereMeshData(vertices, indices, radius);
-	renderer->CreateResources(vertices, indices, L"Texture/pinkchecker.dds");
+	renderer->CreateResources(vertices, indices, "Texture/pinkchecker.dds");
 
 	Logger::Instance().Info("구체 생성됨. 위치: ({}, {}, {}), 반지름: {}",
 		position.x, position.y, position.z, radius);
@@ -1056,7 +1056,7 @@ void Engine::CreateCapsule(const PxVec3& position, float radius, float height)
 	std::vector<Vertex> vertices;
 	std::vector<UINT> indices;
 	CreateCapsuleMeshData(vertices, indices, radius, height);
-	renderer->CreateResources(vertices, indices, L"Texture/yellowchecker.dds");
+	renderer->CreateResources(vertices, indices, "Texture/yellowchecker.dds");
 
 	Logger::Instance().Info("캡슐 생성됨. 위치: ({}, {}, {}), 반지름: {}, 높이: {}",
 		position.x, position.y, position.z, radius, height);
@@ -1078,7 +1078,7 @@ void Engine::CreateDemonstrationObjects(Scene* scene, const PxVec3& position)
 	std::vector<Vertex> cubeVertices;
 	std::vector<UINT> cubeIndices;
 	CreateCubeMeshData(cubeVertices, cubeIndices);
-	cubeRenderer->CreateResources(cubeVertices, cubeIndices, L"Texture/checker.dds");
+	cubeRenderer->CreateResources(cubeVertices, cubeIndices, "Texture/checker.dds");
 }
 
 void Engine::CreateDefaultScene()
@@ -1117,7 +1117,7 @@ void Engine::CreateDefaultScene()
 	std::vector<Vertex> groundVertices;
 	std::vector<UINT> groundIndices;
 	CreateCubeMeshData(groundVertices, groundIndices);
-	groundRenderer->CreateResources(groundVertices, groundIndices, L"Texture/mintchecker.dds");
+	groundRenderer->CreateResources(groundVertices, groundIndices, "Texture/mintchecker.dds");
 
 	// 테스트 오브젝트 생성
 	float startHeight = 20.0f;
