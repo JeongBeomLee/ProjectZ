@@ -177,6 +177,9 @@
     <ClInclude Include="TextureResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
+    <ClInclude Include="ShaderResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -252,6 +255,9 @@
       <Filter>Resource\Manager</Filter>
     </ClCompile>
     <ClCompile Include="TextureResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderResource.cpp">
       <Filter>Resource</Filter>
     </ClCompile>
   </ItemGroup>

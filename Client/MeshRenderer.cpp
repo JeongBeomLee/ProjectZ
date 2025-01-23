@@ -49,7 +49,7 @@ bool MeshRenderer::CreateResources(const std::vector<Vertex>& vertices,
 	if (!CreateConstantBufferView(device)) return false;
 
     m_textureResource = 
-        Resource::ResourceManager::Instance().Load<Resource::TextureResource>(texturePath);
+        Resource::ResourceManager::Instance().LoadTexture(texturePath);
     if (!m_textureResource) {
         Logger::Instance().Error("텍스처 리소스 로드 실패: {}", texturePath);
         return false;

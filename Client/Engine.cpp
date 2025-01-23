@@ -7,6 +7,7 @@
 #include "SceneManager.h"
 #include "TimeManager.h"
 #include "InputManager.h"
+#include "ResourceManager.h"
 #include "Transform.h"
 #include "PhysicsBody.h"
 #include "MeshRenderer.h"
@@ -605,8 +606,8 @@ bool Engine::CreatePipelineState()
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 	psoDesc.pRootSignature = m_rootSignature.Get();
-	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShader.Get());
-	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShader.Get());
+	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShader->GetShaderBlob());
+	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShader->GetShaderBlob());
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
 	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
@@ -632,33 +633,21 @@ bool Engine::CreatePipelineState()
 
 bool Engine::CompileShaders()
 {
-	UINT compileFlags = 0;
-	IFDEBUG(compileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;);
-	ComPtr<ID3DBlob> errorBlob = nullptr;
+	auto& resourceManager = Resource::ResourceManager::Instance();
 
-	// 버텍스 셰이더 컴파일
-	ThrowIfFailed(D3DCompileFromFile(
-		L"shaders.hlsl",
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"VSMain",
-		"vs_5_0",
-		compileFlags,
-		0,
-		&m_vertexShader,
-		&errorBlob));
+	m_vertexShader = resourceManager.LoadShader(
+		"shaders.hlsl", Resource::ShaderType::Vertex);
+	if (!m_vertexShader) {
+		Logger::Instance().Error("버텍스 셰이더 로드 실패");
+		return false;
+	}
 
-	// 픽셀 셰이더 컴파일
-	ThrowIfFailed(D3DCompileFromFile(
-		L"shaders.hlsl",
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"PSMain",
-		"ps_5_0",
-		compileFlags,
-		0,
-		&m_pixelShader,
-		&errorBlob));
+	m_pixelShader = resourceManager.LoadShader(
+		"shaders.hlsl", Resource::ShaderType::Pixel);
+	if (!m_pixelShader) {
+		Logger::Instance().Error("픽셀 셰이더 로드 실패");
+		return false;
+	}
 
 	return true;
 }

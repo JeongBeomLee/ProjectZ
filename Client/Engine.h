@@ -1,6 +1,7 @@
 #pragma once
 #include "Event.h"
 #include "EventTypes.h"
+#include "ShaderResource.h"
 
 class PhysicsObject;
 class PhysicsEngine;
@@ -66,8 +67,8 @@ private:
 	UINT m_frameIndex;
 
 	// 셰이더 관련 멤버
-	ComPtr<ID3DBlob> m_vertexShader;
-	ComPtr<ID3DBlob> m_pixelShader;
+	std::shared_ptr<Resource::ShaderResource> m_vertexShader;
+	std::shared_ptr<Resource::ShaderResource> m_pixelShader;
 
 	// 디스크립터 힙 관리
 	static const UINT MAX_OBJECTS = 100;  // 최대 오브젝트 수
