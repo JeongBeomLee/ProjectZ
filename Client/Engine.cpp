@@ -1076,79 +1076,37 @@ void Engine::CreateDefaultScene()
 {
 	auto& resourceManager = Resource::ResourceManager::Instance();
 
-	// 기본 머티리얼 생성 및 PSO 테스트
-	auto baseMaterial = resourceManager.LoadMaterial("materials/default.json");
-	if (baseMaterial) {
-		// 기존 리소스 설정
-		baseMaterial->SetShaders(m_vertexShader, m_pixelShader);
-		auto texture = resourceManager.LoadTexture("Texture/checker.dds");
-		if (texture) {
-			baseMaterial->SetTexture("diffuseMap", texture);
-		}
-
-		// 파라미터 설정
-		baseMaterial->DefineParameter("baseColor", Resource::MaterialParameterType::Float4);
-		baseMaterial->DefineParameter("metallic", Resource::MaterialParameterType::Float);
-		baseMaterial->DefineParameter("roughness", Resource::MaterialParameterType::Float);
-
-		if (baseMaterial->CreateConstantBuffer()) {
-			XMFLOAT4 baseColor = { 1.0f, 0.0f, 0.0f, 1.0f };
-			float metallic = 0.5f;
-			float roughness = 0.3f;
-
-			baseMaterial->SetParameterData("baseColor", &baseColor);
-			baseMaterial->SetParameterData("metallic", &metallic);
-			baseMaterial->SetParameterData("roughness", &roughness);
-		}
-
-		// PSO 설정 테스트
-		Resource::MaterialResource::PipelineSettings psoSettings;
-
-		// 와이어프레임 렌더링 테스트를 위한 래스터라이저 상태 수정
-		psoSettings.rasterizer.FillMode = D3D12_FILL_MODE_WIREFRAME;
-		psoSettings.rasterizer.CullMode = D3D12_CULL_MODE_NONE;
-
-		// 반투명 렌더링 테스트를 위한 블렌드 상태 수정
-		psoSettings.blend.RenderTarget[0].BlendEnable = TRUE;
-		psoSettings.blend.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-		psoSettings.blend.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-		psoSettings.blend.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-		psoSettings.blend.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-		psoSettings.blend.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-		psoSettings.blend.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-
-		baseMaterial->SetPipelineSettings(psoSettings);
-
-		// PSO 생성 테스트
-		if (baseMaterial->GetPipelineState()) {
-			Logger::Instance().Info("PSO 테스트 성공");
-		}
-
-		// 두 개의 머티리얼 인스턴스 생성
-		auto instance1 = std::make_shared<Resource::MaterialInstance>(baseMaterial);
-		auto instance2 = std::make_shared<Resource::MaterialInstance>(baseMaterial);
+	// JSON 머티리얼 로드 테스트
+	auto material = resourceManager.LoadMaterial("standard.json");
+	if (material) {
+		// 머티리얼로부터 새로운 인스턴스 생성
+		auto instance1 = std::make_shared<Resource::MaterialInstance>(material);
+		auto instance2 = std::make_shared<Resource::MaterialInstance>(material);
 
 		if (instance1 && instance2) {
-			// 첫 번째 인스턴스 - 빨간색 설정
+			// 첫 번째 인스턴스 - 빨간색 금속성 재질
 			XMFLOAT4 redColor = { 1.0f, 0.0f, 0.0f, 1.0f };
-			float metallic1 = 0.8f;
-			float roughness1 = 0.2f;
+			float metallic1 = 1.0f;
+			float roughness1 = 0.1f;
 
 			instance1->SetParameterData("baseColor", &redColor);
 			instance1->SetParameterData("metallic", &metallic1);
 			instance1->SetParameterData("roughness", &roughness1);
 
-			// 두 번째 인스턴스 - 파란색 설정
-			XMFLOAT4 blueColor = { 0.0f, 0.0f, 1.0f, 1.0f };
-			float metallic2 = 0.3f;
-			float roughness2 = 0.7f;
+			// 두 번째 인스턴스 - 파란색 비금속성 재질
+			XMFLOAT4 blueColor = { 0.0f, 0.0f, 1.0f, 0.8f };
+			float metallic2 = 0.0f;
+			float roughness2 = 0.9f;
 
 			instance2->SetParameterData("baseColor", &blueColor);
 			instance2->SetParameterData("metallic", &metallic2);
 			instance2->SetParameterData("roughness", &roughness2);
 
-			Logger::Instance().Info("머티리얼 인스턴스 테스트 성공");
+			Logger::Instance().Info("JSON 머티리얼 및 인스턴스 테스트 성공");
 		}
+	}
+	else {
+		Logger::Instance().Error("JSON 머티리얼 로드 실패");
 	}
 
 	auto& sceneManager = SceneManager::Instance();

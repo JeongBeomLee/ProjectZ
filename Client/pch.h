@@ -30,6 +30,10 @@
 #include "tbb/concurrent_queue.h"
 #include "tbb/concurrent_unordered_map.h"
 
+// JSON 관련 헤더
+#include "nlohmann/json.hpp"
+using json = nlohmann::json;
+
 // STL 헤더
 #include <iostream>
 #include <memory>

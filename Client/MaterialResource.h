@@ -54,6 +54,12 @@ namespace Resource
 		bool CreatePipelineState();
 		size_t CalculatePipelineStateHash();
 
+		// JSON 파싱 및 파라미터 설정 헬퍼 함수들
+		MaterialParameterType ParseParameterType(const std::string& typeStr);
+		void SetParameterFromJson(const std::string& name, const json& value);
+		void LoadPipelineSettings(const json& renderState);
+		D3D12_BLEND ParseBlendFactor(const json& value);
+
 	private:
 		std::shared_ptr<ShaderResource> m_vertexShader;
 		std::shared_ptr<ShaderResource> m_pixelShader;

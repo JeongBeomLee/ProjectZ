@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Engine.h"
 #include "MaterialResource.h"
+#include "ResourceManager.h"
 #include "Logger.h"
 
 namespace Resource
@@ -16,13 +17,81 @@ namespace Resource
         SetState(ResourceState::Loading);
 
         try {
-            // 현재는 빈 구현. 나중에 JSON 파싱 로직이 추가될 예정
+            std::ifstream file(path);
+            if (!file.is_open()) {
+                SetError("머티리얼 파일을 열 수 없음: " + path);
+                return false;
+            }
+
+            json materialData = json::parse(file);
+            auto& resourceManager = Resource::ResourceManager::Instance();
+
+            // 셰이더 로드
+            if (materialData.contains("shaders")) {
+                auto& shaders = materialData["shaders"];
+                std::string vsPath = shaders["vertex"].get<std::string>();
+                std::string psPath = shaders["pixel"].get<std::string>();
+
+                m_vertexShader = resourceManager.LoadShader(vsPath, ShaderType::Vertex);
+                m_pixelShader = resourceManager.LoadShader(psPath, ShaderType::Pixel);
+
+                if (!m_vertexShader || !m_pixelShader) {
+                    SetError("셰이더 로드 실패");
+                    return false;
+                }
+            }
+
+            // 텍스처 로드
+            if (materialData.contains("textures")) {
+                auto& textures = materialData["textures"];
+                for (auto& [paramName, texPath] : textures.items()) {
+                    auto texture = resourceManager.LoadTexture(texPath.get<std::string>());
+                    if (texture) {
+                        m_textures[paramName] = texture;
+                    }
+                    else {
+                        Logger::Instance().Warning("텍스처 로드 실패: {}", texPath.get<std::string>());
+                    }
+                }
+            }
+
+            // 파라미터 정의 및 상수 버퍼 생성
+            if (materialData.contains("parameters")) {
+                auto& params = materialData["parameters"];
+                // 먼저 모든 파라미터 정의
+                for (auto& [paramName, paramData] : params.items()) {
+                    std::string typeStr = paramData["type"].get<std::string>();
+                    MaterialParameterType type = ParseParameterType(typeStr);
+                    DefineParameter(paramName, type);
+                }
+                // 상수 버퍼 생성
+                if (!CreateConstantBuffer()) {
+                    SetError("상수 버퍼 생성 실패");
+                    return false;
+                }
+                // 그 다음 기본값 설정
+                for (auto& [paramName, paramData] : params.items()) {
+                    if (paramData.contains("value")) {
+                        SetParameterFromJson(paramName, paramData["value"]);
+                    }
+                }
+            }
+
+            // 파이프라인 상태 설정
+            if (materialData.contains("renderState")) {
+                LoadPipelineSettings(materialData["renderState"]);
+            }
+
             SetState(ResourceState::Loaded);
             Logger::Instance().Info("머티리얼 로드 성공: {}", path);
             return true;
         }
+        catch (const json::exception& e) {
+            SetError(std::string("JSON 파싱 에러: ") + e.what());
+            return false;
+        }
         catch (const std::exception& e) {
-            SetError(std::string("머티리얼 로드 실패: ") + e.what());
+            SetError(std::string("머티리얼 로드 에러: ") + e.what());
             return false;
         }
     }
@@ -294,6 +363,145 @@ namespace Resource
         hashCombine(hash, reinterpret_cast<size_t>(m_pixelShader.get()));
 
         return hash;
+    }
+
+    MaterialParameterType MaterialResource::ParseParameterType(const std::string& typeStr)
+    {
+        static const std::unordered_map<std::string, MaterialParameterType> typeMap = {
+           {"float", MaterialParameterType::Float},
+           {"float2", MaterialParameterType::Float2},
+           {"float3", MaterialParameterType::Float3},
+           {"float4", MaterialParameterType::Float4},
+           {"matrix", MaterialParameterType::Matrix4x4},
+           {"int", MaterialParameterType::Int},
+           {"bool", MaterialParameterType::Bool}
+        };
+
+        auto it = typeMap.find(typeStr);
+        if (it == typeMap.end()) {
+            throw std::runtime_error("알 수 없는 파라미터 타입: " + typeStr);
+        }
+        return it->second;
+    }
+
+    void MaterialResource::SetParameterFromJson(const std::string& name, const json& value)
+    {
+        const MaterialParameterInfo* info = GetParameterInfo(name);
+        if (!info) {
+            throw std::runtime_error("파라미터를 찾을 수 없음: " + name);
+        }
+
+        switch (info->type) {
+        case MaterialParameterType::Float: {
+            float data = value.get<float>();
+            SetParameterData(name, &data);
+            break;
+        }
+        case MaterialParameterType::Float2: {
+            XMFLOAT2 data;
+            auto arr = value.get<std::vector<float>>();
+            if (arr.size() != 2) throw std::runtime_error("Float2 타입은 2개의 값이 필요함");
+            data.x = arr[0];
+            data.y = arr[1];
+            SetParameterData(name, &data);
+            break;
+        }
+        case MaterialParameterType::Float3: {
+            XMFLOAT3 data;
+            auto arr = value.get<std::vector<float>>();
+            if (arr.size() != 3) throw std::runtime_error("Float3 타입은 3개의 값이 필요함");
+            data.x = arr[0];
+            data.y = arr[1];
+            data.z = arr[2];
+            SetParameterData(name, &data);
+            break;
+        }
+        case MaterialParameterType::Float4: {
+            XMFLOAT4 data;
+            auto arr = value.get<std::vector<float>>();
+            if (arr.size() != 4) throw std::runtime_error("Float4 타입은 4개의 값이 필요함");
+            data.x = arr[0];
+            data.y = arr[1];
+            data.z = arr[2];
+            data.w = arr[3];
+            SetParameterData(name, &data);
+            break;
+        }
+        case MaterialParameterType::Int: {
+            int data = value.get<int>();
+            SetParameterData(name, &data);
+            break;
+        }
+        case MaterialParameterType::Bool: {
+            bool data = value.get<bool>();
+            SetParameterData(name, &data);
+            break;
+        }
+        default:
+            throw std::runtime_error("지원하지 않는 파라미터 타입");
+        }
+    }
+
+    void MaterialResource::LoadPipelineSettings(const json& renderState)
+    {
+        PipelineSettings settings;
+
+        if (renderState.contains("cullMode")) {
+            std::string cullMode = renderState["cullMode"].get<std::string>();
+            if (cullMode == "none") {
+                settings.rasterizer.CullMode = D3D12_CULL_MODE_NONE;
+            }
+            else if (cullMode == "front") {
+                settings.rasterizer.CullMode = D3D12_CULL_MODE_FRONT;
+            }
+            else if (cullMode == "back") {
+                settings.rasterizer.CullMode = D3D12_CULL_MODE_BACK;
+            }
+        }
+
+        if (renderState.contains("fillMode")) {
+            std::string fillMode = renderState["fillMode"].get<std::string>();
+            if (fillMode == "wireframe") {
+                settings.rasterizer.FillMode = D3D12_FILL_MODE_WIREFRAME;
+            }
+            else if (fillMode == "solid") {
+                settings.rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
+            }
+        }
+
+        if (renderState.contains("blend")) {
+            auto& blend = renderState["blend"];
+            if (blend.contains("enable")) {
+                settings.blend.RenderTarget[0].BlendEnable = blend["enable"].get<bool>();
+            }
+            if (blend.contains("srcBlend")) {
+                settings.blend.RenderTarget[0].SrcBlend = ParseBlendFactor(blend["srcBlend"]);
+            }
+            if (blend.contains("destBlend")) {
+                settings.blend.RenderTarget[0].DestBlend = ParseBlendFactor(blend["destBlend"]);
+            }
+        }
+
+        SetPipelineSettings(settings);
+    }
+
+    D3D12_BLEND MaterialResource::ParseBlendFactor(const json& value)
+    {
+        std::string factor = value.get<std::string>();
+        static const std::unordered_map<std::string, D3D12_BLEND> blendMap = {
+            {"zero", D3D12_BLEND_ZERO},
+            {"one", D3D12_BLEND_ONE},
+            {"srcAlpha", D3D12_BLEND_SRC_ALPHA},
+            {"invSrcAlpha", D3D12_BLEND_INV_SRC_ALPHA},
+            {"destAlpha", D3D12_BLEND_DEST_ALPHA},
+            {"invDestAlpha", D3D12_BLEND_INV_DEST_ALPHA}
+        };
+
+        auto it = blendMap.find(factor);
+        if (it == blendMap.end()) {
+            throw std::runtime_error("알 수 없는 블렌드 팩터: " + factor);
+        }
+        return it->second;
     }
     
 }
