@@ -180,6 +180,15 @@
     <ClInclude Include="ShaderResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
+    <ClInclude Include="MaterialResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialParameter.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialInstance.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -258,6 +267,12 @@
       <Filter>Resource</Filter>
     </ClCompile>
     <ClCompile Include="ShaderResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialInstance.cpp">
       <Filter>Resource</Filter>
     </ClCompile>
   </ItemGroup>

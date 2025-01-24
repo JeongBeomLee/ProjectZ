@@ -24,6 +24,7 @@ public:
 
 	ID3D12Device10* GetDevice() const { return m_device.Get(); }
 	ID3D12CommandQueue* GetCommandQueue() const { return m_commandQueue.Get(); }
+	ID3D12RootSignature* GetRootSignature() const { return m_rootSignature.Get(); }
 	PhysicsEngine* GetPhysicsEngine() const { return m_physicsEngine.get(); }
 
 	Camera* GetMainCamera() const { return m_mainCamera; }

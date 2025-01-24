@@ -142,6 +142,30 @@ namespace Resource
         return shader;
     }
 
+    std::shared_ptr<MaterialResource> ResourceManager::LoadMaterial(const std::string& path)
+    {
+        // 캐시된 머티리얼이 있는지 확인
+        auto it = m_materialCache.find(path);
+        if (it != m_materialCache.end()) {
+            if (auto material = it->second.lock()) {
+                Logger::Instance().Debug("머티리얼 재사용: {}", path);
+                return material;
+            }
+            m_materialCache.erase(it);
+        }
+
+        // 새 머티리얼 생성 및 로드
+        auto material = std::make_shared<MaterialResource>();
+        if (!material->Load(path)) {
+            Logger::Instance().Error("머티리얼 로드 실패: {}", path);
+            return nullptr;
+        }
+
+        m_materialCache[path] = material;
+        Logger::Instance().Info("새 머티리얼 로드: {}", path);
+        return material;
+    }
+
     void ResourceManager::PreloadResources(const std::string& manifestPath)
     {
         // TODO: Phase 5에서 구현 예정
