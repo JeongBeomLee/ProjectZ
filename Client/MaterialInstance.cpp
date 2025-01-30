@@ -5,97 +5,142 @@
 
 namespace Resource
 {
-    MaterialInstance::MaterialInstance(std::shared_ptr<MaterialResource> baseMaterial)
-        : m_baseMaterial(baseMaterial)
-    {
-        if (m_baseMaterial) {
-            CreateConstantBuffer();
-            Logger::Instance().Debug("머티리얼 인스턴스 생성됨: {}", m_baseMaterial->GetPath());
-        }
-    }
+	MaterialInstance::MaterialInstance(std::shared_ptr<MaterialResource> baseMaterial)
+		: m_baseMaterial(baseMaterial)
+	{
+		if (m_baseMaterial) {
+			// 기본 머티리얼의 상수 값을 복사하여 초기화
+			m_materialConstants = m_baseMaterial->GetMaterialConstants();
 
-    MaterialInstance::~MaterialInstance()
-    {
-        if (m_mappedData) {
-            m_parameterBuffer->Unmap(0, nullptr);
-            m_mappedData = nullptr;
-        }
-    }
+			if (CreateConstantBuffer() && CreateConstantBufferView()) {
+				Logger::Instance().Debug("머티리얼 인스턴스 생성됨");
+			}
+			else {
+				Logger::Instance().Error("머티리얼 인스턴스 생성 실패");
+			}
+		}
+	}
 
-    bool MaterialInstance::SetParameterData(const std::string& name, const void* data)
-    {
-        if (!m_baseMaterial || !m_mappedData) {
-            return false;
-        }
+	MaterialInstance::~MaterialInstance()
+	{
+		if (m_mappedConstantBufferData) {
+			m_constantBuffer->Unmap(0, nullptr);
+			m_mappedConstantBufferData = nullptr;
+		}
+	}
 
-        const MaterialParameterInfo* paramInfo = m_baseMaterial->GetParameterInfo(name);
-        if (!paramInfo) {
-            Logger::Instance().Error("파라미터를 찾을 수 없음: {}", name);
-            return false;
-        }
+	void MaterialInstance::SetBaseColor(const XMFLOAT4& color)
+	{
+		m_materialConstants.baseColor = color;
+		m_constantsDirty = true;
+	}
 
-        memcpy(m_mappedData + paramInfo->offset, data, paramInfo->size);
-        m_parametersDirty = true;
-        return true;
-    }
+	void MaterialInstance::SetRoughness(float roughness)
+	{
+		m_materialConstants.materialParams.y = roughness;
+		m_constantsDirty = true;
+	}
 
-    void MaterialInstance::UpdateParameters()
-    {
-        if (!m_parametersDirty) {
-            return;
-        }
+	void MaterialInstance::SetMetallic(float metallic)
+	{
+		m_materialConstants.materialParams.x = metallic;
+		m_constantsDirty = true;
+	}
 
-        // GPU가 현재 프레임의 상수 버퍼를 사용하지 않는다고 가정
-        // 더 정교한 동기화가 필요할 수 있음
-        m_parametersDirty = false;
-    }
+	void MaterialInstance::SetAO(float ao)
+	{
+		m_materialConstants.materialParams.z = ao;
+		m_constantsDirty = true;
+	}
 
-    ID3D12PipelineState* MaterialInstance::GetPipelineState() const
-    {
-        return m_baseMaterial ? m_baseMaterial->GetPipelineState() : nullptr;
-    }
+	void MaterialInstance::SetEmissive(const XMFLOAT4& emissive)
+	{
+		m_materialConstants.emissiveColor = emissive;
+		m_constantsDirty = true;
+	}
 
-    bool MaterialInstance::CreateConstantBuffer()
-    {
-        if (!m_baseMaterial) {
-            Logger::Instance().Error("베이스 머티리얼이 설정되지 않음");
-            return false;
-        }
+	void MaterialInstance::UpdateMaterialConstants()
+	{
+		if (m_constantsDirty && m_mappedConstantBufferData) {
+			memcpy(m_mappedConstantBufferData, &m_materialConstants, sizeof(MaterialConstants));
+			m_constantsDirty = false;
+		}
+	}
 
-        // 베이스 머티리얼로부터 전체 파라미터 크기를 계산
-        const size_t totalParamSize = (m_baseMaterial->GetTotalParameterSize() + 255) & ~255;
-        if (totalParamSize == 0) {
-            Logger::Instance().Debug("파라미터가 없는 머티리얼 인스턴스");
-            return true;
-        }
+	ID3D12PipelineState* MaterialInstance::GetPipelineState() const
+	{
+		return m_baseMaterial ? m_baseMaterial->GetPipelineState() : nullptr;
+	}
 
-        auto device = Engine::Instance().GetDevice();
-        if (!device) return false;
+	const MaterialResource::TextureSlot& MaterialInstance::GetTextureSlot(UINT index) const
+	{
+		return m_baseMaterial->GetTextureSlot(index);
+	}
 
-        D3D12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-        D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(totalParamSize);
+	bool MaterialInstance::CreateConstantBuffer()
+	{
+		const UINT alignedSize = (sizeof(MaterialConstants) + 255) & ~255;
 
-        HRESULT hr = device->CreateCommittedResource(
-            &heapProps,
-            D3D12_HEAP_FLAG_NONE,
-            &bufferDesc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&m_parameterBuffer));
+		auto device = Engine::Instance().GetDevice();
+		if (!device) return false;
 
-        if (FAILED(hr)) {
-            Logger::Instance().Error("인스턴스 상수 버퍼 생성 실패");
-            return false;
-        }
+		D3D12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedSize);
 
-        CD3DX12_RANGE readRange(0, 0);
-        hr = m_parameterBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_mappedData));
-        if (FAILED(hr)) {
-            Logger::Instance().Error("인스턴스 상수 버퍼 매핑 실패");
-            return false;
-        }
+		HRESULT hr = device->CreateCommittedResource(
+			&heapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&bufferDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_constantBuffer));
 
-        Logger::Instance().Debug("인스턴스 상수 버퍼 생성됨");
-        return true;
-    }
+		if (FAILED(hr)) {
+			Logger::Instance().Error("인스턴스 상수 버퍼 생성 실패");
+			return false;
+		}
+
+		// 상수 버퍼 매핑
+		CD3DX12_RANGE readRange(0, 0);
+		hr = m_constantBuffer->Map(0, &readRange,
+			reinterpret_cast<void**>(&m_mappedConstantBufferData));
+
+		if (FAILED(hr)) {
+			Logger::Instance().Error("인스턴스 상수 버퍼 매핑 실패");
+			return false;
+		}
+
+		// 초기 데이터 복사
+		memcpy(m_mappedConstantBufferData, &m_materialConstants, sizeof(MaterialConstants));
+
+		return true;
+	}
+
+	bool MaterialInstance::CreateConstantBufferView()
+	{
+		auto device = Engine::Instance().GetDevice();
+		auto descHeap = Engine::Instance().GetDescriptorHeap();
+		UINT descriptorIndex = Engine::Instance().GetMaterialCbvDescriptorIndex();
+		UINT descriptorSize = Engine::Instance().GetDescriptorIncrementSize();
+
+		if (!device || !descHeap) return false;
+
+		CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle(
+			descHeap->GetCPUDescriptorHandleForHeapStart());
+		cbvHandle.Offset(descriptorIndex, descriptorSize);
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+		cbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
+		cbvDesc.SizeInBytes = (sizeof(MaterialConstants) + 255) & ~255;
+
+		device->CreateConstantBufferView(&cbvDesc, cbvHandle);
+
+		// GPU 디스크립터 핸들 저장
+		m_cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+			descHeap->GetGPUDescriptorHandleForHeapStart(),
+			descriptorIndex,
+			descriptorSize);
+
+		return true;
+	}
 }

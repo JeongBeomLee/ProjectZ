@@ -26,18 +26,32 @@ void MeshRenderer::Initialize()
 void MeshRenderer::Update(float deltaTime) 
 {
     if (!m_isInitialized || !IsEnabled()) return;
+    // 변환 행렬 업데이트
     UpdateConstantBuffer();
+    // 머티리얼 인스턴스 업데이트
+    if (m_materialInstance) {
+        m_materialInstance->UpdateMaterialConstants();
+    }
 }
 
 void MeshRenderer::Destroy() 
 {
+    if (m_resources) {
+        if (m_resources->constantBufferMappedData) {
+            m_resources->constantBuffer->Unmap(0, nullptr);
+            m_resources->constantBufferMappedData = nullptr;
+        }
+    }
+
     m_resources.reset();
+    m_materialInstance.reset();
     m_isInitialized = false;
 }
 
-bool MeshRenderer::CreateResources(const std::vector<Vertex>& vertices,
+bool MeshRenderer::CreateResources(
+    const std::vector<Vertex>& vertices,
     const std::vector<UINT>& indices,
-    const std::string& texturePath) 
+    std::shared_ptr<Resource::MaterialInstance> material)
 {
     auto device = Engine::Instance().GetDevice();
     if (!device) return false;
@@ -48,32 +62,46 @@ bool MeshRenderer::CreateResources(const std::vector<Vertex>& vertices,
     if (!CreateConstantBuffer()) return false;
 	if (!CreateConstantBufferView(device)) return false;
 
-    m_textureResource = 
-        Resource::ResourceManager::Instance().LoadTexture(texturePath);
-    if (!m_textureResource) {
-        Logger::Instance().Error("텍스처 리소스 로드 실패: {}", texturePath);
-        return false;
-    }
-
+    m_materialInstance = material;
     UpdateBoundingSphere(vertices);
-
     m_isInitialized = true;
     return true;
 }
 
 void MeshRenderer::Render(ID3D12GraphicsCommandList* commandList) 
 {
-    if (!m_isInitialized || !IsEnabled()) return;
+    if (!m_isInitialized || !IsEnabled() || !m_materialInstance) return;
 
-    // 상수 버퍼 뷰 설정
+    // PSO 설정
+    ID3D12PipelineState* pso = m_materialInstance->GetPipelineState();
+    if (!pso) return;
+    commandList->SetPipelineState(pso);
+
+    // 상수 버퍼 바인딩
+    // Object Constants (b0)
     commandList->SetGraphicsRootDescriptorTable(0, m_resources->cbvHandle);
 
-    // 텍스처 SRV 설정
-    commandList->SetGraphicsRootDescriptorTable(2, m_textureResource->GetGPUSRVHandle());
+    // Material Constants (b2)
+    commandList->SetGraphicsRootDescriptorTable(2, 
+        m_materialInstance->GetMaterialCBVHandle());
 
-    // 정점 버퍼 설정
+    // 텍스처 바인딩
+    // Base Color (t0)
+    commandList->SetGraphicsRootDescriptorTable(3,
+        m_materialInstance->GetTextureSlot(0).handle);
+
+    // Normal Map (t1)
+    commandList->SetGraphicsRootDescriptorTable(4,
+        m_materialInstance->GetTextureSlot(1).handle);
+
+    // Metallic-Roughness Map (t2)
+    commandList->SetGraphicsRootDescriptorTable(5,
+        m_materialInstance->GetTextureSlot(2).handle);
+
+    // 버텍스/인덱스 버퍼 설정
     commandList->IASetVertexBuffers(0, 1, &m_resources->vertexBufferView);
     commandList->IASetIndexBuffer(&m_resources->indexBufferView);
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     // 드로우 콜
     commandList->DrawIndexedInstanced(m_resources->indexCount, 1, 0, 0, 0);

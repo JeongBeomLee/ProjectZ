@@ -183,9 +183,6 @@
     <ClInclude Include="MaterialResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
-    <ClInclude Include="MaterialParameter.h">
-      <Filter>Resource</Filter>
-    </ClInclude>
     <ClInclude Include="MaterialInstance.h">
       <Filter>Resource</Filter>
     </ClInclude>

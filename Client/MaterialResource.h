@@ -1,79 +1,73 @@
 #pragma once
 #include "IResource.h"
-#include "TextureResource.h"
 #include "ShaderResource.h"
-#include "MaterialParameter.h"
+#include "TextureResource.h"
 
 namespace Resource
 {
-	class MaterialResource : public IResource {
-	public:
-		struct PipelineSettings {
-			D3D12_RASTERIZER_DESC rasterizer = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-			D3D12_BLEND_DESC blend = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-			D3D12_DEPTH_STENCIL_DESC depthStencil = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		};
+    class MaterialResource : public IResource {
+    public:
+        struct TextureSlot {
+            std::shared_ptr<TextureResource> texture;
+            D3D12_GPU_DESCRIPTOR_HANDLE handle;
+        };
 
-		MaterialResource() = default;
-		~MaterialResource() override;
+        MaterialResource() = default;
+        ~MaterialResource() override;
 
-		bool Load(const std::string& path) override;
-		void Unload() override;
+        bool Load(const std::string& path) override;
+        void Unload() override;
 
-		void SetShaders(
-			std::shared_ptr<ShaderResource> vertex,
-			std::shared_ptr<ShaderResource> pixel);
+        // 리소스 설정
+        void SetShaders(std::shared_ptr<ShaderResource> vertex,
+            std::shared_ptr<ShaderResource> pixel);
+        void SetBaseColorTexture(std::shared_ptr<TextureResource> texture);
+        void SetNormalTexture(std::shared_ptr<TextureResource> texture);
+        void SetMetallicRoughnessTexture(std::shared_ptr<TextureResource> texture);
 
-		void SetTexture(
-			const std::string& paramName,
-			std::shared_ptr<TextureResource> texture);
+        // 파이프라인 상태 관리
+        void SetPipelineSettings(const D3D12_RASTERIZER_DESC& rasterizer,
+            const D3D12_BLEND_DESC& blend,
+            const D3D12_DEPTH_STENCIL_DESC& depthStencil);
+        ID3D12PipelineState* GetPipelineState();
 
-		// 접근자 함수들
-		ShaderResource* GetVertexShader() const { return m_vertexShader.get(); }
-		ShaderResource* GetPixelShader() const { return m_pixelShader.get(); }
-		TextureResource* GetTexture(const std::string& paramName) const;
+        // Material Constants 관리
+        MaterialConstants& GetMaterialConstants() { return m_materialConstants; }
+        void SetBaseColor(const XMFLOAT4& color);
+		void SetRoughness(float roughness);
+		void SetMetallic(float metallic);
+		void SetAO(float ao);
+		void SetEmissive(const XMFLOAT4& emissive);
+        void UpdateMaterialConstants();
 
-		// 파라미터 정의 및 접근
-		void DefineParameter(const std::string& name, MaterialParameterType type);
-		bool SetParameterData(const std::string& name, const void* data);
-		const MaterialParameterInfo* GetParameterInfo(const std::string& name) const;
-		size_t GetTotalParameterSize() const { return m_totalParamSize; }
+        // GPU Descriptor Handles
+        const D3D12_GPU_DESCRIPTOR_HANDLE& GetMaterialCBVHandle() const { return m_cbvHandle; }
+        const TextureSlot& GetTextureSlot(UINT index) const { return m_textureSlots[index]; }
 
-		// 상수 버퍼 관리
-		bool CreateConstantBuffer();
-		void UpdateConstantBuffer();
-		ID3D12Resource* GetConstantBuffer() const { return m_constantBuffer.Get(); }
+    private:
+        bool CreateConstantBuffer();
+        bool CreateConstantBufferView();
+        bool CreatePipelineState();
 
-		// PSO 관리
-		void SetPipelineSettings(const PipelineSettings& settings);
-		ID3D12PipelineState* GetPipelineState();
+    private:
+        std::shared_ptr<ShaderResource> m_vertexShader;
+        std::shared_ptr<ShaderResource> m_pixelShader;
 
-	private:
-		// PSO 관련 함수들
-		bool CreatePipelineState();
-		size_t CalculatePipelineStateHash();
+		// [slot 1] Base Color
+		// [slot 2] Normal
+		// [slot 3] Metallic-Roughness
+        std::array<TextureSlot, 3> m_textureSlots;
 
-		// JSON 파싱 및 파라미터 설정 헬퍼 함수들
-		MaterialParameterType ParseParameterType(const std::string& typeStr);
-		void SetParameterFromJson(const std::string& name, const json& value);
-		void LoadPipelineSettings(const json& renderState);
-		D3D12_BLEND ParseBlendFactor(const json& value);
+        ComPtr<ID3D12Resource> m_constantBuffer;
+        D3D12_GPU_DESCRIPTOR_HANDLE m_cbvHandle;
+        UINT8* m_mappedConstantBufferData = nullptr;
 
-	private:
-		std::shared_ptr<ShaderResource> m_vertexShader;
-		std::shared_ptr<ShaderResource> m_pixelShader;
-		std::unordered_map<std::string, std::shared_ptr<TextureResource>> m_textures;
+        MaterialConstants m_materialConstants;
+        bool m_constantsDirty = false;
 
-		// 파라미터 관리
-		std::unordered_map<std::string, MaterialParameterInfo> m_parameters;
-		size_t m_totalParamSize = 0;
-		ComPtr<ID3D12Resource> m_constantBuffer;
-		UINT8* m_mappedData = nullptr;
-		bool m_parametersDirty = false;
-
-		// PSO
-		PipelineSettings m_pipelineSettings;
-		ComPtr<ID3D12PipelineState> m_pipelineState;
-	};
+        D3D12_RASTERIZER_DESC m_rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        D3D12_BLEND_DESC m_blendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+        D3D12_DEPTH_STENCIL_DESC m_depthStencilDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+        ComPtr<ID3D12PipelineState> m_pipelineState;
+    };
 }

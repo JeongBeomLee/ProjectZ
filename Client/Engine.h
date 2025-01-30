@@ -33,7 +33,8 @@ public:
 
 	ID3D12DescriptorHeap* GetDescriptorHeap() const { return m_descHeap.Get(); }
 	UINT GetCbvDescriptorIndex() { return m_currentCbvIndex++; }
-	UINT GetSrvDescriptorIndex() { return MAX_OBJECTS + 1 + m_currentSrvIndex++; }
+	UINT GetMaterialCbvDescriptorIndex() { return m_currentMaterialCbvIndex++; }
+	UINT GetSrvDescriptorIndex() { return  m_currentSrvIndex++; }
 	UINT GetDescriptorIncrementSize() const { return m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV); }
 
 private:
@@ -61,19 +62,15 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 
 	ComPtr<ID3D12RootSignature> m_rootSignature;
-	ComPtr<ID3D12PipelineState> m_pipelineState;
 
 	UINT64 m_fenceValues[FRAME_BUFFER_COUNT];
 	HANDLE m_fenceEvent;
 	UINT m_frameIndex;
 
-	// 셰이더 관련 멤버
-	std::shared_ptr<Resource::ShaderResource> m_vertexShader;
-	std::shared_ptr<Resource::ShaderResource> m_pixelShader;
-
 	// 디스크립터 힙 관리
 	static const UINT MAX_OBJECTS = 100;  // 최대 오브젝트 수
 	UINT m_currentCbvIndex = 0;  // CBV 할당을 위한 인덱스
+	UINT m_currentMaterialCbvIndex = 0;
 	UINT m_currentSrvIndex = 0;  // SRV 할당을 위한 인덱스
 
 	// 라이팅 관련
@@ -105,8 +102,6 @@ private:
 	bool CreateFence();
 	bool CreateDepthStencilBuffer();
 	bool CreateRootSignature();
-	bool CreatePipelineState();
-	bool CompileShaders();
 	bool CreateLightConstantBuffer();
 	bool CreateDescHeap();
 

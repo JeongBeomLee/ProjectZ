@@ -30,10 +30,6 @@
 #include "tbb/concurrent_queue.h"
 #include "tbb/concurrent_unordered_map.h"
 
-// JSON 관련 헤더
-#include "nlohmann/json.hpp"
-using json = nlohmann::json;
-
 // STL 헤더
 #include <iostream>
 #include <memory>
@@ -184,6 +180,17 @@ struct LightConstants {
     XMFLOAT4 lightColor;      // w는 강도로 사용
     XMFLOAT4 ambientColor;    // w는 강도로 사용
     XMFLOAT4 eyePosition;     // w는 사용하지 않음
+};
+
+// 머티리얼 상수 버퍼 구조체
+struct MaterialConstants {
+    XMFLOAT4 baseColor;        // 기본 색상 및 알파
+    XMFLOAT4 materialParams;   // x: metallic, y: roughness, z: ambient occlusion, w: 예약됨
+    XMFLOAT4 emissiveColor;    // 발광 색상 및 강도(w)
+    UINT useNormalMap;         // 노말맵 사용 여부
+    UINT useMetallicMap;       // 메탈릭맵 사용 여부
+    UINT useRoughnessMap;     // 러프니스맵 사용 여부
+    UINT useAOMap;            // AO맵 사용 여부
 };
 
 // 물리 객체의 타입을 구분하기 위한 열거형 클래스

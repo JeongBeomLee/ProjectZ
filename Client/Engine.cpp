@@ -13,7 +13,7 @@
 #include "MeshRenderer.h"
 #include "GameObject.h"
 #include "Camera.h"
-#include "MaterialParameter.h"
+#include "MaterialResource.h"
 #include "MaterialInstance.h"
 #include "Logger.h"
 #include "Utils.h"
@@ -116,10 +116,6 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		Logger::Instance().Fatal("루트 시그니처 생성 실패");
 		return false;
 	}
-	if (!CreatePipelineState()) {
-		Logger::Instance().Fatal("파이프라인 상태 생성 실패");
-		return false;
-	}
 
 	// 물리 엔진 초기화
 	m_physicsEngine = std::make_unique<PhysicsEngine>();
@@ -195,7 +191,7 @@ void Engine::BeginRender()
 {
 	// 커맨드 리스트 초기화
 	ThrowIfFailed(m_commandAllocator->Reset());
-	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
+	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
 	// 뷰포트와 시저렉트 설정
 	const CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
@@ -505,149 +501,101 @@ bool Engine::CreateDepthStencilBuffer()
 
 bool Engine::CreateRootSignature()
 {
-	// 정적 샘플러 생성
-	D3D12_STATIC_SAMPLER_DESC samplerDesc = {};
-	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	samplerDesc.MipLODBias = 0;
-	samplerDesc.MaxAnisotropy = 0;
-	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-	samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	samplerDesc.MinLOD = 0.0f;
-	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
-	samplerDesc.ShaderRegister = 0; // s0 레지스터
-	samplerDesc.RegisterSpace = 0;
-	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	// 디스크립터 레인지 설정
+	D3D12_DESCRIPTOR_RANGE ranges[6] = {};
 
-	// 디스크립터 테이블 설정
-	D3D12_DESCRIPTOR_RANGE ranges[3] = {};
-
-	// 변환 행렬용 range
+	// 오브젝트 상수 버퍼 (변환 행렬)
 	ranges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	ranges[0].NumDescriptors = 1;
-	ranges[0].BaseShaderRegister = 0;	// b0 레지스터
+	ranges[0].BaseShaderRegister = 0;    // b0
 	ranges[0].RegisterSpace = 0;
 	ranges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	// 라이팅용 range
+	// 전역 라이트 상수 버퍼
 	ranges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	ranges[1].NumDescriptors = 1;
-	ranges[1].BaseShaderRegister = 1;	// b1 레지스터
+	ranges[1].BaseShaderRegister = 1;    // b1
 	ranges[1].RegisterSpace = 0;
 	ranges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	// 텍스처용 range
-	ranges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	// 머티리얼 상수 버퍼
+	ranges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	ranges[2].NumDescriptors = 1;
-	ranges[2].BaseShaderRegister = 0;	// t0 레지스터
+	ranges[2].BaseShaderRegister = 2;    // b2
 	ranges[2].RegisterSpace = 0;
 	ranges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+	// 베이스 컬러/알베도 텍스처
+	ranges[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	ranges[3].NumDescriptors = 1;
+	ranges[3].BaseShaderRegister = 0;    // t0
+	ranges[3].RegisterSpace = 0;
+	ranges[3].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	// 노말 텍스처
+	ranges[4].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	ranges[4].NumDescriptors = 1;
+	ranges[4].BaseShaderRegister = 1;    // t1
+	ranges[4].RegisterSpace = 0;
+	ranges[4].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	// 메탈릭-러프니스 텍스처
+	ranges[5].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	ranges[5].NumDescriptors = 1;
+	ranges[5].BaseShaderRegister = 2;    // t2
+	ranges[5].RegisterSpace = 0;
+	ranges[5].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
 	// 루트 파라미터 설정
-	D3D12_ROOT_PARAMETER rootParameters[3] = {};
+	D3D12_ROOT_PARAMETER rootParameters[6] = {};
+	for (int i = 0; i < 6; ++i) {
+		rootParameters[i].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParameters[i].DescriptorTable.NumDescriptorRanges = 1;
+		rootParameters[i].DescriptorTable.pDescriptorRanges = &ranges[i];
+		rootParameters[i].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	}
 
-	// 변환 행렬용 파라미터
-	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
-	rootParameters[0].DescriptorTable.pDescriptorRanges = &ranges[0];
-	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-
-	// 라이팅용 파라미터
-	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
-	rootParameters[1].DescriptorTable.pDescriptorRanges = &ranges[1];
-	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-	// 텍스처용 파라미터
-	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
-	rootParameters[2].DescriptorTable.pDescriptorRanges = &ranges[2];
-	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	// 정적 샘플러 설정
+	D3D12_STATIC_SAMPLER_DESC sampler = {};
+	sampler.Filter = D3D12_FILTER_ANISOTROPIC;
+	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler.MipLODBias = 0;
+	sampler.MaxAnisotropy = 16;
+	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	sampler.MinLOD = 0.0f;
+	sampler.MaxLOD = D3D12_FLOAT32_MAX;
+	sampler.ShaderRegister = 0;  // s0
+	sampler.RegisterSpace = 0;
+	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	// 루트 시그니처 생성
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
 	rootSignatureDesc.NumParameters = _countof(rootParameters);
 	rootSignatureDesc.pParameters = rootParameters;
 	rootSignatureDesc.NumStaticSamplers = 1;
-	rootSignatureDesc.pStaticSamplers = &samplerDesc;
+	rootSignatureDesc.pStaticSamplers = &sampler;
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	ComPtr<ID3DBlob> signature;
 	ComPtr<ID3DBlob> error;
-	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc,
-		D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
-	ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(),
-		signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
-
-	return true;
-}
-
-bool Engine::CreatePipelineState()
-{
-	// 셰이더 컴파일 및 로드
-	CompileShaders();
-
-	// 정점 입력 레이아웃 정의
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
-		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
-		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 28,
-		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 40,
-		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 52,
-		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
-	// 파이프라인 상태 생성
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
-	psoDesc.pRootSignature = m_rootSignature.Get();
-	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShader->GetShaderBlob());
-	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShader->GetShaderBlob());
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
-	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState.DepthEnable = TRUE;
-	psoDesc.DepthStencilState.StencilEnable = FALSE;
-	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	psoDesc.SampleDesc.Count = 1;
-
-	HRESULT hr = m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
+	HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc,
+		D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
 
 	if (FAILED(hr)) {
+		if (error) {
+			Logger::Instance().Error("루트 시그니처 직렬화 실패: {}",
+				static_cast<const char*>(error->GetBufferPointer()));
+		}
 		return false;
 	}
 
-	return true;
-}
+	hr = m_device->CreateRootSignature(0, signature->GetBufferPointer(),
+		signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature));
 
-bool Engine::CompileShaders()
-{
-	auto& resourceManager = Resource::ResourceManager::Instance();
-
-	m_vertexShader = resourceManager.LoadShader(
-		"shaders.hlsl", Resource::ShaderType::Vertex);
-	if (!m_vertexShader) {
-		Logger::Instance().Error("버텍스 셰이더 로드 실패");
-		return false;
-	}
-
-	m_pixelShader = resourceManager.LoadShader(
-		"shaders.hlsl", Resource::ShaderType::Pixel);
-	if (!m_pixelShader) {
-		Logger::Instance().Error("픽셀 셰이더 로드 실패");
+	if (FAILED(hr)) {
+		Logger::Instance().Error("루트 시그니처 생성 실패");
 		return false;
 	}
 
@@ -694,15 +642,27 @@ bool Engine::CreateLightConstantBuffer()
 
 bool Engine::CreateDescHeap()
 {
-	// MAX_OBJECTS(CBVs) + 1(Light CBV) + MAX_OBJECTS(SRVs)
+	// 디스크립터 힙 설계:
+   // - Object CBV (MAX_OBJECTS)
+   // - Light CBV (1)
+   // - Material CBV (MAX_OBJECTS)
+   // - Albedo/Base Color SRV (MAX_OBJECTS)
+   // - Normal SRV (MAX_OBJECTS)
+   // - Metallic-Roughness SRV (MAX_OBJECTS)
+	const UINT totalDescriptors = MAX_OBJECTS * 6 + 1;  // CBVs + SRVs + Light CBV
+
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.NumDescriptors = MAX_OBJECTS * 2 + 1;
+	heapDesc.NumDescriptors = totalDescriptors;
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-	ThrowIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_descHeap)));
+	HRESULT hr = m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_descHeap));
+	if (FAILED(hr)) {
+		Logger::Instance().Error("디스크립터 힙 생성 실패");
+		return false;
+	}
 
-	// 라이트 CBV 생성 (MAX_OBJECTS 위치에)
+	// 글로벌 라이트 CBV 생성 (MAX_OBJECTS 위치에)
 	CD3DX12_CPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
 	lightCbvHandle.Offset(MAX_OBJECTS, GetDescriptorIncrementSize());
 
@@ -712,10 +672,11 @@ bool Engine::CreateDescHeap()
 	m_device->CreateConstantBufferView(&lightCbvDesc, lightCbvHandle);
 
 	// 인덱스 초기화
-	m_currentCbvIndex = 0;
-	m_currentSrvIndex = 0;
+	m_currentCbvIndex = 0;						  // Object CBVs (0 ~ MAX_OBJECTS-1)
+	m_currentMaterialCbvIndex = MAX_OBJECTS + 1;  // Material CBVs
+	m_currentSrvIndex = MAX_OBJECTS * 3 + 1;      // SRVs
 
-	Logger::Instance().Info("디스크립터 힙 생성 완료. 총 디스크립터 수: {}", MAX_OBJECTS * 2 + 1);
+	Logger::Instance().Info("디스크립터 힙 생성 완료. 총 디스크립터 수: {}", totalDescriptors);
 	return true;
 }
 
@@ -998,7 +959,7 @@ void Engine::CreateCube(const PxVec3& position, const PxVec3& dimensions)
 	std::vector<UINT> indices;
 	CreateCubeMeshData(vertices, indices);  // 이 함수는 기존의 큐브 정점/인덱스 데이터를 생성
 
-	renderer->CreateResources(vertices, indices, "Texture/checker.dds");
+	//renderer->CreateResources(vertices, indices, "Texture/checker.dds");
 
 	Logger::Instance().Info("큐브 게임 오브젝트 생성됨. 위치: ({}, {}, {})",
 		position.x, position.y, position.z);
@@ -1022,7 +983,7 @@ void Engine::CreateSphere(const PxVec3& position, float radius)
 	std::vector<Vertex> vertices;
 	std::vector<UINT> indices;
 	CreateSphereMeshData(vertices, indices, radius);
-	renderer->CreateResources(vertices, indices, "Texture/pinkchecker.dds");
+	//renderer->CreateResources(vertices, indices, "Texture/pinkchecker.dds");
 
 	Logger::Instance().Info("구체 생성됨. 위치: ({}, {}, {}), 반지름: {}",
 		position.x, position.y, position.z, radius);
@@ -1047,7 +1008,7 @@ void Engine::CreateCapsule(const PxVec3& position, float radius, float height)
 	std::vector<Vertex> vertices;
 	std::vector<UINT> indices;
 	CreateCapsuleMeshData(vertices, indices, radius, height);
-	renderer->CreateResources(vertices, indices, "Texture/yellowchecker.dds");
+	//renderer->CreateResources(vertices, indices, "Texture/yellowchecker.dds");
 
 	Logger::Instance().Info("캡슐 생성됨. 위치: ({}, {}, {}), 반지름: {}, 높이: {}",
 		position.x, position.y, position.z, radius, height);
@@ -1055,6 +1016,7 @@ void Engine::CreateCapsule(const PxVec3& position, float radius, float height)
 
 void Engine::CreateDemonstrationObjects(Scene* scene, const PxVec3& position)
 {
+	Resource::ResourceManager& resourceManager = Resource::ResourceManager::Instance();
 	auto cube = scene->CreateGameObject("Cube");
 	cube->GetTransform()->SetPosition(XMFLOAT3(position.x, position.y, position.z));
 
@@ -1065,49 +1027,37 @@ void Engine::CreateDemonstrationObjects(Scene* scene, const PxVec3& position)
 	cubePhysics->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Ground);
 	cubePhysics->CreateBody(PhysicsObjectType::DYNAMIC, PhysicsShapeType::Box, cubeParams);
 
+	auto vertexShader = resourceManager.LoadShader("shaders.hlsl", Resource::ShaderType::Vertex);
+	auto pixelShader = resourceManager.LoadShader("shaders.hlsl", Resource::ShaderType::Pixel);
+
 	auto cubeRenderer = cube->AddComponent<MeshRenderer>();
 	std::vector<Vertex> cubeVertices;
 	std::vector<UINT> cubeIndices;
 	CreateCubeMeshData(cubeVertices, cubeIndices);
-	cubeRenderer->CreateResources(cubeVertices, cubeIndices, "Texture/checker.dds");
+
+	auto materialResource = resourceManager.LoadMaterial("chekermaterial");
+
+	materialResource->SetShaders(vertexShader, pixelShader);
+
+	auto baseColorTex = resourceManager.LoadTexture("Texture/checker.dds");
+	auto normalTex = resourceManager.LoadTexture("Texture/checker_normal.dds");
+	auto metallicRoughnessTex = resourceManager.LoadTexture("Texture/checker_metallic-roughness.dds");
+	
+	materialResource->SetBaseColorTexture(baseColorTex);
+	materialResource->SetNormalTexture(normalTex);
+	materialResource->SetMetallicRoughnessTexture(metallicRoughnessTex);
+
+	materialResource->SetBaseColor(XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f));
+	materialResource->SetMetallic(0.1f);
+	materialResource->SetRoughness(0.1f);
+
+	auto materialInstance = std::make_shared<Resource::MaterialInstance>(materialResource);
+	cubeRenderer->CreateResources(cubeVertices, cubeIndices, materialInstance);
 }
 
 void Engine::CreateDefaultScene()
 {
 	auto& resourceManager = Resource::ResourceManager::Instance();
-
-	// JSON 머티리얼 로드 테스트
-	auto material = resourceManager.LoadMaterial("standard.json");
-	if (material) {
-		// 머티리얼로부터 새로운 인스턴스 생성
-		auto instance1 = std::make_shared<Resource::MaterialInstance>(material);
-		auto instance2 = std::make_shared<Resource::MaterialInstance>(material);
-
-		if (instance1 && instance2) {
-			// 첫 번째 인스턴스 - 빨간색 금속성 재질
-			XMFLOAT4 redColor = { 1.0f, 0.0f, 0.0f, 1.0f };
-			float metallic1 = 1.0f;
-			float roughness1 = 0.1f;
-
-			instance1->SetParameterData("baseColor", &redColor);
-			instance1->SetParameterData("metallic", &metallic1);
-			instance1->SetParameterData("roughness", &roughness1);
-
-			// 두 번째 인스턴스 - 파란색 비금속성 재질
-			XMFLOAT4 blueColor = { 0.0f, 0.0f, 1.0f, 0.8f };
-			float metallic2 = 0.0f;
-			float roughness2 = 0.9f;
-
-			instance2->SetParameterData("baseColor", &blueColor);
-			instance2->SetParameterData("metallic", &metallic2);
-			instance2->SetParameterData("roughness", &roughness2);
-
-			Logger::Instance().Info("JSON 머티리얼 및 인스턴스 테스트 성공");
-		}
-	}
-	else {
-		Logger::Instance().Error("JSON 머티리얼 로드 실패");
-	}
 
 	auto& sceneManager = SceneManager::Instance();
 	auto defaultScene = sceneManager.CreateScene("Default Scene");
@@ -1139,11 +1089,11 @@ void Engine::CreateDefaultScene()
 	groundPhysics->SetCollisionMask(CollisionGroup::Default);
 	groundPhysics->CreateBody(PhysicsObjectType::STATIC, PhysicsShapeType::Box, groundParams);
 
-	auto groundRenderer = ground->AddComponent<MeshRenderer>();
+	/*auto groundRenderer = ground->AddComponent<MeshRenderer>();
 	std::vector<Vertex> groundVertices;
 	std::vector<UINT> groundIndices;
 	CreateCubeMeshData(groundVertices, groundIndices);
-	groundRenderer->CreateResources(groundVertices, groundIndices, "Texture/mintchecker.dds");
+	groundRenderer->CreateResources(groundVertices, groundIndices, "Texture/mintchecker.dds");*/
 
 	// 테스트 오브젝트 생성
 	float startHeight = 20.0f;
