@@ -57,6 +57,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // 콘솔 창 정리
 	if (fp != nullptr) fclose(fp);
     FreeConsole();
+    CoUninitialize(); // 종료 시 COM 해제
 
     return (int) msg.wParam;
 }
@@ -91,6 +92,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    if (!hWnd) {
       return FALSE;
+   }
+
+   HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+   if (FAILED(hr)) {
+	   MessageBox(nullptr, L"Failed to initialize COM", L"Error", MB_OK);
+	   return FALSE;
    }
    
    // 엔진 초기화

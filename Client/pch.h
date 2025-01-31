@@ -17,18 +17,7 @@
 #include "Util/d3dx12.h"
 #include "ResourceUploadBatch.h"
 #include "DDSTextureLoader.h"
-
-// PhysX 관련 헤더
-#include "PhysX/include/PxPhysicsAPI.h"
-
-// Assimp 관련 헤더
-#include "assimp/Importer.hpp"
-#include "assimp/scene.h"
-#include "assimp/postprocess.h"
-
-// TBB 관련 헤더
-#include "tbb/concurrent_queue.h"
-#include "tbb/concurrent_unordered_map.h"
+#include "WICTextureLoader.h"
 
 // STL 헤더
 #include <iostream>
@@ -45,6 +34,7 @@
 #include <thread>
 #include <format>
 #include <fstream>
+#include <filesystem>
 #include <mutex>
 #include <shared_mutex>
 #include <chrono>
@@ -58,6 +48,18 @@
 #include <type_traits>
 #include <iomanip>
 #include <typeindex>
+
+// PhysX 관련 헤더
+#include "PhysX/include/PxPhysicsAPI.h"
+
+// TBB 관련 헤더
+#include "tbb/concurrent_queue.h"
+#include "tbb/concurrent_unordered_map.h"
+
+// Assimp 관련 헤더
+#include "assimp/assimp/Importer.hpp"
+#include "assimp/assimp/scene.h"
+#include "assimp/assimp/postprocess.h"
 
 // COM 스마트 포인터 사용
 using Microsoft::WRL::ComPtr;
@@ -94,6 +96,8 @@ constexpr UINT CACHE_LINE_SIZE = 64;
     #pragma comment(lib, "LowLevelAABB_static_64")
     #pragma comment(lib, "LowLevelDynamics_static_64")
     #pragma comment(lib, "SimulationController_static_64")
+
+    #pragma comment(lib, "assimp/lib/Debug/assimp-vc143-mtd.lib")
 #else
     #pragma comment(lib, "PhysX_64.lib")
     #pragma comment(lib, "PhysXCommon_64.lib")
@@ -112,10 +116,9 @@ constexpr UINT CACHE_LINE_SIZE = 64;
     #pragma comment(lib, "LowLevelAABB_static_64")
     #pragma comment(lib, "LowLevelDynamics_static_64")
     #pragma comment(lib, "SimulationController_static_64")
+    
+    #pragma comment(lib, "assimp/lib/Release/assimp-vc143-mt.lib")
 #endif
-
-#pragma comment(lib, "packages/Assimp.3.0.0/build/native/lib/x64/assimp.lib")
-
 
 // 에러 체크 매크로
 #ifndef ThrowIfFailed
@@ -164,6 +167,8 @@ struct Vertex {
     XMFLOAT3 normal;
 	XMFLOAT3 tangent;
     XMFLOAT2 texCoord;
+    //XMFLOAT4 boneWeights;    // 최대 4개의 본 가중치
+    //XMUINT4 boneIndices;     // 해당 본들의 인덱스
 };
 
 // Object 상수 버퍼 구조체

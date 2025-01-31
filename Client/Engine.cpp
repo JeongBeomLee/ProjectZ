@@ -1017,67 +1017,54 @@ void Engine::CreateCapsule(const PxVec3& position, float radius, float height)
 void Engine::CreateDemonstrationObjects(Scene* scene, const PxVec3& position)
 {
 	Resource::ResourceManager& resourceManager = Resource::ResourceManager::Instance();
-	auto cube = scene->CreateGameObject("Cube");
-	cube->GetTransform()->SetPosition(XMFLOAT3(position.x, position.y, position.z));
 
-	auto cubePhysics = cube->AddComponent<PhysicsBody>();
-	PhysicsBody::BoxParams cubeParams;
-	cubeParams.dimensions = PxVec3(0.5f);
-	cubePhysics->SetCollisionGroup(CollisionGroup::Default);
-	cubePhysics->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Ground);
-	cubePhysics->CreateBody(PhysicsObjectType::DYNAMIC, PhysicsShapeType::Box, cubeParams);
+	// 테스트용 모델 GameObject 생성
+	auto modelObject = scene->CreateGameObject("TestModel");
+	modelObject->GetTransform()->SetPosition(XMFLOAT3(position.x, position.y, position.z));
 
-	auto vertexShader = resourceManager.LoadShader("shaders.hlsl", Resource::ShaderType::Vertex);
-	auto pixelShader = resourceManager.LoadShader("shaders.hlsl", Resource::ShaderType::Pixel);
+	// 물리 컴포넌트 추가
+	auto modelPhysics = modelObject->AddComponent<PhysicsBody>();
+	PhysicsBody::BoxParams modelParams;
+	modelParams.dimensions = PxVec3(0.5f);
+	modelPhysics->SetCollisionGroup(CollisionGroup::Default);
+	modelPhysics->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Ground);
+	modelPhysics->CreateBody(PhysicsObjectType::DYNAMIC, PhysicsShapeType::Box, modelParams);
 
-	auto cubeRenderer = cube->AddComponent<MeshRenderer>();
-	std::vector<Vertex> cubeVertices;
-	std::vector<UINT> cubeIndices;
-	CreateCubeMeshData(cubeVertices, cubeIndices);
+	// 모델 로드
+	auto modelResource = resourceManager.LoadModel("Resources/Models/Robot.fbx");
 
-	auto materialResource = resourceManager.LoadMaterial("chekermaterial");
+	// MeshRenderer 컴포넌트 추가
+	auto renderer = modelObject->AddComponent<MeshRenderer>();
+	if (!renderer->SetModel(modelResource)) {
+		Logger::Instance().Error("모델 설정 실패: {}", "Resources/Models/robot.fbx");
+		return;
+	}
 
-	materialResource->SetShaders(vertexShader, pixelShader);
-
-	auto baseColorTex = resourceManager.LoadTexture("Texture/checker.dds");
-	auto normalTex = resourceManager.LoadTexture("Texture/checker_normal.dds");
-	auto metallicRoughnessTex = resourceManager.LoadTexture("Texture/checker_metallic-roughness.dds");
-	
-	materialResource->SetBaseColorTexture(baseColorTex);
-	materialResource->SetNormalTexture(normalTex);
-	materialResource->SetMetallicRoughnessTexture(metallicRoughnessTex);
-
-	materialResource->SetBaseColor(XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f));
-	materialResource->SetMetallic(0.1f);
-	materialResource->SetRoughness(0.1f);
-
-	auto materialInstance = std::make_shared<Resource::MaterialInstance>(materialResource);
-	cubeRenderer->CreateResources(cubeVertices, cubeIndices, materialInstance);
+	Logger::Instance().Info("데모 모델 객체 생성 완료: ({}, {}, {})",
+		position.x, position.y, position.z);
 }
 
 void Engine::CreateDefaultScene()
 {
 	auto& resourceManager = Resource::ResourceManager::Instance();
-
 	auto& sceneManager = SceneManager::Instance();
 	auto defaultScene = sceneManager.CreateScene("Default Scene");
 
 	// 메인 카메라 생성
 	auto cameraObject = defaultScene->CreateGameObject("Main Camera");
 	auto cameraTransform = cameraObject->GetTransform();
-
 	cameraTransform->SetPosition(XMFLOAT3(0.0f, 5.0f, -10.0f));
 	cameraTransform->SetRotation(XMFLOAT3(30.0f, 0.0f, 0.0f));
 
 	m_mainCamera = cameraObject->AddComponent<Camera>();
 	m_mainCamera->EnableControl(true);
-	m_mainCamera->SetMoveSpeed(10.0f);  // 이동 속도 설정
-	m_mainCamera->SetRotateSpeed(0.1f);  // 회전 속도 설정
+	m_mainCamera->SetMoveSpeed(1000.0f);
+	m_mainCamera->SetRotateSpeed(0.1f);
 	m_mainCamera->SetPerspectiveProperties(
-		XM_PIDIV4,           // 90도 시야각
+		XM_PIDIV4,
 		static_cast<float>(m_width) / static_cast<float>(m_height),
-		0.1f,                // 근평면
-		1000.0f              // 원평면
+		0.1f,
+		1000.0f
 	);
 
 	// 지면 생성
@@ -1089,16 +1076,9 @@ void Engine::CreateDefaultScene()
 	groundPhysics->SetCollisionMask(CollisionGroup::Default);
 	groundPhysics->CreateBody(PhysicsObjectType::STATIC, PhysicsShapeType::Box, groundParams);
 
-	/*auto groundRenderer = ground->AddComponent<MeshRenderer>();
-	std::vector<Vertex> groundVertices;
-	std::vector<UINT> groundIndices;
-	CreateCubeMeshData(groundVertices, groundIndices);
-	groundRenderer->CreateResources(groundVertices, groundIndices, "Texture/mintchecker.dds");*/
-
 	// 테스트 오브젝트 생성
 	float startHeight = 20.0f;
 	float spacing = 2.0f;
-
 	for (int i = 0; i < 5; ++i) {
 		PxVec3 position(
 			(i % 2 == 0) ? spacing : -spacing,

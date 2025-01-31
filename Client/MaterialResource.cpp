@@ -243,7 +243,6 @@ namespace Resource
 
 		psoDesc.RasterizerState = m_rasterizerDesc;
 		// Test //
-		psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
 		psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
 		//////////
 

@@ -4,6 +4,7 @@
 #include "TextureResource.h"
 #include "ShaderResource.h"
 #include "MaterialResource.h"
+#include "ModelResource.h"
 #include "LinearAllocator.h"
 #include "Logger.h"
 
@@ -21,6 +22,9 @@ namespace Resource
 
         // 머티리얼 로드
         std::shared_ptr<MaterialResource> LoadMaterial(const std::string& path);
+
+		// 모델 로드
+		std::shared_ptr<ModelResource> LoadModel(const std::string& path);
 
         void PreloadResources(const std::string& manifestPath);
         void CleanupUnusedResources();
@@ -62,6 +66,7 @@ namespace Resource
         std::unordered_map<std::string, std::weak_ptr<TextureResource>> m_textureCache;
         std::unordered_map<std::string, std::weak_ptr<ShaderResource>> m_shaderCache;
         std::unordered_map<std::string, std::weak_ptr<MaterialResource>> m_materialCache;
+        std::unordered_map<std::string, std::weak_ptr<ModelResource>> m_models;
         Memory::LinearAllocator m_resourceAllocator;
     };
 }

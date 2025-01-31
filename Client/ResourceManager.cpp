@@ -1,6 +1,7 @@
 // ResourceManager.cpp
 #include "pch.h"
 #include "ResourceManager.h"
+#include "EventManager.h"
 
 namespace Resource
 {
@@ -164,6 +165,49 @@ namespace Resource
         m_materialCache[path] = material;
         Logger::Instance().Info("새 머티리얼 로드: {}", path);
         return material;
+    }
+
+    std::shared_ptr<ModelResource> ResourceManager::LoadModel(const std::string& path)
+    {
+        // 이미 로드된 모델이 있는지 확인
+        auto it = m_models.find(path);
+        if (it != m_models.end()) {
+            if (auto resource = it->second.lock()) {
+                return resource;
+            }
+            m_models.erase(it);
+        }
+
+        try {
+            // 모델 리소스 생성 및 로드
+            auto model = std::make_shared<ModelResource>();
+
+            // 리소스 로드 이벤트 발생
+            EventManager::Instance().Publish(Event::ResourceEvent(
+                path, Event::ResourceEvent::Type::Started));
+
+            if (!model->Load(path)) {
+                // 로드 실패 시 이벤트 발생
+                EventManager::Instance().Publish(Event::ResourceEvent(
+                    path, Event::ResourceEvent::Type::Failed, model->GetError()));
+                return nullptr;
+            }
+
+            // 캐시에 추가
+            m_models[path] = model;
+
+            // 로드 완료 이벤트 발생
+            EventManager::Instance().Publish(Event::ResourceEvent(
+                path, Event::ResourceEvent::Type::Completed));
+
+            return model;
+        }
+        catch (const std::exception& e) {
+            // 예외 발생 시 이벤트 발생
+            EventManager::Instance().Publish(Event::ResourceEvent(
+                path, Event::ResourceEvent::Type::Failed, e.what()));
+            return nullptr;
+        }
     }
 
     void ResourceManager::PreloadResources(const std::string& manifestPath)

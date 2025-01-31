@@ -25,12 +25,23 @@ void MeshRenderer::Initialize()
 
 void MeshRenderer::Update(float deltaTime) 
 {
-    if (!m_isInitialized || !IsEnabled()) return;
-    // 변환 행렬 업데이트
+    if (!m_isInitialized || !IsEnabled() || !m_resources) return;
+
+    // 객체의 변환 행렬 업데이트
     UpdateConstantBuffer();
-    // 머티리얼 인스턴스 업데이트
-    if (m_materialInstance) {
-        m_materialInstance->UpdateMaterialConstants();
+
+    // 각 서브메시의 머테리얼 인스턴스 업데이트
+    for (const auto& subMesh : m_resources->subMeshes) {
+        if (subMesh.materialInstance) {
+            subMesh.materialInstance->UpdateMaterialConstants();
+        }
+    }
+
+    // 모델이 있고 Transform이 변경되었다면 바운딩 볼륨 업데이트
+    auto transform = GetGameObject()->GetTransform();
+    if (m_model && transform->IsDirty()) {
+        // 추후 스켈레탈 애니메이션 구현 시 여기에서 본 행렬도 업데이트
+        UpdateBoundingSphere(m_model);
     }
 }
 
@@ -44,7 +55,7 @@ void MeshRenderer::Destroy()
     }
 
     m_resources.reset();
-    m_materialInstance.reset();
+    m_model.reset();
     m_isInitialized = false;
 }
 
@@ -56,55 +67,100 @@ bool MeshRenderer::CreateResources(
     auto device = Engine::Instance().GetDevice();
     if (!device) return false;
 
-    if (!CreateVertexBuffer(vertices)) return false;
-    if (!CreateIndexBuffer(indices)) return false;
+    //if (!CreateVertexBuffer(vertices)) return false;
+    //if (!CreateIndexBuffer(indices)) return false;
 
     if (!CreateConstantBuffer()) return false;
 	if (!CreateConstantBufferView(device)) return false;
 
-    m_materialInstance = material;
-    UpdateBoundingSphere(vertices);
+    //m_materialInstance = material;
+    //UpdateBoundingSphere(vertices);
+    m_isInitialized = true;
+    return true;
+}
+
+bool MeshRenderer::SetModel(std::shared_ptr<Resource::ModelResource> model)
+{
+    if (!model || model->GetState() != Resource::ResourceState::Loaded) {
+        return false;
+    }
+
+    Destroy();
+    m_model = model;
+    m_resources = std::make_unique<MeshResources>();
+
+    // 각 서브메시에 대한 리소스 생성
+    const auto& subMeshes = model->GetSubMeshes();
+    m_resources->subMeshes.reserve(subMeshes.size());
+
+    for (const auto& subMesh : subMeshes) {
+        MeshResources::SubMeshResources resources;
+        if (!CreateSubMeshResources(subMesh, resources)) {
+            return false;
+        }
+        resources.materialInstance = subMesh.material;
+        m_resources->subMeshes.push_back(std::move(resources));
+    }
+
+    // 상수 버퍼 생성
+    if (!CreateConstantBuffer() || !CreateConstantBufferView(Engine::Instance().GetDevice())) {
+        return false;
+    }
+
+    UpdateBoundingSphere(model);
     m_isInitialized = true;
     return true;
 }
 
 void MeshRenderer::Render(ID3D12GraphicsCommandList* commandList) 
 {
-    if (!m_isInitialized || !IsEnabled() || !m_materialInstance) return;
+    if (!m_isInitialized || !IsEnabled() || !m_resources) return;
 
-    // PSO 설정
-    ID3D12PipelineState* pso = m_materialInstance->GetPipelineState();
-    if (!pso) return;
-    commandList->SetPipelineState(pso);
-
-    // 상수 버퍼 바인딩
-    // Object Constants (b0)
+    // 객체 상수 버퍼 설정 (변환 행렬)
     commandList->SetGraphicsRootDescriptorTable(0, m_resources->cbvHandle);
 
-    // Material Constants (b2)
-    commandList->SetGraphicsRootDescriptorTable(2, 
-        m_materialInstance->GetMaterialCBVHandle());
+    // 각 서브메시 렌더링
+    for (const auto& subMesh : m_resources->subMeshes) {
+        // 머테리얼이 없다면 스킵
+        if (!subMesh.materialInstance) continue;
 
-    // 텍스처 바인딩
-    // Base Color (t0)
-    commandList->SetGraphicsRootDescriptorTable(3,
-        m_materialInstance->GetTextureSlot(0).handle);
+        // 파이프라인 스테이트 설정
+        ID3D12PipelineState* pso = subMesh.materialInstance->GetPipelineState();
+        if (!pso) continue;
+        commandList->SetPipelineState(pso);
 
-    // Normal Map (t1)
-    commandList->SetGraphicsRootDescriptorTable(4,
-        m_materialInstance->GetTextureSlot(1).handle);
+        // 머테리얼 상수 버퍼 설정
+        commandList->SetGraphicsRootDescriptorTable(2,
+            subMesh.materialInstance->GetMaterialCBVHandle());
+        auto materialConstants = subMesh.materialInstance->GetMaterialConstants();
 
-    // Metallic-Roughness Map (t2)
-    commandList->SetGraphicsRootDescriptorTable(5,
-        m_materialInstance->GetTextureSlot(2).handle);
+        // 텍스처가 존재할 때만 바인딩
+        const auto& baseColorSlot = subMesh.materialInstance->GetTextureSlot(0);
+        const auto& normalMapSlot = subMesh.materialInstance->GetTextureSlot(1);
+        const auto& metallicRoughnessSlot = subMesh.materialInstance->GetTextureSlot(2);
 
-    // 버텍스/인덱스 버퍼 설정
-    commandList->IASetVertexBuffers(0, 1, &m_resources->vertexBufferView);
-    commandList->IASetIndexBuffer(&m_resources->indexBufferView);
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        // 베이스 컬러 텍스처
+        if (baseColorSlot.texture) {
+            commandList->SetGraphicsRootDescriptorTable(3, baseColorSlot.handle);
+        }
 
-    // 드로우 콜
-    commandList->DrawIndexedInstanced(m_resources->indexCount, 1, 0, 0, 0);
+        // 노말 맵
+        if (normalMapSlot.texture) {
+            commandList->SetGraphicsRootDescriptorTable(4, normalMapSlot.handle);
+        }
+
+        // 메탈릭-러프니스 맵
+        if (metallicRoughnessSlot.texture) {
+            commandList->SetGraphicsRootDescriptorTable(5, metallicRoughnessSlot.handle);
+        }
+
+        // 버텍스/인덱스 버퍼 설정
+        commandList->IASetVertexBuffers(0, 1, &subMesh.vertexBufferView);
+        commandList->IASetIndexBuffer(&subMesh.indexBufferView);
+
+        // 드로우 콜
+        commandList->DrawIndexedInstanced(subMesh.indexCount, 1, 0, 0, 0);
+    }
 }
 
 void MeshRenderer::UpdateConstantBuffer() 
@@ -125,47 +181,131 @@ void MeshRenderer::UpdateConstantBuffer()
     memcpy(m_resources->constantBufferMappedData, &constants, sizeof(ObjectConstants));
 }
 
-void MeshRenderer::UpdateBoundingSphere(const std::vector<Vertex>& vertices)
+void MeshRenderer::UpdateBoundingSphere(const std::shared_ptr<Resource::ModelResource>& model)
 {
-    if (vertices.empty()) {
+    const auto& subMeshes = model->GetSubMeshes();
+    if (subMeshes.empty()) {
         m_boundingSphereCenter = XMFLOAT3(0, 0, 0);
-        m_boundingSphereRadius = 1.0f;
+        m_boundingSphereRadius = 0.0f;
         return;
     }
 
-    // 중심점 계산
-    XMFLOAT3 center(0, 0, 0);
-    for (const auto& vertex : vertices) {
-        center.x += vertex.position.x;
-        center.y += vertex.position.y;
-        center.z += vertex.position.z;
+    // 모든 서브메시의 바운딩 스피어를 포함하는 새로운 바운딩 스피어 계산
+    if (subMeshes.size() == 1) {
+        // 단일 메시인 경우 해당 메시의 바운딩 스피어 사용
+        m_boundingSphereCenter = subMeshes[0].boundingSphereCenter;
+        m_boundingSphereRadius = subMeshes[0].boundingSphereRadius;
     }
+    else {
+        // 모든 서브메시의 바운딩 스피어를 포함하는 새로운 바운딩 스피어 계산
+        XMVECTOR minPos = XMVectorSet(FLT_MAX, FLT_MAX, FLT_MAX, 1.0f);
+        XMVECTOR maxPos = XMVectorSet(-FLT_MAX, -FLT_MAX, -FLT_MAX, 1.0f);
 
-    float invCount = 1.0f / vertices.size();
-    center.x *= invCount;
-    center.y *= invCount;
-    center.z *= invCount;
+        for (const auto& subMesh : subMeshes) {
+            XMVECTOR center = XMLoadFloat3(&subMesh.boundingSphereCenter);
+            XMVECTOR radius = XMVectorReplicate(subMesh.boundingSphereRadius);
 
-    // 반지름 계산
-    float maxRadiusSq = 0.0f;
-    for (const auto& vertex : vertices) {
-        float dx = vertex.position.x - center.x;
-        float dy = vertex.position.y - center.y;
-        float dz = vertex.position.z - center.z;
-        float distSq = dx * dx + dy * dy + dz * dz;
-        maxRadiusSq = std::max(maxRadiusSq, distSq);
+            minPos = XMVectorMin(minPos, XMVectorSubtract(center, radius));
+            maxPos = XMVectorMax(maxPos, XMVectorAdd(center, radius));
+        }
+
+        // 중심점과 반지름 계산
+        XMVECTOR center = XMVectorScale(XMVectorAdd(minPos, maxPos), 0.5f);
+        XMVECTOR radius = XMVectorScale(XMVectorSubtract(maxPos, minPos), 0.5f);
+
+        XMStoreFloat3(&m_boundingSphereCenter, center);
+        m_boundingSphereRadius = XMVectorGetX(XMVector3Length(radius));
     }
-
-    m_boundingSphereCenter = center;
-    m_boundingSphereRadius = std::sqrt(maxRadiusSq);
 }
 
-bool MeshRenderer::CreateVertexBuffer(const std::vector<Vertex>& vertices)
+//bool MeshRenderer::CreateVertexBuffer(const std::vector<Vertex>& vertices)
+//{
+//    auto device = Engine::Instance().GetDevice();
+//
+//    const UINT vertexBufferSize = static_cast<UINT>(vertices.size() * sizeof(Vertex));
+//
+//    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+//    auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
+//
+//    HRESULT hr = device->CreateCommittedResource(
+//        &heapProperties,
+//        D3D12_HEAP_FLAG_NONE,
+//        &resourceDesc,
+//        D3D12_RESOURCE_STATE_GENERIC_READ,
+//        nullptr,
+//        IID_PPV_ARGS(&m_resources->vertexBuffer));
+//
+//    if (FAILED(hr)) {
+//        Logger::Instance().Error("정점 버퍼 생성 실패");
+//        return false;
+//    }
+//
+//    // 데이터 복사
+//    UINT8* pVertexDataBegin;
+//    CD3DX12_RANGE readRange(0, 0);
+//    hr = m_resources->vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
+//    if (FAILED(hr)) return false;
+//
+//    memcpy(pVertexDataBegin, vertices.data(), vertexBufferSize);
+//    m_resources->vertexBuffer->Unmap(0, nullptr);
+//
+//    // 버퍼 뷰 생성
+//    m_resources->vertexBufferView.BufferLocation = m_resources->vertexBuffer->GetGPUVirtualAddress();
+//    m_resources->vertexBufferView.StrideInBytes = sizeof(Vertex);
+//    m_resources->vertexBufferView.SizeInBytes = vertexBufferSize;
+//
+//    return true;
+//}
+
+//bool MeshRenderer::CreateIndexBuffer(const std::vector<UINT>& indices) 
+//{
+//    auto device = Engine::Instance().GetDevice();
+//
+//    const UINT indexBufferSize = static_cast<UINT>(indices.size() * sizeof(UINT));
+//    m_resources->indexCount = static_cast<UINT>(indices.size());
+//
+//    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+//    auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
+//
+//    HRESULT hr = device->CreateCommittedResource(
+//        &heapProperties,
+//        D3D12_HEAP_FLAG_NONE,
+//        &resourceDesc,
+//        D3D12_RESOURCE_STATE_GENERIC_READ,
+//        nullptr,
+//        IID_PPV_ARGS(&m_resources->indexBuffer));
+//
+//    if (FAILED(hr)) {
+//        Logger::Instance().Error("인덱스 버퍼 생성 실패");
+//        return false;
+//    }
+//
+//    // 데이터 복사
+//    UINT8* pIndexDataBegin;
+//    CD3DX12_RANGE readRange(0, 0);
+//    hr = m_resources->indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin));
+//    if (FAILED(hr)) return false;
+//
+//    memcpy(pIndexDataBegin, indices.data(), indexBufferSize);
+//    m_resources->indexBuffer->Unmap(0, nullptr);
+//
+//    // 버퍼 뷰 생성
+//    m_resources->indexBufferView.BufferLocation = m_resources->indexBuffer->GetGPUVirtualAddress();
+//    m_resources->indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+//    m_resources->indexBufferView.SizeInBytes = indexBufferSize;
+//
+//    return true;
+//}
+
+bool MeshRenderer::CreateSubMeshResources(
+    const Resource::ModelResource::SubMesh& subMesh, 
+    MeshResources::SubMeshResources& resources)
 {
     auto device = Engine::Instance().GetDevice();
+    if (!device) return false;
 
-    const UINT vertexBufferSize = static_cast<UINT>(vertices.size() * sizeof(Vertex));
-
+    // 버텍스 버퍼 생성
+    const UINT vertexBufferSize = static_cast<UINT>(subMesh.vertices.size() * sizeof(Vertex));
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
 
@@ -175,71 +315,62 @@ bool MeshRenderer::CreateVertexBuffer(const std::vector<Vertex>& vertices)
         &resourceDesc,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
-        IID_PPV_ARGS(&m_resources->vertexBuffer));
+        IID_PPV_ARGS(&resources.vertexBuffer));
 
     if (FAILED(hr)) {
-        Logger::Instance().Error("정점 버퍼 생성 실패");
+        Logger::Instance().Error("버텍스 버퍼 생성 실패");
         return false;
     }
 
-    // 데이터 복사
-    UINT8* pVertexDataBegin;
+    // 버텍스 데이터 복사
+    UINT8* vertexDataBegin;
     CD3DX12_RANGE readRange(0, 0);
-    hr = m_resources->vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
+    hr = resources.vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&vertexDataBegin));
     if (FAILED(hr)) return false;
 
-    memcpy(pVertexDataBegin, vertices.data(), vertexBufferSize);
-    m_resources->vertexBuffer->Unmap(0, nullptr);
+    memcpy(vertexDataBegin, subMesh.vertices.data(), vertexBufferSize);
+    resources.vertexBuffer->Unmap(0, nullptr);
 
-    // 버퍼 뷰 생성
-    m_resources->vertexBufferView.BufferLocation = m_resources->vertexBuffer->GetGPUVirtualAddress();
-    m_resources->vertexBufferView.StrideInBytes = sizeof(Vertex);
-    m_resources->vertexBufferView.SizeInBytes = vertexBufferSize;
+    // 버텍스 버퍼 뷰 생성
+    resources.vertexBufferView.BufferLocation = resources.vertexBuffer->GetGPUVirtualAddress();
+    resources.vertexBufferView.StrideInBytes = sizeof(Vertex);
+    resources.vertexBufferView.SizeInBytes = vertexBufferSize;
 
-    return true;
-}
+    // 인덱스 버퍼 생성 (위와 유사한 과정)
+    const UINT indexBufferSize = static_cast<UINT>(subMesh.indices.size() * sizeof(UINT));
+    resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
 
-bool MeshRenderer::CreateIndexBuffer(const std::vector<UINT>& indices) 
-{
-    auto device = Engine::Instance().GetDevice();
-
-    const UINT indexBufferSize = static_cast<UINT>(indices.size() * sizeof(UINT));
-    m_resources->indexCount = static_cast<UINT>(indices.size());
-
-    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
-
-    HRESULT hr = device->CreateCommittedResource(
+    hr = device->CreateCommittedResource(
         &heapProperties,
         D3D12_HEAP_FLAG_NONE,
         &resourceDesc,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
-        IID_PPV_ARGS(&m_resources->indexBuffer));
+        IID_PPV_ARGS(&resources.indexBuffer));
 
     if (FAILED(hr)) {
         Logger::Instance().Error("인덱스 버퍼 생성 실패");
         return false;
     }
 
-    // 데이터 복사
-    UINT8* pIndexDataBegin;
-    CD3DX12_RANGE readRange(0, 0);
-    hr = m_resources->indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin));
+    // 인덱스 데이터 복사
+    UINT8* indexDataBegin;
+    hr = resources.indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&indexDataBegin));
     if (FAILED(hr)) return false;
 
-    memcpy(pIndexDataBegin, indices.data(), indexBufferSize);
-    m_resources->indexBuffer->Unmap(0, nullptr);
+    memcpy(indexDataBegin, subMesh.indices.data(), indexBufferSize);
+    resources.indexBuffer->Unmap(0, nullptr);
 
-    // 버퍼 뷰 생성
-    m_resources->indexBufferView.BufferLocation = m_resources->indexBuffer->GetGPUVirtualAddress();
-    m_resources->indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-    m_resources->indexBufferView.SizeInBytes = indexBufferSize;
+    // 인덱스 버퍼 뷰 생성
+    resources.indexBufferView.BufferLocation = resources.indexBuffer->GetGPUVirtualAddress();
+    resources.indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+    resources.indexBufferView.SizeInBytes = indexBufferSize;
+    resources.indexCount = static_cast<UINT>(subMesh.indices.size());
 
     return true;
 }
 
-bool MeshRenderer::CreateConstantBuffer() 
+bool MeshRenderer::CreateConstantBuffer()
 {
     auto device = Engine::Instance().GetDevice();
 

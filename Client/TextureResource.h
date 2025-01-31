@@ -15,7 +15,7 @@ namespace Resource
         const D3D12_GPU_DESCRIPTOR_HANDLE& GetGPUSRVHandle() const { return m_srvHandle; }
 
     private:
-        bool CreateTextureFromDDS(const std::wstring& widePath);
+        bool CreateTextureFromFile(const std::wstring& widePath);
         bool CreateShaderResourceView();
 
     private:

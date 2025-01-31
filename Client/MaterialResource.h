@@ -30,7 +30,7 @@ namespace Resource
             const D3D12_BLEND_DESC& blend,
             const D3D12_DEPTH_STENCIL_DESC& depthStencil);
         ID3D12PipelineState* GetPipelineState();
-
+        
         // Material Constants °ü¸®
         MaterialConstants& GetMaterialConstants() { return m_materialConstants; }
         void SetBaseColor(const XMFLOAT4& color);
