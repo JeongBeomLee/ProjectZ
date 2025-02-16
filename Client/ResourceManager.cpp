@@ -1,117 +1,218 @@
+// ResourceManager.cpp
 #include "pch.h"
 #include "ResourceManager.h"
+#include "EventManager.h"
 
 namespace Resource
 {
-    ResourceManager& ResourceManager::Instance() 
+    ResourceManager::ResourceManager()
+        : m_resourceAllocator(32 * 1024 * 1024, "ResourceAllocator")
+    {
+        Logger::Instance().Info("리소스 매니저 초기화됨");
+    }
+
+    ResourceManager::~ResourceManager()
+    {
+        CleanupUnusedResources();
+        Logger::Instance().Info("리소스 매니저 종료됨");
+    }
+
+    ResourceManager& ResourceManager::Instance()
     {
         static ResourceManager instance;
         return instance;
     }
 
-    void ResourceManager::ReleaseResource(const std::string& path) 
+    void ResourceManager::CleanupUnusedResources()
     {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
-        auto it = m_resources.find(path);
-        if (it != m_resources.end()) {
-            Logger::Instance().Info("리소스 해제: {}", path);
-            it->second->Unload();
-            m_resources.erase(it);
-        }
-    }
+        size_t unloadedCount = 0;
 
-    void ResourceManager::GarbageCollect() 
-    {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
-        for (auto it = m_resources.begin(); it != m_resources.end();) {
-            if (it->second.use_count() == 1) {  // ResourceManager만 참조 중
-                Logger::Instance().Info("미사용 리소스 정리: {}", it->first);
-                it->second->Unload();
-                it = m_resources.erase(it);
+        auto textureIt = m_textureCache.begin();
+        while (textureIt != m_textureCache.end()) {
+            if (textureIt->second.expired()) {
+                Logger::Instance().Debug("만료된 텍스처 제거: {}", textureIt->first);
+                textureIt = m_textureCache.erase(textureIt);
+                unloadedCount++;
             }
             else {
-                ++it;
+                ++textureIt;
             }
         }
-    }
 
-    void ResourceManager::ReleaseAllResources() 
-    {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
-        for (auto& [path, resource] : m_resources) {
-            Logger::Instance().Info("리소스 해제: {}", path);
-            resource->Unload();
-        }
-        m_resources.clear();
-    }
-
-    size_t ResourceManager::GetTotalMemoryUsage() const 
-    {
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
-        size_t total = 0;
-        for (const auto& [path, resource] : m_resources) {
-            total += resource->GetSize();
-        }
-        return total;
-    }
-
-    void ResourceManager::PrintResourceStats() const 
-    {
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
-        Logger::Instance().Info("=== 리소스 상태 ===");
-        Logger::Instance().Info("총 리소스 수: {}", m_resources.size());
-        Logger::Instance().Info("총 메모리 사용량: {} bytes", GetTotalMemoryUsage());
-
-        for (const auto& [path, resource] : m_resources) {
-            Logger::Instance().Info("- {} ({}): {} bytes, {} refs",
-                resource->GetName(),
-                path,
-                resource->GetSize(),
-                resource->GetRefCount());
-        }
-    }
-
-    void ResourceManager::QueueResourceLoading(std::shared_ptr<IResource> resource) 
-    {
-        std::lock_guard<std::mutex> lock(m_loadingMutex);
-
-        // 리소스 로딩 이벤트 발생
-        Event::ResourceEvent event(resource->GetPath(), Event::ResourceEvent::Type::Started);
-        EventManager::Instance().Publish(event);
-
-        // 비동기 로딩 시작
-        auto future = std::async(std::launch::async, [resource]() {
-            return resource->Load();
-            });
-
-        m_loadingQueue.push({ resource, std::move(future) });
-    }
-
-    void ResourceManager::ProcessLoadingQueue() 
-    {
-        std::lock_guard<std::mutex> lock(m_loadingMutex);
-
-        while (!m_loadingQueue.empty()) {
-            auto& task = m_loadingQueue.front();
-
-            // future가 준비되었는지 확인
-            if (task.loadingFuture.wait_for(std::chrono::seconds(0))
-                == std::future_status::ready) {
-
-                bool success = task.loadingFuture.get();
-                Event::ResourceEvent event(
-                    task.resource->GetPath(),
-                    success ? Event::ResourceEvent::Type::Completed
-                    : Event::ResourceEvent::Type::Failed,
-                    success ? "" : "Loading failed"
-                    );
-                EventManager::Instance().Publish(event);
-
-                m_loadingQueue.pop();
+        auto shaderIt = m_shaderCache.begin();
+        while (shaderIt != m_shaderCache.end()) {
+            if (shaderIt->second.expired()) {
+                Logger::Instance().Debug("만료된 셰이더 제거: {}", shaderIt->first);
+                shaderIt = m_shaderCache.erase(shaderIt);
+                unloadedCount++;
             }
             else {
-                break;  // 아직 로딩 중인 태스크가 있으므로 중단
+                ++shaderIt;
             }
         }
+
+        Logger::Instance().Info("리소스 정리 완료. 제거된 리소스: {}", unloadedCount);
+    }
+
+    size_t ResourceManager::GetLoadedResourceCount() const
+    {
+        size_t count = 0;
+
+        for (const auto& [path, weakResource] : m_textureCache) {
+            if (!weakResource.expired()) {
+                count++;
+            }
+        }
+
+        for (const auto& [path, weakResource] : m_shaderCache) {
+            if (!weakResource.expired()) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    void ResourceManager::PrintResourceStats() const
+    {
+        size_t activeCount = GetLoadedResourceCount();
+		size_t totalCount = m_textureCache.size() + m_shaderCache.size();
+
+        Logger::Instance().Info("=== 리소스 통계 ===");
+        Logger::Instance().Info("활성 리소스: {}", activeCount);
+        Logger::Instance().Info("캐시된 총 리소스: {}", totalCount);
+        Logger::Instance().Info("메모리 사용량: {}/{} 바이트",
+            m_resourceAllocator.GetUsedMemory(),
+            m_resourceAllocator.GetTotalMemory());
+
+        // TODO: 타입별 리소스 카운트 출력은 나중에 구현
+    }
+
+    std::shared_ptr<TextureResource> ResourceManager::LoadTexture(const std::string& path)
+    {
+        // 캐시된 텍스처가 있는지 확인
+        auto it = m_textureCache.find(path);
+        if (it != m_textureCache.end()) {
+            if (auto texture = it->second.lock()) {
+                Logger::Instance().Debug("텍스처 재사용: {}", path);
+                return texture;
+            }
+            m_textureCache.erase(it);
+            Logger::Instance().Debug("만료된 텍스처 제거: {}", path);
+        }
+
+        // 새 텍스처 생성 및 로드
+        auto texture = std::make_shared<TextureResource>();
+        if (!texture->Load(path)) {
+			Logger::Instance().Error("텍스처 로드 실패: {}, 에러: {}",
+				path, texture->GetError());
+            return nullptr;
+        }
+
+        m_textureCache[path] = texture;
+        Logger::Instance().Info("새 텍스처 로드: {}", path);
+        return texture;
+    }
+
+    std::shared_ptr<ShaderResource> ResourceManager::LoadShader(const std::string& path, ShaderType type)
+    {
+        std::string cacheKey = CreateShaderCacheKey(path, type);
+
+        // 캐시된 셰이더가 있는지 확인
+        auto it = m_shaderCache.find(cacheKey);
+        if (it != m_shaderCache.end()) {
+            if (auto shader = it->second.lock()) {
+                Logger::Instance().Debug("셰이더 재사용: {}", path);
+                return shader;
+            }
+
+            Logger::Instance().Debug("만료된 셰이더 제거: {}", path);
+            m_shaderCache.erase(it);
+        }
+
+        // 새 셰이더 생성 및 로드
+        auto shader = std::make_shared<ShaderResource>(type);
+        if (!shader->Load(path)) {
+			Logger::Instance().Error("셰이더 로드 실패: {}, 에러: {}",
+				path, shader->GetError());
+            return nullptr;
+        }
+
+        m_shaderCache[cacheKey] = shader;
+        Logger::Instance().Info("새 셰이더 로드: {}", path);
+        return shader;
+    }
+
+    std::shared_ptr<MaterialResource> ResourceManager::LoadMaterial(const std::string& path)
+    {
+        // 캐시된 머티리얼이 있는지 확인
+        auto it = m_materialCache.find(path);
+        if (it != m_materialCache.end()) {
+            if (auto material = it->second.lock()) {
+                Logger::Instance().Debug("머티리얼 재사용: {}", path);
+                return material;
+            }
+            m_materialCache.erase(it);
+        }
+
+        // 새 머티리얼 생성 및 로드
+        auto material = std::make_shared<MaterialResource>();
+        if (!material->Load(path)) {
+            Logger::Instance().Error("머티리얼 로드 실패: {}", path);
+            return nullptr;
+        }
+
+        m_materialCache[path] = material;
+        Logger::Instance().Info("새 머티리얼 로드: {}", path);
+        return material;
+    }
+
+    std::shared_ptr<ModelResource> ResourceManager::LoadModel(const std::string& path)
+    {
+        // 이미 로드된 모델이 있는지 확인
+        auto it = m_models.find(path);
+        if (it != m_models.end()) {
+            if (auto resource = it->second.lock()) {
+                return resource;
+            }
+            m_models.erase(it);
+        }
+
+        try {
+            // 모델 리소스 생성 및 로드
+            auto model = std::make_shared<ModelResource>();
+
+            // 리소스 로드 이벤트 발생
+            EventManager::Instance().Publish(Event::ResourceEvent(
+                path, Event::ResourceEvent::Type::Started));
+
+            if (!model->Load(path)) {
+                // 로드 실패 시 이벤트 발생
+                EventManager::Instance().Publish(Event::ResourceEvent(
+                    path, Event::ResourceEvent::Type::Failed, model->GetError()));
+                return nullptr;
+            }
+
+            // 캐시에 추가
+            m_models[path] = model;
+
+            // 로드 완료 이벤트 발생
+            EventManager::Instance().Publish(Event::ResourceEvent(
+                path, Event::ResourceEvent::Type::Completed));
+
+            return model;
+        }
+        catch (const std::exception& e) {
+            // 예외 발생 시 이벤트 발생
+            EventManager::Instance().Publish(Event::ResourceEvent(
+                path, Event::ResourceEvent::Type::Failed, e.what()));
+            return nullptr;
+        }
+    }
+
+    void ResourceManager::PreloadResources(const std::string& manifestPath)
+    {
+        // TODO: Phase 5에서 구현 예정
+        Logger::Instance().Info("리소스 프리로딩 시작: {}", manifestPath);
     }
 }

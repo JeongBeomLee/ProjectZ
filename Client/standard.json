@@ -1,0 +1,44 @@
+{
+   "name": "StandardMaterial",
+   "description": "기본 PBR 머티리얼",
+   
+   "shaders": {
+       "vertex": "shaders.hlsl",
+       "pixel": "shaders.hlsl"
+   },
+
+  "textures": {
+    "albedoMap": "Texture/checker.dds",
+    "normalMap": "Texture/checker_normal.dds"
+  },
+   
+   "parameters": {
+       "baseColor": {
+           "type": "float4",
+           "value": [1.0, 1.0, 1.0, 1.0],
+           "description": "기본 색상 및 알파"
+       },
+       "metallic": {
+           "type": "float",
+           "value": 0.0,
+           "description": "금속성 정도 (0-1)"
+       },
+       "roughness": {
+           "type": "float",
+           "value": 0.5,
+           "description": "거칠기 정도 (0-1)"
+       }
+   },
+   
+   "renderState": {
+       "cullMode": "back",
+       "fillMode": "solid",
+       "blend": {
+           "enable": true,
+           "srcBlend": "srcAlpha",
+           "destBlend": "invSrcAlpha"
+       },
+       "depthWrite": true,
+       "depthTest": true
+   }
+}

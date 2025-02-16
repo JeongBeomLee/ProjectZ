@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "Client.h"
 #include "Engine.h"
+#include "InputManager.h"
 
 #define MAX_LOADSTRING 100
 
@@ -56,6 +57,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // 콘솔 창 정리
 	if (fp != nullptr) fclose(fp);
     FreeConsole();
+    CoUninitialize(); // 종료 시 COM 해제
 
     return (int) msg.wParam;
 }
@@ -91,6 +93,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    if (!hWnd) {
       return FALSE;
    }
+
+   HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+   if (FAILED(hr)) {
+	   MessageBox(nullptr, L"Failed to initialize COM", L"Error", MB_OK);
+	   return FALSE;
+   }
    
    // 엔진 초기화
    if (!Engine::Instance().Initialize(hWnd, 1280, 720)) {
@@ -107,6 +115,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
+    case WM_MOUSEMOVE: {
+        int x = GET_X_LPARAM(lParam);
+        int y = GET_Y_LPARAM(lParam);
+        InputManager::Instance().ProcessMouseMove(x, y);
+        break;
+    }
     case WM_COMMAND: {
             int wmId = LOWORD(wParam);
             // 메뉴 선택을 구문 분석합니다:

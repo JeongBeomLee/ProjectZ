@@ -4,7 +4,18 @@
 #include "PhysicsEngine.h"
 #include "MemoryManager.h"
 #include "EventManager.h"
+#include "SceneManager.h"
+#include "TimeManager.h"
+#include "InputManager.h"
 #include "ResourceManager.h"
+#include "Transform.h"
+#include "PhysicsBody.h"
+#include "MeshRenderer.h"
+#include "GameObject.h"
+#include "Camera.h"
+#include "MaterialResource.h"
+#include "MaterialInstance.h"
+#include "CharacterController.h"
 #include "Logger.h"
 #include "Utils.h"
 
@@ -73,27 +84,17 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 	if (!CreateSwapChain(hwnd)) {
 		Logger::Instance().Fatal("스왑체인 생성 실패");
 		return false;
-
 	}
 	if (!CreateRTVDescriptorHeaps()) {
 		Logger::Instance().Fatal("RTV 디스크립터 힙 생성 실패");
 		return false;
-
 	}
 	if (!CreateRenderTargetViews()) {
 		Logger::Instance().Fatal("RTV 생성 실패");
 		return false;
 	}
-	if (!CreateConstantBuffer()) {
-		Logger::Instance().Fatal("상수 버퍼 생성 실패");
-		return false;
-	}
 	if (!CreateLightConstantBuffer()) {
 		Logger::Instance().Fatal("라이트 상수 버퍼 생성 실패");
-		return false;
-	}
-	if (!CreateTexture(L"Texture/checker.dds")) {
-		Logger::Instance().Fatal("텍스처 생성 실패");
 		return false;
 	}
 	if (!CreateDescHeap()) {
@@ -108,20 +109,12 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		Logger::Instance().Fatal("펜스 생성 실패");
 		return false;
 	}
+	if (!CreateDepthStencilBuffer()) {
+		Logger::Instance().Fatal("깊이 스텐실 버퍼 생성 실패");
+		return false;
+	}
 	if (!CreateRootSignature()) {
 		Logger::Instance().Fatal("루트 시그니처 생성 실패");
-		return false;
-	}
-	if (!CreatePipelineState()) {
-		Logger::Instance().Fatal("파이프라인 상태 생성 실패");
-		return false;
-	}
-	if (!CreateVertexBuffer()) {
-		Logger::Instance().Fatal("정점 버퍼 생성 실패");
-		return false;
-	}
-	if (!CreateIndexBuffer()) {
-		Logger::Instance().Fatal("인덱스 버퍼 생성 실패");
 		return false;
 	}
 
@@ -132,152 +125,135 @@ bool Engine::Initialize(HWND hwnd, UINT width, UINT height)
 		return false;
 	}
 
-	// 지면 생성
-	m_ground = m_physicsEngine->CreateBox(
-		PxVec3(0.0f, 0.0f, 0.0f),
-		PxVec3(100.0f, 0.5f, 100.0f),
-		PhysicsObjectType::STATIC,
-		CollisionGroup::Ground,
-		CollisionGroup::Default | CollisionGroup::Player);
+	// 입력 매니저 초기화
+	InputManager::Instance().Initialize(hwnd);
 
-	// 물리 박스 생성 (크기는 렌더링되는 큐브와 동일하게)
-	m_physicsBox = m_physicsEngine->CreateBox(
-		PxVec3(0.0f, 5.0f, 0.0f),  // 시작 위치
-		PxVec3(0.5f, 0.5f, 0.5f),  // 크기
-		PhysicsObjectType::DYNAMIC, // 동적 객체
-		CollisionGroup::Default,    // 기본 그룹
-		CollisionGroup::Ground);    // 지면과 충돌
+	// 기본 씬 생성
+	CreateDefaultScene();
 
-	// 초기 변환 행렬 설정
-	m_worldMatrix = XMMatrixIdentity();
-	m_viewMatrix = XMMatrixLookAtLH(
-		XMVectorSet(0.0f, 5.0f, -5.0f, 1.0f),  // 카메라 위치
-		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 지점
-		XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f)    // 업 벡터
-	);
-	m_projectionMatrix = XMMatrixPerspectiveFovLH(
-		XM_PIDIV4,                              // 시야각(45도)
-		m_aspectRatio,                          // 화면 비율
-		0.1f,                                   // 근평면
-		100.0f                                  // 원평면
-	);
-
-	// 회전 애니메이션 초기화
-	m_rotationAngle = 0.0f;
-	m_lastTick = GetTickCount64();
-
+	// 타이머 초기화
+	TimeManager::Instance().Initialize();
 	Logger::Instance().Info("Engine 초기화 완료");
 	return true;
 }
 
 void Engine::Update()
 {
+	// 타이머 업데이트
+	TimeManager::Instance().Update();
+	float deltaTime = TimeManager::Instance().GetDeltaTime();
+
+	// 입력 업데이트
+	InputManager::Instance().Update();
+
+	////////////////////////
+	// 카메라 테스트 동작 //
+	////////////////////////
+	//static float totalTime = 0.0f;
+	//totalTime += deltaTime;
+
+	//if (m_mainCamera) {
+	//	// 원형 움직임
+	//	float radius = 10.0f;
+	//	float circleSpeed = 0.5f;
+	//	float height = 5.0f;
+
+	//	// 카메라 위치 계산
+	//	float x = radius * std::cos(totalTime * circleSpeed);
+	//	float z = radius * std::sin(totalTime * circleSpeed);
+
+	//	// 카메라 위치 및 회전 설정
+	//	auto cameraTransform = m_mainCamera->GetGameObject()->GetTransform();
+	//	cameraTransform->SetPosition(XMFLOAT3(x, height, z));
+
+	//	// 항상 원점을 바라보도록 회전
+	//	float yaw = std::atan2(-x, -z) * (180.0f / XM_PI);
+	//	cameraTransform->SetRotation(XMFLOAT3(30.0f, yaw, 0.0f));
+	//}
+	////////////////////////
+
 	// 프레임 메모리 초기화
 	Memory::BeginFrameMemory();
 
 	// 모든 큐에 있는 이벤트 처리
 	EventManager::Instance().Update();
-	
-	// 델타 시간 계산
-	ULONGLONG currentTick = GetTickCount64();
-	float deltaTime = (currentTick - m_lastTick) / 1000.0f;
-	m_lastTick = currentTick;
-
-	// deltaTime이 0이하인 경우 최소값으로 설정
-	if (deltaTime <= 0.0f) {
-		deltaTime = 1.0f / 600.0f;  // 기본 프레임 레이트
-		//Logger::Instance().Warning("0 또는 음수 DT 감지, 기본 값 사용: {}", deltaTime);
-	}
 
 	// 물리 엔진 업데이트
 	m_physicsEngine->Update(deltaTime);
 
-	// 월드 행렬 업데이트
-	UpdateWorldMatrix();
-
-	//// 회전 각도 업데이트
-	m_rotationAngle += deltaTime;
-
-	// 라이트 방향 업데이트 (원을 그리며 회전)
-	float lightAngle = m_rotationAngle * 0.5f;  // 큐브보다 천천히 회전
-	m_lightConstants.lightDirection.x = sinf(lightAngle);
-	m_lightConstants.lightDirection.z = cosf(lightAngle);
-	m_lightConstants.lightDirection.y = -0.5f;  // 약간 위에서 비추도록
-
-	// 정규화
-	XMVECTOR lightDir = XMLoadFloat4(&m_lightConstants.lightDirection);
-	lightDir = XMVector3Normalize(lightDir);
-	XMStoreFloat4(&m_lightConstants.lightDirection, lightDir);
+	// 씬 매니저를 통한 현재 씬 업데이트
+	SceneManager::Instance().Update(deltaTime);
 
 	// 라이트 상수 버퍼 업데이트
-	memcpy(m_lightConstantBufferMappedData, &m_lightConstants, sizeof(m_lightConstants));
+	UpdateLightConstant(deltaTime);
 }
 
-void Engine::Render()
+void Engine::BeginRender()
 {
+	// 커맨드 리스트 초기화
 	ThrowIfFailed(m_commandAllocator->Reset());
-	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
-
-	// 상수 버퍼 업데이트
-	UpdateConstantBuffer();
+	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
 	// 뷰포트와 시저렉트 설정
 	const CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
 	const CD3DX12_RECT scissorRect(0, 0, m_width, m_height);
-
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
 
-	// 루트 시그니처와 디스크립터 힙 설정
-	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-
-	// CBV/SRV 힙 설정
-	ID3D12DescriptorHeap* ppHeaps[] = { m_descHeap.Get() };
-	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-
-	// Transform CBV 설정 (첫 번째 위치)
-	m_commandList->SetGraphicsRootDescriptorTable(0, m_descHeap->GetGPUDescriptorHandleForHeapStart());
-
-	// Light CBV 설정 (두 번째 위치)
-	CD3DX12_GPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
-	lightCbvHandle.Offset(m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-	m_commandList->SetGraphicsRootDescriptorTable(1, lightCbvHandle);
-
-	// Texture SRV 설정 (세 번째 위치)
-	CD3DX12_GPU_DESCRIPTOR_HANDLE textureSrvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
-	textureSrvHandle.Offset(2, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-	m_commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandle);
-
-	// 리소스 배리어
+	// 리소스 배리어 (Present -> RenderTarget)
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_renderTargets[m_frameIndex].Get(),
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		D3D12_RESOURCE_STATE_PRESENT,
+		D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_commandList->ResourceBarrier(1, &barrier);
 
 	// 렌더 타겟 설정
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
 		m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_frameIndex, GetRtvDescriptorSize());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
 
-	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
+	// 깊이 버퍼 초기화
+	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
+		1.0f, 0, 0, nullptr);
 
 	// 화면 클리어
 	const float clearColor[] = { 0.0f, 0.0f, 0.2f, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
-	////////// RENDER ///////////
-	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	m_commandList->IASetIndexBuffer(&m_indexBufferView);
-	m_commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
-	/////////////////////////////
+	// 루트 시그니처와 디스크립터 힙 설정
+	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
-	// 리소스 배리어
-	barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+	// 공통 리소스 설정
+	ID3D12DescriptorHeap* ppHeaps[] = { m_descHeap.Get() };
+	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+	// 라이트 CBV 설정
+	CD3DX12_GPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetGPUDescriptorHandleForHeapStart());
+	lightCbvHandle.Offset(MAX_OBJECTS, GetDescriptorIncrementSize());
+	m_commandList->SetGraphicsRootDescriptorTable(1, lightCbvHandle);
+
+	// 프리미티브 토폴로지 설정
+	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+void Engine::ExecuteRender()
+{
+	SceneManager::Instance().Render(m_commandList.Get());
+}
+
+void Engine::EndRender()
+{
+	// 리소스 배리어 (RenderTarget -> Present)
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_renderTargets[m_frameIndex].Get(),
-		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PRESENT);
 	m_commandList->ResourceBarrier(1, &barrier);
 
+	// 커맨드 리스트 닫기
 	ThrowIfFailed(m_commandList->Close());
 
 	// 커맨드 리스트 실행
@@ -287,27 +263,25 @@ void Engine::Render()
 	// 화면 표시
 	ThrowIfFailed(m_swapChain->Present(1, 0));
 
+	// GPU 동기화
 	WaitForGpu();
 	MoveToNextFrame();
+}
+
+void Engine::Render()
+{
+	BeginRender();
+	ExecuteRender();
+	EndRender();
 }
 
 void Engine::Cleanup()
 {
 	WaitForGpu();
-
+	SceneManager::Instance().Clear();
 	UnregisterEventHandlers();
-
 	m_physicsEngine.reset();
-
     CloseHandle(m_fenceEvent);
-}
-
-void Engine::UpdateWorldMatrix()
-{
-	if (m_physicsBox) {
-		// 물리 객체의 변환 행렬을 가져와서 렌더링에 사용할 월드 행렬 업데이트
-		m_worldMatrix = m_physicsBox->GetTransformMatrix();
-	}
 }
 
 bool Engine::CreateDevice()
@@ -456,6 +430,8 @@ bool Engine::CreateCommandAllocatorAndList()
 		IID_PPV_ARGS(&m_commandList)));
 
 	ThrowIfFailed(m_commandList->Close());
+
+	Logger::Instance().Info("커맨드 할당자 및 커맨드 리스트 생성 성공");
 	return true;
 }
 
@@ -471,315 +447,159 @@ bool Engine::CreateFence()
 		return false;
 	}
 
+	Logger::Instance().Info("펜스 생성 성공");
+	return true;
+}
+
+bool Engine::CreateDepthStencilBuffer()
+{
+	D3D12_RESOURCE_DESC depthStencilDesc = {};
+	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	depthStencilDesc.Alignment = 0;
+	depthStencilDesc.Width = m_width;
+	depthStencilDesc.Height = m_height;
+	depthStencilDesc.DepthOrArraySize = 1;
+	depthStencilDesc.MipLevels = 1;
+	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilDesc.SampleDesc.Count = 1;
+	depthStencilDesc.SampleDesc.Quality = 0;
+	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	D3D12_CLEAR_VALUE optClear;
+	optClear.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	optClear.DepthStencil.Depth = 1.0f;
+	optClear.DepthStencil.Stencil = 0;
+
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	ThrowIfFailed(m_device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&depthStencilDesc,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&optClear,
+		IID_PPV_ARGS(&m_depthStencilBuffer)));
+
+	// DSV 힙 생성
+	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+	dsvHeapDesc.NumDescriptors = 1;
+	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
+
+	// DSV 생성
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+	m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), &dsvDesc,
+		m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+
+	Logger::Instance().Info("깊이 스텐실 버퍼 생성 성공");
 	return true;
 }
 
 bool Engine::CreateRootSignature()
 {
-	// 정적 샘플러 생성
-	D3D12_STATIC_SAMPLER_DESC samplerDesc = {};
-	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	samplerDesc.MipLODBias = 0;
-	samplerDesc.MaxAnisotropy = 0;
-	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-	samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	samplerDesc.MinLOD = 0.0f;
-	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
-	samplerDesc.ShaderRegister = 0; // s0 레지스터
-	samplerDesc.RegisterSpace = 0;
-	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	// 디스크립터 레인지 설정
+	D3D12_DESCRIPTOR_RANGE ranges[6] = {};
 
-	// 디스크립터 테이블 설정
-	D3D12_DESCRIPTOR_RANGE ranges[3] = {};
-
-	// 변환 행렬용 range
+	// 오브젝트 상수 버퍼 (변환 행렬)
 	ranges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	ranges[0].NumDescriptors = 1;
-	ranges[0].BaseShaderRegister = 0;	// b0 레지스터
+	ranges[0].BaseShaderRegister = 0;    // b0
 	ranges[0].RegisterSpace = 0;
 	ranges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	// 라이팅용 range
+	// 전역 라이트 상수 버퍼
 	ranges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	ranges[1].NumDescriptors = 1;
-	ranges[1].BaseShaderRegister = 1;	// b1 레지스터
+	ranges[1].BaseShaderRegister = 1;    // b1
 	ranges[1].RegisterSpace = 0;
 	ranges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	// 텍스처용 range
-	ranges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	// 머티리얼 상수 버퍼
+	ranges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	ranges[2].NumDescriptors = 1;
-	ranges[2].BaseShaderRegister = 0;	// t0 레지스터
+	ranges[2].BaseShaderRegister = 2;    // b2
 	ranges[2].RegisterSpace = 0;
 	ranges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+	// 베이스 컬러/알베도 텍스처
+	ranges[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	ranges[3].NumDescriptors = 1;
+	ranges[3].BaseShaderRegister = 0;    // t0
+	ranges[3].RegisterSpace = 0;
+	ranges[3].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	// 노말 텍스처
+	ranges[4].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	ranges[4].NumDescriptors = 1;
+	ranges[4].BaseShaderRegister = 1;    // t1
+	ranges[4].RegisterSpace = 0;
+	ranges[4].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	// 메탈릭-러프니스 텍스처
+	ranges[5].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	ranges[5].NumDescriptors = 1;
+	ranges[5].BaseShaderRegister = 2;    // t2
+	ranges[5].RegisterSpace = 0;
+	ranges[5].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
 	// 루트 파라미터 설정
-	D3D12_ROOT_PARAMETER rootParameters[3] = {};
+	D3D12_ROOT_PARAMETER rootParameters[6] = {};
+	for (int i = 0; i < 6; ++i) {
+		rootParameters[i].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParameters[i].DescriptorTable.NumDescriptorRanges = 1;
+		rootParameters[i].DescriptorTable.pDescriptorRanges = &ranges[i];
+		rootParameters[i].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	}
 
-	// 변환 행렬용 파라미터
-	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
-	rootParameters[0].DescriptorTable.pDescriptorRanges = &ranges[0];
-	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-
-	// 라이팅용 파라미터
-	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
-	rootParameters[1].DescriptorTable.pDescriptorRanges = &ranges[1];
-	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-	// 텍스처용 파라미터
-	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
-	rootParameters[2].DescriptorTable.pDescriptorRanges = &ranges[2];
-	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	// 정적 샘플러 설정
+	D3D12_STATIC_SAMPLER_DESC sampler = {};
+	sampler.Filter = D3D12_FILTER_ANISOTROPIC;
+	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler.MipLODBias = 0;
+	sampler.MaxAnisotropy = 16;
+	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	sampler.MinLOD = 0.0f;
+	sampler.MaxLOD = D3D12_FLOAT32_MAX;
+	sampler.ShaderRegister = 0;  // s0
+	sampler.RegisterSpace = 0;
+	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	// 루트 시그니처 생성
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
 	rootSignatureDesc.NumParameters = _countof(rootParameters);
 	rootSignatureDesc.pParameters = rootParameters;
 	rootSignatureDesc.NumStaticSamplers = 1;
-	rootSignatureDesc.pStaticSamplers = &samplerDesc;
+	rootSignatureDesc.pStaticSamplers = &sampler;
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	ComPtr<ID3DBlob> signature;
 	ComPtr<ID3DBlob> error;
-	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc,
-		D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
-	ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(),
-		signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+	HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc,
+		D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
 
-	return true;
-}
-
-bool Engine::CreatePipelineState()
-{
-	// 셰이더 컴파일 및 로드
-	if (!InitializeShaders()) {
+	if (FAILED(hr)) {
+		if (error) {
+			Logger::Instance().Error("루트 시그니처 직렬화 실패: {}",
+				static_cast<const char*>(error->GetBufferPointer()));
+		}
 		return false;
 	}
 
-	// 정점 입력 레이아웃 정의
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
-		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
-		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 28,
-		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40,
-		  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
+	hr = m_device->CreateRootSignature(0, signature->GetBufferPointer(),
+		signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature));
 
-	// 파이프라인 상태 생성
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
-	psoDesc.pRootSignature = m_rootSignature.Get();
-	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShader->GetShaderBlob());
-	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShader->GetShaderBlob());
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
-	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState.DepthEnable = FALSE;
-	psoDesc.DepthStencilState.StencilEnable = FALSE;
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	psoDesc.SampleDesc.Count = 1;
-
-	return SUCCEEDED(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
-}
-
-bool Engine::CreateVertexBuffer()
-{
-	// 큐브의 정점 데이터
-	Vertex cubeVertices[] = {
-		// 앞면 (z = 0.5f)
-		{ XMFLOAT3(-0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(-0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
-
-		// 뒷면 (z = -0.5f)
-		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
-
-		// 윗면 (y = 0.5f)
-		{ XMFLOAT3(-0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-
-		// 아랫면 (y = -0.5f)
-		{ XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-
-		// 오른쪽면 (x = 0.5f)
-		{ XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-
-		// 왼쪽면 (x = -0.5f)
-		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) }
-	};
-
-
-	const UINT vertexBufferSize = sizeof(cubeVertices);
-
-	// 버퍼 생성
-	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
-	CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
-
-	ThrowIfFailed(m_device->CreateCommittedResource(
-		&heapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&bufferDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_vertexBuffer)));
-
-	// 데이터 복사
-	UINT8* pVertexDataBegin;
-	CD3DX12_RANGE readRange(0, 0);
-	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-	memcpy(pVertexDataBegin, cubeVertices, sizeof(cubeVertices));
-	m_vertexBuffer->Unmap(0, nullptr);
-
-	// 버퍼 뷰 생성
-	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-	m_vertexBufferView.SizeInBytes = vertexBufferSize;
-
-	return true;
-}
-
-bool Engine::CreateIndexBuffer()
-{
-	// 큐브의 인덱스 데이터
-	UINT indices[] = {
-		// 앞면 (0-3)
-		0, 1, 2,    // 첫 번째 삼각형
-		0, 2, 3,    // 두 번째 삼각형
-
-		// 뒷면 (4-7)
-		4, 5, 6,
-		4, 6, 7,
-
-		// 윗면 (8-11)
-		8, 9, 10,
-		8, 10, 11,
-
-		// 아랫면 (12-15)
-		12, 13, 14,
-		12, 14, 15,
-
-		// 오른쪽면 (16-19)
-		16, 17, 18,
-		16, 18, 19,
-
-		// 왼쪽면 (20-23)
-		20, 21, 22,
-		20, 22, 23
-	};
-
-	m_indexCount = ARRAYSIZE(indices);
-	const UINT indexBufferSize = sizeof(indices);
-
-	// 인덱스 버퍼 생성
-	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
-
-	ThrowIfFailed(m_device->CreateCommittedResource(
-		&heapProperties,
-		D3D12_HEAP_FLAG_NONE,
-		&resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_indexBuffer)));
-
-	// 데이터 복사
-	UINT8* pIndexDataBegin;
-	CD3DX12_RANGE readRange(0, 0);
-	ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
-	memcpy(pIndexDataBegin, indices, indexBufferSize);
-	m_indexBuffer->Unmap(0, nullptr);
-
-	// 인덱스 버퍼 뷰 생성
-	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	m_indexBufferView.SizeInBytes = indexBufferSize;
-
-	return true;
-}
-
-bool Engine::InitializeShaders()
-{
-	using namespace Resource;
-
-	// 버텍스 셰이더 로드
-	m_vertexShader = ResourceManager::Instance().RequestResource<ShaderResource>(
-		"shaders.hlsl",
-		ShaderResource::ShaderType::Vertex,
-		"VSMain"
-	);
-
-	// 픽셀 셰이더 로드
-	m_pixelShader = ResourceManager::Instance().RequestResource<ShaderResource>(
-		"shaders.hlsl",
-		ShaderResource::ShaderType::Pixel,
-		"PSMain"
-	);
-
-	// 셰이더 로딩 완료 대기
-	if (!m_vertexShader->Load() || !m_pixelShader->Load()) {
-		Logger::Instance().Error("셰이더 로딩 실패");
+	if (FAILED(hr)) {
+		Logger::Instance().Error("루트 시그니처 생성 실패");
 		return false;
 	}
 
-	return true;
-}
-
-bool Engine::CreateConstantBuffer()
-{
-	// 상수 버퍼는 256 바이트 정렬이 필요
-	const UINT constantBufferSize = (sizeof(ObjectConstants) + 255) & ~255;
-
-	auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
-
-	// 상수 버퍼 생성
-	if(FAILED(m_device->CreateCommittedResource(
-		&heapProperties,
-		D3D12_HEAP_FLAG_NONE,
-		&resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_constantBuffer)))) {
-		return false;
-	}
-
-	// 상수 버퍼를 CPU 메모리에 매핑
-	CD3DX12_RANGE readRange(0, 0);
-	if (FAILED(m_constantBuffer->Map(0, &readRange,
-		reinterpret_cast<void**>(&m_constantBufferMappedData)))) {
-		return false;
-	}
-
-	Logger::Instance().Info("상수 버퍼 생성 성공");
 	return true;
 }
 
@@ -821,67 +641,465 @@ bool Engine::CreateLightConstantBuffer()
 	return true;
 }
 
-bool Engine::CreateTexture(const wchar_t* filename)
+bool Engine::CreateDescHeap()
 {
-	// 리소스 업로드 배치 생성
-	DirectX::ResourceUploadBatch resourceUpload(m_device.Get());
-	resourceUpload.Begin();
+	// 디스크립터 힙 설계:
+   // - Object CBV (MAX_OBJECTS)
+   // - Light CBV (1)
+   // - Material CBV (MAX_OBJECTS)
+   // - Albedo/Base Color SRV (MAX_OBJECTS)
+   // - Normal SRV (MAX_OBJECTS)
+   // - Metallic-Roughness SRV (MAX_OBJECTS)
+	const UINT totalDescriptors = MAX_OBJECTS * 6 + 1;  // CBVs + SRVs + Light CBV
 
-	// DDS 텍스처 로드
-	if (FAILED(DirectX::CreateDDSTextureFromFile(
-		m_device.Get(),
-		resourceUpload,
-		filename,
-		m_texture.ReleaseAndGetAddressOf()))) {
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+	heapDesc.NumDescriptors = totalDescriptors;
+	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	HRESULT hr = m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_descHeap));
+	if (FAILED(hr)) {
+		Logger::Instance().Error("디스크립터 힙 생성 실패");
 		return false;
 	}
 
-	// 리소스 업로드 실행
-	auto uploadResourcesFinished = resourceUpload.End(m_commandQueue.Get());
-	uploadResourcesFinished.wait();
+	// 글로벌 라이트 CBV 생성 (MAX_OBJECTS 위치에)
+	CD3DX12_CPU_DESCRIPTOR_HANDLE lightCbvHandle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
+	lightCbvHandle.Offset(MAX_OBJECTS, GetDescriptorIncrementSize());
 
-	return true;
-}
-
-bool Engine::CreateDescHeap()
-{
-	// CBV 2개와 SRV 1개를 위한 디스크립터 힙 생성
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 3;  // CBV 2개 + SRV 1개
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
-	ThrowIfFailed(m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_descHeap)));
-
-	// 변환 행렬용 CBV 생성
-	D3D12_CONSTANT_BUFFER_VIEW_DESC transformCbvDesc = {};
-	transformCbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
-	transformCbvDesc.SizeInBytes = (sizeof(ObjectConstants) + 255) & ~255;
-
-	// 라이팅용 CBV 생성
 	D3D12_CONSTANT_BUFFER_VIEW_DESC lightCbvDesc = {};
 	lightCbvDesc.BufferLocation = m_lightConstantBuffer->GetGPUVirtualAddress();
 	lightCbvDesc.SizeInBytes = (sizeof(LightConstants) + 255) & ~255;
+	m_device->CreateConstantBufferView(&lightCbvDesc, lightCbvHandle);
 
-	// 텍스처용 SRV 생성
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = m_texture->GetDesc().Format;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = m_texture->GetDesc().MipLevels;
+	// 인덱스 초기화
+	m_currentCbvIndex = 0;						  // Object CBVs (0 ~ MAX_OBJECTS-1)
+	m_currentMaterialCbvIndex = MAX_OBJECTS + 1;  // Material CBVs
+	m_currentSrvIndex = MAX_OBJECTS * 3 + 1;      // SRVs
 
-	// 디스크립터 핸들 계산
-	CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_descHeap->GetCPUDescriptorHandleForHeapStart());
-	UINT handleIncrement = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	// CBV들과 SRV 생성
-	m_device->CreateConstantBufferView(&transformCbvDesc, handle);
-	handle.Offset(handleIncrement);
-	m_device->CreateConstantBufferView(&lightCbvDesc, handle);
-	handle.Offset(handleIncrement);
-	m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, handle);
-
+	Logger::Instance().Info("디스크립터 힙 생성 완료. 총 디스크립터 수: {}", totalDescriptors);
 	return true;
+}
+
+void Engine::UpdateLightConstant(float deltaTime)
+{
+	// 회전 각도 업데이트
+	m_rotationAngle += deltaTime;
+
+	// 라이트 방향 업데이트 (원을 그리며 회전)
+	float lightAngle = m_rotationAngle * 0.5f;  // 큐브보다 천천히 회전
+	m_lightConstants.lightDirection.x = sinf(lightAngle);
+	m_lightConstants.lightDirection.z = cosf(lightAngle);
+	m_lightConstants.lightDirection.y = -0.5f;  // 약간 위에서 비추도록
+
+	// 정규화
+	XMVECTOR lightDir = XMLoadFloat4(&m_lightConstants.lightDirection);
+	lightDir = XMVector3Normalize(lightDir);
+	XMStoreFloat4(&m_lightConstants.lightDirection, lightDir);
+
+	// 라이트 상수 버퍼 업데이트
+	memcpy(m_lightConstantBufferMappedData, &m_lightConstants, sizeof(m_lightConstants));
+}
+
+void Engine::CreateCubeMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices)
+{
+    // 정점 데이터
+    vertices = {
+    // 전면 (z = 0.5f)
+    { XMFLOAT3(-0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f)},
+    { XMFLOAT3(-0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+    { XMFLOAT3(0.5f,  0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+    { XMFLOAT3(0.5f, -0.5f, 0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+
+    // 후면 (z = -0.5f)
+    { XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+    { XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+    { XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+    { XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+
+    // 상면 (y = 0.5f)
+    { XMFLOAT3(-0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+    { XMFLOAT3(0.5f, 0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+    { XMFLOAT3(0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+    { XMFLOAT3(-0.5f, 0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+
+    // 하면 (y = -0.5f)
+    { XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+    { XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+    { XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+    { XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+
+    // 우면 (x = 0.5f)
+    { XMFLOAT3(0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
+    { XMFLOAT3(0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
+    { XMFLOAT3(0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
+    { XMFLOAT3(0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
+
+    // 좌면 (x = -0.5f)
+    { XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+    { XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+    { XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
+    { XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) }
+    };
+
+	// 인덱스 데이터
+	indices = {
+		// 전면
+		0, 1, 2,    0, 2, 3,
+
+		// 후면
+		4, 5, 6,    4, 6, 7,
+
+		// 상면
+		8, 9, 10,   8, 10, 11,
+
+		// 하면
+		12, 13, 14, 12, 14, 15,
+
+		// 우면
+		16, 17, 18, 16, 18, 19,
+
+		// 좌면
+		20, 21, 22, 20, 22, 23
+	};
+
+	Logger::Instance().Info("큐브 메시 데이터 생성 완료");
+}
+
+void Engine::CreateSphereMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices, float radius, int slices, int stacks)
+{
+	vertices.clear();
+	indices.clear();
+
+	// vertices 벡터의 예상 크기를 미리 할당하여 성능 개선
+	vertices.reserve((stacks + 1) * (slices + 1));
+	indices.reserve(stacks * slices * 6);
+
+	// 모든 정점 생성 (극점 포함)
+	for (int i = 0; i <= stacks; ++i) {
+		float phi = i * XM_PI / stacks;
+		float sinPhi = sinf(phi);
+		float cosPhi = cosf(phi);
+
+		for (int j = 0; j <= slices; ++j) {
+			float theta = j * XM_2PI / slices;
+			float sinTheta = sinf(theta);
+			float cosTheta = cosf(theta);
+
+			// 정점 위치 계산
+			XMFLOAT3 pos = {
+				radius * sinPhi * cosTheta,
+				radius * cosPhi,
+				radius * sinPhi * sinTheta
+			};
+
+			// 노말 벡터는 정규화된 위치 벡터
+			XMFLOAT3 normal = {
+				sinPhi * cosTheta,
+				cosPhi,
+				sinPhi * sinTheta
+			};
+
+			XMFLOAT3 tangent = {
+				-sinTheta,
+				0.0f,
+				cosTheta
+			};
+
+			// UV 좌표 계산 개선
+			// U: 0 to 1 (theta 기준)
+			// V: 0 to 1 (phi 기준)
+			XMFLOAT2 tex = {
+				(float)j / slices,           // U
+				1.0f - (float)i / stacks     // V (반전하여 텍스처 방향 수정)
+			};
+
+			vertices.push_back({ pos, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), normal, tangent, tex });
+		}
+	}
+
+    // 인덱스 생성
+	for (int i = 0; i < stacks; ++i) {
+		for (int j = 0; j < slices; ++j) {
+			int current = i * (slices + 1) + j;
+			int next = current + 1;
+			int bottom = (i + 1) * (slices + 1) + j;
+			int bottomNext = bottom + 1;
+
+			// 상단 삼각형
+			indices.push_back(current);
+			indices.push_back(bottom);
+			indices.push_back(next);
+
+			// 하단 삼각형
+			indices.push_back(bottom);
+			indices.push_back(bottomNext);
+			indices.push_back(next);
+		}
+	}
+}
+
+void Engine::CreateCapsuleMeshData(std::vector<Vertex>& vertices, std::vector<UINT>& indices, float radius, float height, int slices, int stacks)
+{
+	vertices.clear();
+	indices.clear();
+
+	float halfHeight = height * 0.5f;
+	int halfStacks = stacks / 2;
+	float phiStep = XM_PI / stacks;
+	float thetaStep = 2.0f * XM_PI / slices;
+
+	// 상단 반구
+	for (int i = 0; i <= halfStacks; ++i) {
+		float phi = i * phiStep;
+
+		for (int j = 0; j <= slices; ++j) {
+			float theta = j * thetaStep;
+
+			XMFLOAT3 pos = {
+				radius * sinf(phi) * cosf(theta),
+				halfHeight + radius * cosf(phi),
+				radius * sinf(phi) * sinf(theta)
+			};
+
+			XMFLOAT3 normal = {
+				sinf(phi) * cosf(theta),
+				cosf(phi),
+				sinf(phi) * sinf(theta)
+			};
+
+			XMFLOAT3 tangent = {
+				-sinf(theta),
+				0.0f,
+				cosf(theta)
+			};
+
+			XMFLOAT2 tex = {
+				theta / (2.0f * XM_PI),
+				phi / XM_PI
+			};
+
+			vertices.push_back({ pos, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), normal, tangent, tex });
+		}
+	}
+
+	// 하단 반구
+	for (int i = halfStacks; i <= stacks; ++i) {
+		float phi = i * phiStep;
+
+		for (int j = 0; j <= slices; ++j) {
+			float theta = j * thetaStep;
+
+			XMFLOAT3 pos = {
+				radius * sinf(phi) * cosf(theta),
+				-halfHeight + radius * cosf(phi),
+				radius * sinf(phi) * sinf(theta)
+			};
+
+			XMFLOAT3 normal = {
+				sinf(phi) * cosf(theta),
+				cosf(phi),
+				sinf(phi) * sinf(theta)
+			};
+
+			XMFLOAT3 tangent = {
+				-sinf(theta),
+				0.0f,
+				cosf(theta)
+			};
+
+			XMFLOAT2 tex = {
+				theta / (2.0f * XM_PI),
+				phi / XM_PI
+			};
+
+			vertices.push_back({ pos, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), normal, tangent, tex });
+		}
+	}
+
+	// 인덱스 생성
+	for (int i = 0; i < stacks; ++i) {
+		for (int j = 0; j < slices; ++j) {
+			int current = i * (slices + 1) + j;
+			int next = current + 1;
+			int bottom = (i + 1) * (slices + 1) + j;
+			int bottomNext = bottom + 1;
+
+			indices.push_back(current);
+			indices.push_back(bottom);
+			indices.push_back(next);
+
+			indices.push_back(next);
+			indices.push_back(bottom);
+			indices.push_back(bottomNext);
+		}
+	}
+}
+
+void Engine::CreateCube(const PxVec3& position, const PxVec3& dimensions)
+{
+	auto gameObject = std::make_shared<GameObject>();
+	//m_gameObjects.push_back(gameObject);
+
+	// Transform 설정
+	auto transform = gameObject->GetTransform();
+	transform->SetPosition(XMFLOAT3(position.x, position.y, position.z));
+
+	// PhysicsBody 추가
+	auto physicsBody = gameObject->AddComponent<PhysicsBody>();
+	PhysicsBody::BoxParams boxParams;
+	boxParams.dimensions = dimensions;
+	physicsBody->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Ground);
+	physicsBody->CreateBody(PhysicsObjectType::DYNAMIC, PhysicsShapeType::Box, boxParams);
+
+	// MeshRenderer 추가
+	auto renderer = gameObject->AddComponent<MeshRenderer>();
+
+	// 큐브 메시 데이터 생성
+	std::vector<Vertex> vertices;
+	std::vector<UINT> indices;
+	CreateCubeMeshData(vertices, indices);  // 이 함수는 기존의 큐브 정점/인덱스 데이터를 생성
+
+	//renderer->CreateResources(vertices, indices, "Texture/checker.dds");
+
+	Logger::Instance().Info("큐브 게임 오브젝트 생성됨. 위치: ({}, {}, {})",
+		position.x, position.y, position.z);
+}
+
+void Engine::CreateSphere(const PxVec3& position, float radius)
+{
+	auto gameObject = std::make_shared<GameObject>();
+	//m_gameObjects.push_back(gameObject);
+
+	auto transform = gameObject->GetTransform();
+	transform->SetPosition(XMFLOAT3(position.x, position.y, position.z));
+
+	auto physicsBody = gameObject->AddComponent<PhysicsBody>();
+	PhysicsBody::SphereParams sphereParams;
+	sphereParams.radius = radius;
+	physicsBody->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Ground);
+	physicsBody->CreateBody(PhysicsObjectType::DYNAMIC, PhysicsShapeType::Sphere, sphereParams);
+
+	auto renderer = gameObject->AddComponent<MeshRenderer>();
+	std::vector<Vertex> vertices;
+	std::vector<UINT> indices;
+	CreateSphereMeshData(vertices, indices, radius);
+	//renderer->CreateResources(vertices, indices, "Texture/pinkchecker.dds");
+
+	Logger::Instance().Info("구체 생성됨. 위치: ({}, {}, {}), 반지름: {}",
+		position.x, position.y, position.z, radius);
+}
+
+void Engine::CreateCapsule(const PxVec3& position, float radius, float height)
+{
+	auto gameObject = std::make_shared<GameObject>();
+	//m_gameObjects.push_back(gameObject);
+
+	auto transform = gameObject->GetTransform();
+	transform->SetPosition(XMFLOAT3(position.x, position.y, position.z));
+
+	auto physicsBody = gameObject->AddComponent<PhysicsBody>();
+	PhysicsBody::CapsuleParams capsuleParams;
+	capsuleParams.radius = radius;
+	capsuleParams.halfHeight = height * 0.5f;
+	physicsBody->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Ground);
+	physicsBody->CreateBody(PhysicsObjectType::DYNAMIC, PhysicsShapeType::Capsule, capsuleParams);
+
+	auto renderer = gameObject->AddComponent<MeshRenderer>();
+	std::vector<Vertex> vertices;
+	std::vector<UINT> indices;
+	CreateCapsuleMeshData(vertices, indices, radius, height);
+	//renderer->CreateResources(vertices, indices, "Texture/yellowchecker.dds");
+
+	Logger::Instance().Info("캡슐 생성됨. 위치: ({}, {}, {}), 반지름: {}, 높이: {}",
+		position.x, position.y, position.z, radius, height);
+}
+
+void Engine::CreateDemonstrationObjects(Scene* scene, const PxVec3& position)
+{
+	Resource::ResourceManager& resourceManager = Resource::ResourceManager::Instance();
+
+	// 테스트용 모델 GameObject 생성
+	auto modelObject = scene->CreateGameObject("TestModel");
+	modelObject->GetTransform()->SetPosition(XMFLOAT3(position.x, position.y, position.z));
+
+	// 물리 컴포넌트 추가
+	auto modelPhysics = modelObject->AddComponent<PhysicsBody>();
+	PhysicsBody::BoxParams modelParams;
+	modelParams.dimensions = PxVec3(0.5f);
+	modelPhysics->SetCollisionGroup(CollisionGroup::Default);
+	modelPhysics->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Ground);
+	modelPhysics->CreateBody(PhysicsObjectType::DYNAMIC, PhysicsShapeType::Box, modelParams);
+
+	// 모델 로드
+	auto modelResource = resourceManager.LoadModel("Resources/Models/Robot.fbx");
+
+	// MeshRenderer 컴포넌트 추가
+	auto renderer = modelObject->AddComponent<MeshRenderer>();
+	if (!renderer->SetModel(modelResource)) {
+		Logger::Instance().Error("모델 설정 실패: {}", "Resources/Models/robot.fbx");
+		return;
+	}
+
+	Logger::Instance().Info("데모 모델 객체 생성 완료: ({}, {}, {})",
+		position.x, position.y, position.z);
+}
+
+void Engine::CreateDefaultScene()
+{
+	auto& resourceManager = Resource::ResourceManager::Instance();
+	auto& sceneManager = SceneManager::Instance();
+	auto defaultScene = sceneManager.CreateScene("Default Scene");
+
+	// 메인 카메라 생성
+	auto cameraObject = defaultScene->CreateGameObject("Main Camera");
+	auto cameraTransform = cameraObject->GetTransform();
+	cameraTransform->SetPosition(XMFLOAT3(0.0f, 5.0f, -10.0f));
+	cameraTransform->SetRotation(XMFLOAT3(30.0f, 0.0f, 0.0f));
+
+	m_mainCamera = cameraObject->AddComponent<Camera>();
+	m_mainCamera->EnableControl(true);
+	m_mainCamera->SetMoveSpeed(1000.0f);
+	m_mainCamera->SetRotateSpeed(0.1f);
+	m_mainCamera->SetPerspectiveProperties(
+		XM_PIDIV4,
+		static_cast<float>(m_width) / static_cast<float>(m_height),
+		0.1f,
+		1000.0f
+	);
+
+	// 지면 생성
+	auto ground = defaultScene->CreateGameObject("Ground");
+	auto groundPhysics = ground->AddComponent<PhysicsBody>();
+	PhysicsBody::BoxParams groundParams;
+	groundParams.dimensions = PxVec3(20.0f, 0.1f, 20.0f);
+	groundPhysics->SetCollisionGroup(CollisionGroup::Ground);
+	groundPhysics->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Character);
+	groundPhysics->CreateBody(PhysicsObjectType::STATIC, PhysicsShapeType::Box, groundParams);
+
+	// 플레이어 캐릭터 생성
+	auto player = defaultScene->CreateGameObject("Player");
+	auto playerTransform = player->GetTransform();
+	playerTransform->SetPosition(XMFLOAT3(0.0f, 10.0f, 0.0f));  // 지면 위에 위치
+	auto playerController = player->AddComponent<CharacterController>();
+
+	// 장애물 생성
+	m_physicsEngine->AddObstacle(
+		PxVec3(3.0f, 0.5f, 0.0f),    // 위치
+		PxVec3(1.0f, 10.0f, 4.0f),    // 크기
+		PxQuat(0.0f, PxVec3(0.0f, 1.0f, 0.0f))  // 회전 없음
+	);
+
+	m_physicsEngine->AddObstacle(
+		PxVec3(-3.0f, 0.5f, 0.0f),   // 위치
+		PxVec3(1.0f, 1.0f, 4.0f),    // 크기
+		PxQuat(PxPi / 4.0f, PxVec3(0.0f, 1.0f, 0.0f))  // Y축 기준 45도 회전
+	);
+
+	CreateDemonstrationObjects(defaultScene, PxVec3(0.0f, 10.0f, 0.0f));
+
+	// 씬 로드
+	sceneManager.LoadScene(defaultScene);
 }
 
 void Engine::RegisterEventHandlers()
@@ -966,16 +1184,6 @@ void Engine::UnregisterEventHandlers()
 	}
 }
 
-void Engine::UpdateConstantBuffer()
-{
-	ObjectConstants constants;
-	constants.worldMatrix = XMMatrixTranspose(m_worldMatrix);
-	constants.viewMatrix = XMMatrixTranspose(m_viewMatrix);
-	constants.projectionMatrix = XMMatrixTranspose(m_projectionMatrix);
-
-	memcpy(m_constantBufferMappedData, &constants, sizeof(constants));
-}
-
 void Engine::WaitForGpu()
 {
 	// 1. 현재 프레임의 Fence 값으로 Signal
@@ -1008,4 +1216,14 @@ void Engine::MoveToNextFrame()
 
 	// 5. 다음 프레임의 Fence값 설정
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
+}
+
+XMMATRIX Engine::GetViewMatrix() const 
+{
+	return m_mainCamera ? m_mainCamera->GetViewMatrix() : XMMatrixIdentity();
+}
+
+XMMATRIX Engine::GetProjectionMatrix() const 
+{
+	return m_mainCamera ? m_mainCamera->GetProjectionMatrix() : XMMatrixIdentity();
 }

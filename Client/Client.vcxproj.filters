@@ -22,9 +22,6 @@
     <Filter Include="PhysXEngine">
       <UniqueIdentifier>{234d8cde-b033-423e-99a3-ee97e74cf614}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Object">
-      <UniqueIdentifier>{fa7549b1-5a26-4eaa-b721-fbad3242c649}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tools">
       <UniqueIdentifier>{7415beb2-ac06-4f51-b2ae-46cb5a503519}</UniqueIdentifier>
     </Filter>
@@ -40,14 +37,41 @@
     <Filter Include="Event\Manager">
       <UniqueIdentifier>{53dae0a9-2544-42cd-8847-1413988b3a4a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component">
+      <UniqueIdentifier>{73eaa7b3-6b0f-400b-ab3a-b391ab6c41cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameObject">
+      <UniqueIdentifier>{2e09b558-3a3e-43bb-b492-f027fc9463c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{c647015c-f70a-410b-b3a8-622827f3bed6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\Manager">
+      <UniqueIdentifier>{739a47dc-0f6c-46ac-ac25-e462c977db12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TimeManager">
+      <UniqueIdentifier>{3c6affcd-3b30-4e0e-b095-fd3baacfbb13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\PhysicsBody">
+      <UniqueIdentifier>{a2fd0fe9-66c9-40fd-8d50-d86fe410a76b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Camera">
+      <UniqueIdentifier>{3118b624-77a6-454d-9ea9-46335880e52c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\MeshRenderer">
+      <UniqueIdentifier>{d7925e6a-4d72-4100-8c5c-97270294912a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Transform">
+      <UniqueIdentifier>{c3d3142f-dd7b-43cb-9636-53119c028625}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="InputManager">
+      <UniqueIdentifier>{1d484531-84a9-41fd-a258-aa9d81db172b}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Resource">
-      <UniqueIdentifier>{1ef362fb-d97c-47c6-a0ac-715d7cb07671}</UniqueIdentifier>
+      <UniqueIdentifier>{400054f7-268e-4f5b-8710-fd5918785e43}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource\Manager">
-      <UniqueIdentifier>{534fb1d8-47b0-4e6d-8ef3-3525d8535ce0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\GraphicsDevice">
-      <UniqueIdentifier>{4cfef54d-1b46-4244-b7d9-9510ae057843}</UniqueIdentifier>
+      <UniqueIdentifier>{45a57fcc-0702-4090-b77b-d1a054a1f9fd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -71,9 +95,6 @@
     </ClInclude>
     <ClInclude Include="PhysicsEngine.h">
       <Filter>PhysXEngine</Filter>
-    </ClInclude>
-    <ClInclude Include="PhysicsObject.h">
-      <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
       <Filter>Tools</Filter>
@@ -114,20 +135,65 @@
     <ClInclude Include="Utils.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsObject.h">
+      <Filter>Component\PhysicsBody</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsBody.h">
+      <Filter>Component\PhysicsBody</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.h">
+      <Filter>Scene\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeManager.h">
+      <Filter>TimeManager</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Component\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshRenderer.h">
+      <Filter>Component\MeshRenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Component\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>InputManager</Filter>
+    </ClInclude>
     <ClInclude Include="IResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
     <ClInclude Include="ResourceManager.h">
       <Filter>Resource\Manager</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderResource.h">
-      <Filter>Resource</Filter>
-    </ClInclude>
     <ClInclude Include="TextureResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsDevice.h">
-      <Filter>Engine\GraphicsDevice</Filter>
+    <ClInclude Include="ShaderResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialInstance.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="CharacterController.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="CharacterControllerHitReport.h">
+      <Filter>PhysXEngine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -142,9 +208,6 @@
     </ClCompile>
     <ClCompile Include="PhysicsEngine.cpp">
       <Filter>PhysXEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="PhysicsObject.cpp">
-      <Filter>Object</Filter>
     </ClCompile>
     <ClCompile Include="Logger.cpp">
       <Filter>Tools</Filter>
@@ -173,8 +236,59 @@
     <ClCompile Include="EventManager.cpp">
       <Filter>Event\Manager</Filter>
     </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsObject.cpp">
+      <Filter>Component\PhysicsBody</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsBody.cpp">
+      <Filter>Component\PhysicsBody</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneManager.cpp">
+      <Filter>Scene\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="TimeManager.cpp">
+      <Filter>TimeManager</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Component\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshRenderer.cpp">
+      <Filter>Component\MeshRenderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Component\Transform</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>InputManager</Filter>
+    </ClCompile>
     <ClCompile Include="ResourceManager.cpp">
       <Filter>Resource\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialInstance.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="CharacterController.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="CharacterControllerHitReport.cpp">
+      <Filter>PhysXEngine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
