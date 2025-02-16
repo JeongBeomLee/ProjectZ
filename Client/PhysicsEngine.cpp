@@ -1,7 +1,5 @@
 #include "pch.h"
 #include "PhysicsEngine.h"
-#include "PhysicsObject.h"
-#include "ContactReportCallback.h"
 #include "Logger.h"
 
 PhysicsEngine::PhysicsEngine()
@@ -30,6 +28,21 @@ bool PhysicsEngine::Initialize()
 	m_defaultMaterial = m_physics->createMaterial(0.5f, 0.5f, 0.4f); // 동적 마찰, 정적 마찰, 반발력
 	if (!m_defaultMaterial) return false;
 
+	// 컨트롤러 매니저 생성
+	m_controllerHitReport = std::make_unique<CharacterControllerHitReport>();
+	m_controllerManager = PxCreateControllerManager(*m_scene);
+	if (!m_controllerManager) {
+		Logger::Instance().Error("컨트롤러 매니저 생성 실패");
+		return false;
+	}
+
+	// 장애물 컨텍스트 생성
+	m_obstacleContext = m_controllerManager->createObstacleContext();
+	if (!m_obstacleContext) {
+		Logger::Instance().Error("장애물 컨텍스트 생성 실패");
+		return false;
+	}
+
 	return true;
 }
 
@@ -37,6 +50,9 @@ void PhysicsEngine::Update(float deltaTime)
 {
 	if (m_scene) {
 		try {
+			// 장애물 업데이트 (지금은 계속 호출하도록)
+			UpdateObstacles();
+
 			// simulate 호출 전 상태 체크
 			m_scene->simulate(deltaTime);
 
@@ -52,8 +68,31 @@ void PhysicsEngine::Update(float deltaTime)
 	}
 }
 
+void PhysicsEngine::UpdateObstacles()
+{
+	if (!m_obstacleContext) return;
+
+	// 장애물 업데이트
+	for (const auto& [handle, obstacle] : m_obstacles) {
+		m_obstacleContext->updateObstacle(handle, *obstacle);
+	}
+}
+
 void PhysicsEngine::Cleanup()
 {
+	// 장애물 정리
+	ClearObstacles();
+
+	// 장애물 컨텍스트 정리
+	PX_RELEASE(m_obstacleContext);
+
+	m_contactCallback.reset();
+	m_controllerHitReport.reset();
+
+	// 컨트롤러 매니저 정리
+	m_controllerManager->purgeControllers();
+	PX_RELEASE(m_controllerManager);
+
 	PX_RELEASE(m_scene);
 	PX_RELEASE(m_dispatcher);
 	PX_RELEASE(m_physics);
@@ -99,6 +138,7 @@ std::shared_ptr<PhysicsObject> PhysicsEngine::CreateBox(
 	if (actor && shape) {
 		// 충돌 필터 데이터 설정
 		shape->setSimulationFilterData(CreateFilterData(group, mask));
+		shape->setQueryFilterData(CreateFilterData(group, mask));
 		m_scene->addActor(*actor);
 		auto physicsObject = std::make_shared<PhysicsObject>(actor);
 		m_physicsObjects.push_back(physicsObject);
@@ -136,6 +176,7 @@ std::shared_ptr<PhysicsObject> PhysicsEngine::CreateSphere(
 
 	if (actor && shape) {
 		shape->setSimulationFilterData(CreateFilterData(group, mask));
+		shape->setQueryFilterData(CreateFilterData(group, mask));
 		m_scene->addActor(*actor);
 		auto physicsObject = std::make_shared<PhysicsObject>(actor);
 		m_physicsObjects.push_back(physicsObject);
@@ -173,6 +214,7 @@ std::shared_ptr<PhysicsObject> PhysicsEngine::CreateCapsule(
 
 	if (actor && shape) {
 		shape->setSimulationFilterData(CreateFilterData(group, mask));
+		shape->setQueryFilterData(CreateFilterData(group, mask));
 		m_scene->addActor(*actor);
 		auto physicsObject = std::make_shared<PhysicsObject>(actor);
 		m_physicsObjects.push_back(physicsObject);
@@ -224,6 +266,7 @@ std::shared_ptr<PhysicsObject> PhysicsEngine::CreateTriangleMesh(
 
 	if (actor && shape) {
 		shape->setSimulationFilterData(CreateFilterData(group, mask));
+		shape->setQueryFilterData(CreateFilterData(group, mask));
 		m_scene->addActor(*actor);
 		auto physicsObject = std::make_shared<PhysicsObject>(actor);
 		m_physicsObjects.push_back(physicsObject);
@@ -244,6 +287,111 @@ std::shared_ptr<PhysicsObject> PhysicsEngine::CreateGroundPlane()
 		return physicsObject;
 	}
 	return nullptr;
+}
+
+std::shared_ptr<PhysicsObject> PhysicsEngine::CreateCapsuleController(
+	const PxVec3& position, float radius, float height, 
+	CollisionGroup group, CollisionGroup mask)
+{
+	if (!m_controllerManager) {
+		Logger::Instance().Error("컨트롤러 매니저가 초기화되지 않음");
+		return nullptr;
+	}
+
+	// 캡슐 컨트롤러 속성 설정
+	PxCapsuleControllerDesc desc;
+	desc.position = PxExtendedVec3(position.x, position.y, position.z);
+	desc.radius = radius;
+	desc.height = height;
+	desc.stepOffset = 0.5f;          // 계단 등반 높이
+	desc.slopeLimit = 0.707f;        // 약 45도
+	desc.material = m_defaultMaterial;
+	desc.upDirection = PxVec3(0, 1, 0);
+	desc.reportCallback = m_controllerHitReport.get();    // 충돌 콜백
+	desc.behaviorCallback = nullptr;  // 행동 콜백
+	desc.contactOffset = 0.1f;        // 접촉 여유 거리
+
+	// 컨트롤러 생성
+	PxController* controller = m_controllerManager->createController(desc);
+	if (!controller) {
+		Logger::Instance().Error("캡슐 컨트롤러 생성 실패");
+		return nullptr;
+	}
+
+	// 필터 데이터 설정
+	PxRigidDynamic* actor = controller->getActor();
+	PxShape* shape;
+	actor->getShapes(&shape, 1);
+
+	// 시뮬레이션 필터 데이터 설정
+	shape->setSimulationFilterData(CreateFilterData(group, mask));
+
+	// 쿼리 필터 데이터도 동일하게 설정 (레이캐스트 등에 사용)
+	shape->setQueryFilterData(CreateFilterData(group, mask));
+
+	// 운동학적 액터로 설정
+	actor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+
+	// PhysicsObject 생성 및 반환
+	auto physicsObject = std::make_shared<PhysicsObject>(actor);
+	m_physicsObjects.push_back(physicsObject);
+
+	Logger::Instance().Debug("캡슐 컨트롤러 생성됨. 위치: ({}, {}, {}), 반지름: {}, 높이: {}",
+		position.x, position.y, position.z, radius, height);
+
+	return physicsObject;
+}
+
+
+PxObstacleHandle PhysicsEngine::AddObstacle(
+	const PxVec3& position, const PxVec3& dimensions, const PxQuat& rotation)
+{
+	if (!m_obstacleContext) {
+		Logger::Instance().Error("장애물 컨텍스트가 초기화되지 않음");
+		return PxObstacleHandle(0);
+	}
+
+	auto obstacle = std::make_unique<PxBoxObstacle>();
+	obstacle->mPos = PxExtendedVec3(position.x, position.y, position.z);
+	obstacle->mHalfExtents = dimensions * 0.5f;
+	obstacle->mRot = PxQuat(rotation);
+
+	PxObstacleHandle handle = m_obstacleContext->addObstacle(*obstacle);
+	if (handle != PxObstacleHandle(0)) {
+		m_obstacles.emplace_back(handle, std::move(obstacle));
+
+		Logger::Instance().Debug("장애물 추가됨. 핸들: {}, 위치: ({}, {}, {}), 크기: ({}, {}, {})",
+			handle,
+			position.x, position.y, position.z,
+			dimensions.x, dimensions.y, dimensions.z);
+	}
+
+	return handle;
+}
+
+void PhysicsEngine::RemoveObstacle(PxObstacleHandle handle)
+{
+	if (!m_obstacleContext) return;
+
+	auto it = std::find_if(m_obstacles.begin(), m_obstacles.end(),
+		[handle](const auto& pair) { return pair.first == handle; });
+
+	if (it != m_obstacles.end()) {
+		m_obstacleContext->removeObstacle(handle);
+		m_obstacles.erase(it);
+		Logger::Instance().Debug("장애물 제거됨. 핸들: {}", handle);
+	}
+}
+
+void PhysicsEngine::ClearObstacles()
+{
+	if (!m_obstacleContext) return;
+
+	for (const auto& [handle, obstacle] : m_obstacles) {
+		m_obstacleContext->removeObstacle(handle);
+	}
+	m_obstacles.clear();
+	Logger::Instance().Debug("모든 장애물 제거됨");
 }
 
 PxFilterData PhysicsEngine::CreateFilterData(CollisionGroup group, CollisionGroup mask)
@@ -303,7 +451,7 @@ PxFilterFlags PhysicsEngine::CustomFilterShader(
 	PxFilterObjectAttributes attributes1, PxFilterData filterData1, 
 	PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
 {
-	// 트리거 객체 처리
+	// 트리거 처리
 	if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1)) {
 		pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
 		return PxFilterFlag::eDEFAULT;
@@ -311,13 +459,27 @@ PxFilterFlags PhysicsEngine::CustomFilterShader(
 
 	// 충돌 마스크 확인
 	if ((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1)) {
-		pairFlags = PxPairFlag::eCONTACT_DEFAULT  // 기본 충돌 속성
-			| PxPairFlag::eNOTIFY_TOUCH_FOUND     // 충돌 시작 알림
-			| PxPairFlag::eNOTIFY_TOUCH_LOST      // 충돌 종료 알림
-			| PxPairFlag::eNOTIFY_CONTACT_POINTS; // 접촉점 정보 제공
+		// CCT 필터링 - CCT는 운동학적 액터로 취급됨
+		bool isKinematic0 = PxFilterObjectIsKinematic(attributes0);
+		bool isKinematic1 = PxFilterObjectIsKinematic(attributes1);
+
+		// CCT와 관련된 충돌인 경우
+		if (isKinematic0 || isKinematic1) {
+			pairFlags = PxPairFlag::eMODIFY_CONTACTS
+				| PxPairFlag::eDETECT_CCD_CONTACT  // CCD 활성화
+				| PxPairFlag::eNOTIFY_TOUCH_CCD    // CCD 접촉 알림
+				| PxPairFlag::eNOTIFY_TOUCH_FOUND  // 접촉 시작 알림
+				| PxPairFlag::eNOTIFY_TOUCH_LOST   // 접촉 종료 알림
+				| PxPairFlag::eNOTIFY_CONTACT_POINTS; // 접촉점 알림
+		}
+		else {
+			pairFlags = PxPairFlag::eCONTACT_DEFAULT
+				| PxPairFlag::eNOTIFY_TOUCH_FOUND
+				| PxPairFlag::eNOTIFY_TOUCH_LOST;
+		}
 
 		return PxFilterFlag::eDEFAULT;
 	}
 
-	return PxFilterFlag::eSUPPRESS; // 충돌 무시
+	return PxFilterFlag::eSUPPRESS;
 }

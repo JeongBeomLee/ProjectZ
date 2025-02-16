@@ -15,6 +15,7 @@
 #include "Camera.h"
 #include "MaterialResource.h"
 #include "MaterialInstance.h"
+#include "CharacterController.h"
 #include "Logger.h"
 #include "Utils.h"
 
@@ -1071,22 +1072,31 @@ void Engine::CreateDefaultScene()
 	auto ground = defaultScene->CreateGameObject("Ground");
 	auto groundPhysics = ground->AddComponent<PhysicsBody>();
 	PhysicsBody::BoxParams groundParams;
-	groundParams.dimensions = PxVec3(20.0f, 0.5f, 20.0f);
+	groundParams.dimensions = PxVec3(20.0f, 0.1f, 20.0f);
 	groundPhysics->SetCollisionGroup(CollisionGroup::Ground);
-	groundPhysics->SetCollisionMask(CollisionGroup::Default);
+	groundPhysics->SetCollisionMask(CollisionGroup::Default | CollisionGroup::Character);
 	groundPhysics->CreateBody(PhysicsObjectType::STATIC, PhysicsShapeType::Box, groundParams);
 
-	// 테스트 오브젝트 생성
-	float startHeight = 20.0f;
-	float spacing = 2.0f;
-	for (int i = 0; i < 5; ++i) {
-		PxVec3 position(
-			(i % 2 == 0) ? spacing : -spacing,
-			startHeight + (i * 2.0f),
-			0.0f
-		);
-		CreateDemonstrationObjects(defaultScene, position);
-	}
+	// 플레이어 캐릭터 생성
+	auto player = defaultScene->CreateGameObject("Player");
+	auto playerTransform = player->GetTransform();
+	playerTransform->SetPosition(XMFLOAT3(0.0f, 10.0f, 0.0f));  // 지면 위에 위치
+	auto playerController = player->AddComponent<CharacterController>();
+
+	// 장애물 생성
+	m_physicsEngine->AddObstacle(
+		PxVec3(3.0f, 0.5f, 0.0f),    // 위치
+		PxVec3(1.0f, 10.0f, 4.0f),    // 크기
+		PxQuat(0.0f, PxVec3(0.0f, 1.0f, 0.0f))  // 회전 없음
+	);
+
+	m_physicsEngine->AddObstacle(
+		PxVec3(-3.0f, 0.5f, 0.0f),   // 위치
+		PxVec3(1.0f, 1.0f, 4.0f),    // 크기
+		PxQuat(PxPi / 4.0f, PxVec3(0.0f, 1.0f, 0.0f))  // Y축 기준 45도 회전
+	);
+
+	CreateDemonstrationObjects(defaultScene, PxVec3(0.0f, 10.0f, 0.0f));
 
 	// 씬 로드
 	sceneManager.LoadScene(defaultScene);

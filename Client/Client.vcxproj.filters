@@ -189,6 +189,12 @@
     <ClInclude Include="ModelResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
+    <ClInclude Include="CharacterController.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="CharacterControllerHitReport.h">
+      <Filter>PhysXEngine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -277,6 +283,12 @@
     </ClCompile>
     <ClCompile Include="ModelResource.cpp">
       <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="CharacterController.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="CharacterControllerHitReport.cpp">
+      <Filter>PhysXEngine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

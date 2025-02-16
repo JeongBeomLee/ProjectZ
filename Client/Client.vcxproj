@@ -146,6 +146,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CharacterController.h" />
+    <ClInclude Include="CharacterControllerHitReport.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ContactReportCallback.h" />
@@ -189,6 +191,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CharacterController.cpp" />
+    <ClCompile Include="CharacterControllerHitReport.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ContactReportCallback.cpp" />
     <ClCompile Include="Engine.cpp" />
